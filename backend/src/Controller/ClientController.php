@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Client;
 use App\Event\ClientCreatedEvent;
 use Doctrine\ORM\EntityManagerInterface;
+use Random\RandomException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -28,6 +29,9 @@ final class ClientController extends AbstractController
     {
     }
 
+    /**
+     * @throws RandomException
+     */
     #[Route('/api/client/register', name: 'client_register', methods: ['POST'])]
     public function register(
         Request $request,
@@ -52,6 +56,8 @@ final class ClientController extends AbstractController
         $client->setZipcode($data['zipcode'] ?? '');
         $client->setGender($data['gender'] ?? null);
         $client->setSocietyName($data['societyName'] ?? null);
+        $client->setVerifiedAccount(false);
+        $client->setVerificationToken(bin2hex(random_bytes(32)));
 
         if (isset($data['birth'])) {
             try {

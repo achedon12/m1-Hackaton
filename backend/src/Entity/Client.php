@@ -52,6 +52,12 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $societyName = null;
 
+    #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
+    private ?bool $verifiedAccount = null;
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $verificationToken = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -171,6 +177,30 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
     public function setGender(?string $gender = null): static
     {
         $this->gender = $gender;
+
+        return $this;
+    }
+
+    public function isVerifiedAccount(): ?bool
+    {
+        return $this->verifiedAccount;
+    }
+
+    public function setVerifiedAccount(?bool $verifiedAccount = null): static
+    {
+        $this->verifiedAccount = $verifiedAccount;
+
+        return $this;
+    }
+
+    public function getVerificationToken(): ?string
+    {
+        return $this->verificationToken;
+    }
+
+    public function setVerificationToken(?string $verificationToken = null): static
+    {
+        $this->verificationToken = $verificationToken;
 
         return $this;
     }
