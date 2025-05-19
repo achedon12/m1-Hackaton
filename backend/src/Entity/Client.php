@@ -17,16 +17,13 @@ class Client
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
-    private ?int $id_client = null;
-
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $firstname = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $lastname = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTime $birth = null;
 
     #[ORM\Column(length: 255)]
@@ -44,36 +41,15 @@ class Client
     #[ORM\Column(length: 255)]
     private ?string $city = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $gender = null;
 
-    #[ORM\Column]
-    private ?bool $driver = null;
-
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $driverFirstname = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $driverLastname = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $driverPhone = null;
+    private ?string $societyName = null;
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getIdClient(): ?int
-    {
-        return $this->id_client;
-    }
-
-    public function setIdClient(int $id_client): static
-    {
-        $this->id_client = $id_client;
-
-        return $this;
     }
 
     public function getFirstname(): ?string
@@ -172,62 +148,14 @@ class Client
         return $this;
     }
 
-    public function getGender(): ?string
+    public function getSocietyName(): ?string
     {
-        return $this->gender;
+        return $this->societyName;
     }
 
-    public function setGender(string $gender): static
+    public function setSocietyName(?string $societyName): static
     {
-        $this->gender = $gender;
-
-        return $this;
-    }
-
-    public function isDriver(): ?bool
-    {
-        return $this->driver;
-    }
-
-    public function setDriver(bool $driver): static
-    {
-        $this->driver = $driver;
-
-        return $this;
-    }
-
-    public function getDriverFirstname(): ?string
-    {
-        return $this->driverFirstname;
-    }
-
-    public function setDriverFirstname(?string $driverFirstname): static
-    {
-        $this->driverFirstname = $driverFirstname;
-
-        return $this;
-    }
-
-    public function getDriverLastname(): ?string
-    {
-        return $this->driverLastname;
-    }
-
-    public function setDriverLastname(?string $driverLastname): static
-    {
-        $this->driverLastname = $driverLastname;
-
-        return $this;
-    }
-
-    public function getDriverPhone(): ?string
-    {
-        return $this->driverPhone;
-    }
-
-    public function setDriverPhone(?string $driverPhone): static
-    {
-        $this->driverPhone = $driverPhone;
+        $this->societyName = $societyName;
 
         return $this;
     }
