@@ -58,6 +58,12 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     private ?string $verificationToken = null;
 
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    private ?float $longitude = null;
+
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    private ?float $latitude = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -201,6 +207,30 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
     public function setVerificationToken(?string $verificationToken = null): static
     {
         $this->verificationToken = $verificationToken;
+
+        return $this;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function setLongitude(?float $longitude = null): static
+    {
+        $this->longitude = $longitude;
+
+        return $this;
+    }
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function setLatitude(?float $latitude = null): static
+    {
+        $this->latitude = $latitude;
 
         return $this;
     }

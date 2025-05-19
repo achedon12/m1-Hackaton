@@ -16,6 +16,23 @@ class GarageRepository extends ServiceEntityRepository
         parent::__construct($registry, Garage::class);
     }
 
+    public function findNearby(float $latitude, float $longitude, float $radius): array
+    {
+        $qb = $this->createQueryBuilder('g')
+            ->select('g, (6371 * acos(cos(radians(:latitude)) * cos(radians(g.latitude)) * cos(radians(g.longitude) - radians(:longitude)) + sin(radians(:latitude)) * sin(radians(g.latitude)))) AS distance')
+            ->orderBy('distance', 'ASC')
+            ->setParameter('latitude', $latitude)
+            ->setParameter('longitude', $longitude);
+
+        if ($radius > 0) {
+            $qb->having('distance <= :radius')
+                ->setParameter('radius', $radius);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+
     //    /**
     //     * @return Garage[] Returns an array of Garage objects
     //     */

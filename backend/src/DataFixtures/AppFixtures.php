@@ -35,6 +35,9 @@ class AppFixtures extends Fixture
         $file = fopen(__DIR__ . '/concessions.csv', 'r');
         if ($file !== false) {
             while (($data = fgetcsv($file, 1000, ';')) !== false) {
+                if ($data[0] === '﻿dealership_name') {
+                    continue;
+                }
                 $garage = new Garage();
                 $garage->setName($data[0]);
                 $garage->setCity($data[1]);
