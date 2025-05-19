@@ -55,8 +55,8 @@ services:
     networks:
       - rdvroum_network
 
-  rdvroum_nginx_mailhog:
-    container_name: rdvroum_nginx_mailhog
+  rdvroum_mailhog:
+    container_name: rdvroum_mailhog
     image: mailhog/mailhog
     ports:
       - "1027:1025"
