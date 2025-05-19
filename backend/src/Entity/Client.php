@@ -59,10 +59,9 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->firstname;
     }
 
-    public function setFirstname(string $firstname = null): static
+    public function setFirstname(?string $firstname): static
     {
         $this->firstname = $firstname;
-
         return $this;
     }
 
@@ -71,10 +70,10 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->lastname;
     }
 
-    public function setLastname(string $lastname = null): static
+
+    public function setLastname(?string $lastname): static
     {
         $this->lastname = $lastname;
-
         return $this;
     }
 
@@ -83,10 +82,9 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->birth;
     }
 
-    public function setBirth(\DateTime $birth = null): static
+    public function setBirth(?\DateTime $birth): static
     {
         $this->birth = $birth;
-
         return $this;
     }
 

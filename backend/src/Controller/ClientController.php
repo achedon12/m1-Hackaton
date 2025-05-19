@@ -47,6 +47,8 @@ final class ClientController extends AbstractController
             }
         }
 
+        $client->setCreationDate(new \DateTimeImmutable());
+
 //        var_dump($client);die();
         $em->persist($client);
         $em->flush();
