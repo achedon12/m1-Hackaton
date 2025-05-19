@@ -37,6 +37,10 @@ class Vehicle
     #[ORM\JoinColumn(nullable: false)]
     private Model $model;
 
+    #[ORM\ManyToOne(targetEntity: Client::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private Client $client;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -110,6 +114,18 @@ class Vehicle
     public function setModel(Model $model): static
     {
         $this->model = $model;
+
+        return $this;
+    }
+
+    public function getClient(): Client
+    {
+        return $this->client;
+    }
+
+    public function setClient(Client $client): static
+    {
+        $this->client = $client;
 
         return $this;
     }
