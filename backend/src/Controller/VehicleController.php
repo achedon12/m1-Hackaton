@@ -32,6 +32,10 @@ final class VehicleController extends AbstractController
             return $this->json(['error' => 'Vehicle not found'], Response::HTTP_NOT_FOUND);
         }
 
+        if (!$vehicle->getClient()->getId() !== $this->security->getUser()->getId()) {
+            return $this->json(['error' => 'You are not authorized to update this vehicle'], Response::HTTP_FORBIDDEN);
+        }
+
         return $this->json($vehicle, Response::HTTP_OK);
     }
 
@@ -42,6 +46,10 @@ final class VehicleController extends AbstractController
 
         if (!$vehicle) {
             return $this->json(['error' => 'Vehicle not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if (!$vehicle->getClient()->getId() !== $this->security->getUser()->getId()) {
+            return $this->json(['error' => 'You are not authorized to update this vehicle'], Response::HTTP_FORBIDDEN);
         }
 
         $this->entityManager->remove($vehicle);
@@ -57,6 +65,10 @@ final class VehicleController extends AbstractController
 
         if (!$vehicle) {
             return $this->json(['error' => 'Vehicle not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if (!$vehicle->getClient()->getId() !== $this->security->getUser()->getId()) {
+            return $this->json(['error' => 'You are not authorized to update this vehicle'], Response::HTTP_FORBIDDEN);
         }
 
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
