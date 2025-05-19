@@ -1,6 +1,7 @@
 import {User, Car, History} from "lucide-react";
 import {useState} from "react";
-import UserForm from "./profile/userForm/userForm.jsx";
+import UserForm from "./userForm/UserForm.jsx";
+import CarForm from "./carForm/CarForm.jsx";
 
 const Profile = () => {
     const [activeTab, setActiveTab] = useState("person");
@@ -21,24 +22,23 @@ const Profile = () => {
                 >
                     <Car className={`w-6 h-6 ${activeTab === "car" ? "text-white" : "text-secondary"}`}/>
                 </button>
-                <button
-                    className={`btn btn-ghost ${activeTab === "history" ? "bg-secondary" : "text-secondary"}`}
-                    onClick={() => setActiveTab("history")}
-                >
-                    <History className={`w-6 h-6 ${activeTab === "history" ? "text-white" : "text-secondary"}`}/>
-                </button>
             </div>
 
 
-            <div className="p-6">
+            <div className="p-6 md:px-60">
+                <div className={'w-full mb-6 bg-tertiary'}>
+                    <h1 className={"text-xl"}>
+                        {activeTab === "person" && "Mes informations personnelles"}
+                        {activeTab === "car" && "Mes véhicules"}
+                        {activeTab === "history" && "Historique"}
+                    </h1>
+                    <hr className={'border-2 border-secondary w-20 mt-4'}/>
+                </div>
                 {activeTab === "person" && (
-                    <UserForm />
+                    <UserForm/>
                 )}
                 {activeTab === "car" && (
-                    <div>
-                        <h1 className="text-xl">Ma voiture</h1>
-                        <p>Contenu lié à la voiture...</p>
-                    </div>
+                    <CarForm/>
                 )}
                 {activeTab === "history" && (
                     <div>
