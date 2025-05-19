@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+
+  rdvroum_nginx:
+    container_name: rdvroum_nginx
+    image: nginx:1.27
+    restart: always
+    ports:
+      - "1081:80"
+    volumes:
+      - .:/var/www/html
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/errors.conf:/etc/nginx/errors.conf:ro
+      - ./nginx/html:/usr/share/nginx/html
+    links:
+      - rdvroum_php
+
+  rdvroum_php:
+    container_name: rdvroum_php
+    restart: unless-stopped
+    build: .
+    volumes:
+      - ./:/var/www/html
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      - rdvroum_mysql
+    ports:
+      - "9001:9000"
+
+  rdvroum_mysql:
+    container_name: rdvroum_mysql
+    image: mysql:9.3.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data:/var/lib/mysql
+
+  rdvroum_nginx_mailhog:
+    container_name: rdvroum_nginx_mailhog
+    image: mailhog/mailhog
+    ports:
+      - "1027:1025"
+      - "8025:8025"
