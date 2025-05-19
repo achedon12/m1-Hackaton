@@ -6,9 +6,11 @@ use App\Repository\ClientRepository;
 use App\Trait\TimeStampTrait;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: ClientRepository::class)]
-class Client
+class Client implements UserInterface, PasswordAuthenticatedUserInterface
 {
     use TimeStampTrait;
 
@@ -57,10 +59,9 @@ class Client
         return $this->firstname;
     }
 
-    public function setFirstname(string $firstname): static
+    public function setFirstname(?string $firstname): static
     {
         $this->firstname = $firstname;
-
         return $this;
     }
 
@@ -69,10 +70,10 @@ class Client
         return $this->lastname;
     }
 
-    public function setLastname(string $lastname): static
+
+    public function setLastname(?string $lastname): static
     {
         $this->lastname = $lastname;
-
         return $this;
     }
 
@@ -81,10 +82,9 @@ class Client
         return $this->birth;
     }
 
-    public function setBirth(\DateTime $birth): static
+    public function setBirth(?\DateTime $birth): static
     {
         $this->birth = $birth;
-
         return $this;
     }
 
@@ -153,10 +153,42 @@ class Client
         return $this->societyName;
     }
 
-    public function setSocietyName(?string $societyName): static
+    public function setSocietyName(?string $societyName = null): static
     {
         $this->societyName = $societyName;
 
         return $this;
+    }
+
+    public function getGender(): ?string
+    {
+        return $this->gender;
+    }
+
+    public function setGender(?string $gender = null): static
+    {
+        $this->gender = $gender;
+
+        return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->firstname . ' ' . $this->lastname;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    public function getRoles(): array
+    {
+        return ['ROLE_USER'];
+    }
+
+    public function eraseCredentials(): void
+    {
+        // Efface les données sensibles temporaires (ex: mot de passe en clair)
     }
 }
