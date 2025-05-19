@@ -1,3 +1,6 @@
-import Layout from './Layout'
+import Layout from './Layout.jsx'
+import Login from "./login/Login.jsx";
 
-export { Layout }
+import Profile from "./Profile.jsx";
+
+export { Layout, Login, Profile };
