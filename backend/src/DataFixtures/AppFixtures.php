@@ -5,6 +5,8 @@ namespace App\DataFixtures;
 use App\Entity\Garage;
 use App\Entity\OperationCategory;
 use App\Entity\Operation;
+use DateTime;
+use DateTimeImmutable;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
@@ -57,12 +59,15 @@ class AppFixtures extends Fixture
 
         if ($file !== false) {
             while (($data = fgetcsv($file, 1000, ';')) !== false) {
+                if ($data[0] === '﻿operation_name') {
+                    continue;
+                }
                 $categoryName = $data[1];
 
-                // Vérifier si la catégorie existe déjà dans le cache
                 if (!isset($categories[$categoryName])) {
-                    $category = new Category();
+                    $category = new OperationCategory();
                     $category->setName($categoryName);
+                    $category->setCreationDate(new \DateTimeImmutable());
                     $manager->persist($category);
                     $categories[$categoryName] = $category;
                 } else {
@@ -70,9 +75,12 @@ class AppFixtures extends Fixture
                 }
 
                 $operation = new Operation();
-                $operation->setName($data[0]);
+                $operation->setLibelle($data[0]);
                 $operation->setCategory($category);
-                $operation->setPrice($data[5]);
+                $operation->setHelp($data[2] === 'NULL' ? null : $data[2]);
+                $operation->setComment($data[3] === 'NULL' ? null : $data[3]);
+                $operation->setEstimatedDuration((new \DateTime())->setTime((int)$data[4], 0));                $operation->setPrice(round((float)$data[5], 2));
+                $operation->setWorkerNeeded($faker->numberBetween(1, 2));
                 $operation->setCreationDate(new \DateTimeImmutable());
                 $manager->persist($operation);
             }
