@@ -17,7 +17,7 @@ class ClientCreatedEvent extends Event
         $this->client = $client;
     }
 
-    public function getUser(): Client
+    public function getClient(): Client
     {
         return $this->client;
     }

@@ -3,6 +3,7 @@
 namespace App\EventListener;
 
 use App\Event\ClientCreatedEvent;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
@@ -16,6 +17,7 @@ use Twig\Error\SyntaxError;
 readonly class ClientCreatedListener
 {
     public function __construct(private MailerInterface $mailer,
+                                private readonly LoggerInterface $logger,
                                 private Environment     $twig)
     {
     }
@@ -27,15 +29,16 @@ readonly class ClientCreatedListener
      */
     public function onUserCreated(ClientCreatedEvent $event): void
     {
-        $user = $event->getUser();
+        $client = $event->getClient();
+
+        $this->logger->info('ClientCreatedEvent triggered for client: ' . $client->getEmail());
 
         try {
             $email = (new Email())
                 ->from('no-reply@rd-vroum.com')
-                ->to($user->getEmail())
+                ->to($client->getEmail())
                 ->subject('Welcome to RD-Vroum!')
-                //TODO: faire process token
-                ->html($this->twig->render('emails/registration.html.twig', ['user' => $user, 'signedUrl' => 'http://localhost:1081/user/verify/' . 'process_token_a_faire'/*$user->getVerificationToken()*/]));
+                ->html($this->twig->render('emails/registration.html.twig', ['user' => $client, 'signedUrl' => 'http://localhost:1081/client/verify/' . $client->getVerificationToken()]));
 
             $this->mailer->send($email);
         } catch (TransportExceptionInterface) {

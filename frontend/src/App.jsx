@@ -1,5 +1,5 @@
 import {BrowserRouter, Routes, Route} from "react-router-dom";
-import {Layout, Login, Profile, Register} from "./pages";
+import {Layout, Login, Profile, Register, Rdv} from "./pages";
 import {ProtectedRoute} from "./components";
 
 const App = () => (
@@ -10,6 +10,7 @@ const App = () => (
             <Route path="/" element={<Layout/>}>
                 {/*<Route path="/profile" element={<ProtectedRoute><Profile/></ProtectedRoute>}/>*/}
                 <Route path="/profile" element={<Profile/>}/>
+                <Route path="/rdv" element={<Rdv/>}></Route>
             </Route>
         </Routes>
     </BrowserRouter>
