@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Repository\BrandRepository;
 use App\Repository\ModelRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +14,14 @@ final class ModelController extends AbstractController
     public function __construct(private readonly ModelRepository $modelRepository
     )
     {
+    }
+
+    #[Route('/list', name: 'list', methods: ['GET'])]
+    public function getModels(): Response
+    {
+        $models = $this->modelRepository->findAll();
+
+        return $this->json($models, Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get', methods: ['GET'])]

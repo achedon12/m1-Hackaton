@@ -27,4 +27,12 @@ final class BrandController extends AbstractController
         return $this->json($brand, Response::HTTP_OK);
     }
 
+    #[Route('/list', name: 'get', methods: ['GET'])]
+    public function getBrands(): Response
+    {
+        $brands = $this->brandRepository->findAll();
+
+        return $this->json($brands, Response::HTTP_OK);
+    }
+
 }
