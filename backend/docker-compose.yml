@@ -15,6 +15,10 @@ services:
       - ./nginx/html:/usr/share/nginx/html
     links:
       - rdvroum_php
+    depends_on:
+      - rdvroum_php
+    networks:
+      - rdvroum_network
 
   rdvroum_php:
     container_name: rdvroum_php
@@ -23,11 +27,17 @@ services:
     volumes:
       - ./:/var/www/html
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      DATABASE_URL: "mysql://root:rdvroum_root_password@rdvroum_mysql:3306/rdvroum_db"
     depends_on:
       - rdvroum_mysql
     ports:
       - "9001:9000"
+    networks:
+      - rdvroum_network
 
   rdvroum_mysql:
     container_name: rdvroum_mysql
@@ -42,6 +52,8 @@ services:
       - "3306:3306"
     volumes:
       - ./data:/var/lib/mysql
+    networks:
+      - rdvroum_network
 
   rdvroum_nginx_mailhog:
     container_name: rdvroum_nginx_mailhog
@@ -49,3 +61,10 @@ services:
     ports:
       - "1027:1025"
       - "8025:8025"
+    networks:
+      - rdvroum_network
+
+networks:
+  rdvroum_network:
+    external:
+      name: rdvroum_network
