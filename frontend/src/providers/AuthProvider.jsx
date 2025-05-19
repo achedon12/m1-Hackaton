@@ -1,24 +1,43 @@
-import { createContext, useState, useContext } from "react";
+import {createContext, useState, useContext, useEffect} from "react";
+import config from "./apiConfig.js";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    const login = async (credentials) => {
-        try {
-            const response = await fetch('/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(credentials),
-            });
-            if (response.ok) {
-                setIsAuthenticated(true);
-            } else {
-                console.log("Login failed");
-            }
-        } catch (error) {
-            console.error(error);
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token && token !== 'undefined') {
+            setIsAuthenticated(true);
+        }
+        setLoading(false);
+    }, []);
+
+    const register = async (firstname, lastname, email, password) => {
+        const response = await fetch(`${config.apiBaseUrl}/client/register`, {
+            method: 'POST',
+            headers: config.headers,
+            body: JSON.stringify({firstname, lastname, email, password})
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            handleStoreData(data);
+        }
+    }
+
+    const login = async (email, password) => {
+        const response = await fetch(`${config.apiBaseUrl}/client/login`, {
+            method: 'POST',
+            headers: config.headers,
+            body: JSON.stringify({email, password})
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            handleStoreData(data);
         }
     };
 
@@ -26,8 +45,13 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
     };
 
-    return (
-        <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    const handleStoreData = (data) => {
+        localStorage.setItem('token', data.token);
+        setIsAuthenticated(true);
+    }
+
+        return (
+        <AuthContext.Provider value={{ isAuthenticated, login, register, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

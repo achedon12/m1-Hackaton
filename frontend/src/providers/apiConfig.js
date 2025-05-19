@@ -1,5 +1,5 @@
 const config = {
-    apiBaseUrl: 'http://localhost:2501/api',
+    apiBaseUrl: 'http://localhost:1081/api',
     headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token') ?? ''}`
