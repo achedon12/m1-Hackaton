@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/api/vehicle', name: 'app_vehicle_')]
+#[Route('/api/vehicle', name: 'api_vehicle_')]
 final class VehicleController extends AbstractController
 {
     public function __construct(private readonly EntityManagerInterface $entityManager,
@@ -23,7 +23,7 @@ final class VehicleController extends AbstractController
     {
     }
 
-    #[Route('/{id}', name: 'home', methods: ['GET'])]
+    #[Route('/{id}', name: 'get', methods: ['GET'])]
     public function getVehicle(int $id): Response
     {
         $vehicle = $this->entityManager->getRepository(Vehicle::class)->find($id);
