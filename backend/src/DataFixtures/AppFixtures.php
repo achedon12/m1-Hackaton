@@ -2,11 +2,11 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\Brand;
 use App\Entity\Garage;
-use App\Entity\OperationCategory;
+use App\Entity\Model;
 use App\Entity\Operation;
-use DateTime;
-use DateTimeImmutable;
+use App\Entity\OperationCategory;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
@@ -24,6 +24,9 @@ class AppFixtures extends Fixture
 
         // load car operations fixtures
         $this->loadCarOperations($manager, $faker);
+
+        // load vehicle brand and models
+        $this->loadVehicleBrandAndModels($manager, $faker);
     }
 
     private function loadGarage(ObjectManager $manager, $faker): void
@@ -79,12 +82,36 @@ class AppFixtures extends Fixture
                 $operation->setCategory($category);
                 $operation->setHelp($data[2] === 'NULL' ? null : $data[2]);
                 $operation->setComment($data[3] === 'NULL' ? null : $data[3]);
-                $operation->setEstimatedDuration((new \DateTime())->setTime((int)$data[4], 0));                $operation->setPrice(round((float)$data[5], 2));
+                $operation->setEstimatedDuration((new \DateTime())->setTime((int)$data[4], 0));
+                $operation->setPrice(round((float)$data[5], 2));
                 $operation->setWorkerNeeded($faker->numberBetween(1, 2));
                 $operation->setCreationDate(new \DateTimeImmutable());
                 $manager->persist($operation);
             }
             fclose($file);
+        }
+
+        $manager->flush();
+    }
+
+    private function loadVehicleBrandAndModels(ObjectManager $manager, $faker): void
+    {
+        $data = json_decode(file_get_contents(__DIR__ . '/../../../frontend/src/assets/car-list.json'), true);
+
+        foreach ($data as $element) {
+            $brand = new Brand();
+            $brand->setName($element['brand']);
+            $brand->setCreationDate(new \DateTimeImmutable());
+
+            $manager->persist($brand);
+
+            foreach ($element['models'] as $m) {
+                $model = new Model();
+                $model->setName($m);
+                $model->setBrand($brand);
+                $model->setCreationDate(new \DateTimeImmutable());
+                $manager->persist($model);
+            }
         }
 
         $manager->flush();
