@@ -1,17 +1,17 @@
 import {forwardRef, useState, useEffect} from "react";
 
 const EditCar = forwardRef(({car, onSave}, ref) => {
-    const [mileage, setMileage] = useState("");
+    const [kms, setKms] = useState("");
 
     useEffect(() => {
         if (car) {
-            setMileage(car.mileage);
+            setKms(car.kms);
         }
     }, [car]);
 
     const handleSave = () => {
         if (onSave && car) {
-            onSave({...car, mileage});
+            onSave({...car, kms});
         }
         if (ref.current) {
             ref.current.close();
@@ -29,8 +29,8 @@ const EditCar = forwardRef(({car, onSave}, ref) => {
                         type="number"
                         className="input input-bordered w-full"
                         placeholder="Ex: 12000"
-                        value={mileage}
-                        onChange={(e) => setMileage(e.target.value)}
+                        value={kms}
+                        onChange={(e) => setKms(e.target.value)}
                     />
                 </fieldset>
 

@@ -19,6 +19,8 @@ const Layout = () => {
                 (position) => {
                     const {latitude, longitude} = position.coords;
                     setLocation({latitude, longitude});
+
+                    //TODO NEARBY
                 },
                 (error) => {
                     console.error("Erreur lors de la récupération de la localisation :", error);

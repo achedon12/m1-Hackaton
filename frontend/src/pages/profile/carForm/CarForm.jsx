@@ -1,51 +1,41 @@
-import {useState, useRef} from "react";
+import {useEffect, useState, useRef} from "react";
 import {Trash} from "lucide-react";
 import AddCar from "./AddCar.jsx";
 import EditCar from "./EditCar.jsx";
+import config from "../../../providers/apiConfig.js";
 
 const CarForm = () => {
+    const client = JSON.parse(localStorage.getItem('client'));
     const [activeCar, setActiveCar] = useState(null);
     const [addCarModal, setAddCarModal] = useState(false);
     const modalRef = useRef(null);
     const editModalRef = useRef(null);
-    const cars = [
-        {
-            brand: "Toyota",
-            model: "Corolla",
-            year: 2020,
-            color: "Red",
-            licensePlate: "ABC123",
-            mileage: 12000,
-            services: [
-                {date: "2023-01-15", description: "Vidange", cost: 100},
-                {date: "2023-03-10", description: "Changement de pneus", cost: 400},
-            ],
-        },
-        {
-            brand: "Honda",
-            model: "Civic",
-            year: 2019,
-            color: "Blue",
-            licensePlate: "XYZ456",
-            mileage: 15000,
-            services: [
-                {date: "2023-02-20", description: "Révision générale", cost: 200},
-            ],
-        },
-        {
-            brand: "Ford",
-            model: "Mustang",
-            year: 2021,
-            color: "Black",
-            licensePlate: "LMN789",
-            mileage: 8000,
-            services: [
-                {date: "2023-04-05", description: "Changement de freins", cost: 300},
-            ],
-        },
-    ];
-
     const [carToEdit, setCarToEdit] = useState(null);
+    const [vehicles, setVehicles] = useState([]);
+
+    useEffect(() => {
+        const fetchVehicles = async () => {
+            try {
+                const response = await fetch(`${config.apiBaseUrl}/vehicle/client/${client.id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                setVehicles(data);
+            } catch (error) {
+                console.error('Error fetching vehicles:', error);
+            }
+        };
+
+        fetchVehicles();
+    }, []);
+
 
     const handleAddCarClick = () => {
         setAddCarModal(true);
@@ -62,29 +52,70 @@ const CarForm = () => {
         }
     };
 
-    const handleSaveCar = (updatedCar) => {
-        // Logique pour sauvegarder les modifications
+    const handleCarDelete = async (carId) => {
+        try {
+            const response = await fetch(`${config.apiBaseUrl}/vehicle/delete/${carId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            setVehicles(vehicles.filter(car => car.id !== carId));
+        } catch (error) {
+            console.error('Error deleting vehicle:', error);
+        }
+    }
+
+    const handleSaveCar = async (updatedCar) => {
+        setVehicles(vehicles.map(car => (car.id === updatedCar.id ? updatedCar : car)));
+        setCarToEdit(null);
+        if (editModalRef.current) {
+            editModalRef.current.close();
+        }
+        try {
+            const response = await fetch(`${config.apiBaseUrl}/vehicle/update/${updatedCar.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    brand: updatedCar.brand.id,
+                    model: updatedCar.model.id,
+                    kms: updatedCar.kms,
+                    circulationDate: updatedCar.circulationDate,
+                    registrationNumber: updatedCar.registrationNumber,
+                    vin: updatedCar.vin,
+                })
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+        } catch (error) {
+            console.error('Error updating vehicle:', error);
+        }
     };
 
     return (
         <>
             <div className={"flex flex-col md:flex-row justify-between items-center w-full"}>
-
-                <ul className="list bg-base-100 rounded-box shadow-md w-full md:w-4/5 md:mr-6">
-                    {cars.map((car, index) => (
+                <ul className={`list bg-base-100 rounded-box shadow-md ${vehicles.length > 0 ? "w-full md:w-4/5 block" : "hidden"}`}>
+                    {vehicles.map((car, index) => (
                         <li key={index} onClick={() => setActiveCar(car)}
                             className="list-row flex justify-between items-center hover:bg-base-200 hover:cursor-pointer active:bg-base-200">
                             <div>
-                                <p className="font-bold">{car.brand} {car.model}</p>
-                                <p className="text-sm text-gray-500">Année : {car.year} | Plaque : {car.licensePlate}</p>
+                                <p className="font-bold">{car.brand.name} {car.model.name}</p>
+                                <p className="text-sm text-gray-500">{car.registrationNumber} - {car.kms} km</p>
                             </div>
                             <div className={"w-1/3 md:w-1/6 flex justify-between items-center"}>
                                 <button className="btn btn-secondary" onClick={() => handleEditCarClick(car)}>
                                     Modifier
                                 </button>
-                                <button className="btn btn-error" onClick={() => {
-                                    // Logic to delete the car
-                                }}>
+                                <button className="btn btn-error" onClick={() => handleCarDelete(car.id)}>
                                     <Trash className="w-4 h-4"/>
                                 </button>
                             </div>
@@ -92,7 +123,7 @@ const CarForm = () => {
                     ))}
                 </ul>
 
-                <div className="md:w-1/5 flex justify-center items-center">
+                <div className={`flex justify-center items-center ${vehicles.length > 0 ? "md:w-1/5" : ""}`}>
                     <button
                         className="btn btn-tertiary w-full text-secondary mt-4 md:mt-0 md:h-12"
                         onClick={handleAddCarClick}
@@ -102,37 +133,37 @@ const CarForm = () => {
                 </div>
             </div>
 
-            <div className="w-full mt-6 md:mt-0">
-                {activeCar && (
-                    <div className="my-10">
-                        <h3 className="text-lg font-bold mb-4">Mes prestations
-                            pour {activeCar.brand} {activeCar.model}</h3>
-                        <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
-                            <table className="table w-full">
-                                <thead className={"bg-base-200"}>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Coût (€)</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {activeCar.services.map((service, index) => (
-                                    <tr key={index}>
-                                        <td>{service.date}</td>
-                                        <td>{service.description}</td>
-                                        <td>{service.cost}</td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )}
-            </div>
+            {/*<div className="w-full mt-6 md:mt-0">*/}
+            {/*    {activeCar && (*/}
+            {/*        <div className="my-10">*/}
+            {/*            <h3 className="text-lg font-bold mb-4">Mes prestations*/}
+            {/*                pour {activeCar.brand} {activeCar.model}</h3>*/}
+            {/*            <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">*/}
+            {/*                <table className="table w-full">*/}
+            {/*                    <thead className={"bg-base-200"}>*/}
+            {/*                    <tr>*/}
+            {/*                        <th>Date</th>*/}
+            {/*                        <th>Description</th>*/}
+            {/*                        <th>Coût (€)</th>*/}
+            {/*                    </tr>*/}
+            {/*                    </thead>*/}
+            {/*                    <tbody>*/}
+            {/*                    {activeCar.services.map((service, index) => (*/}
+            {/*                        <tr key={index}>*/}
+            {/*                            <td>{service.date}</td>*/}
+            {/*                            <td>{service.description}</td>*/}
+            {/*                            <td>{service.cost}</td>*/}
+            {/*                        </tr>*/}
+            {/*                    ))}*/}
+            {/*                    </tbody>*/}
+            {/*                </table>*/}
+            {/*            </div>*/}
+            {/*        </div>*/}
+            {/*    )}*/}
+            {/*</div>*/}
 
             <AddCar ref={modalRef}/>
-            <EditCar ref={editModalRef} car={carToEdit} onSave={handleSaveCar} />
+            <EditCar ref={editModalRef} car={carToEdit} onSave={handleSaveCar}/>
         </>
     );
 };

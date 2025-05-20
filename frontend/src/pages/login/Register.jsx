@@ -68,7 +68,12 @@ const Register = () => {
         try {
             const registerForm = {...formData}
             await register(registerForm);
-            navigate("/");
+            if (localStorage.getItem("token")) {
+                navigate("/");
+            } else {
+               alert("Erreur lors de l'enregistrement");
+            }
+
         } catch (error) {
             console.error("Erreur lors de l'enregistrement :", error);
         }

@@ -29,6 +29,8 @@ security:
         - { path: ^/api/operations/list, roles: PUBLIC_ACCESS }
         - { path: ^/api/client/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/client/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/brand, roles: PUBLIC_ACCESS }
+        - { path: ^/api/model, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:

@@ -265,4 +265,18 @@ final class ClientController extends AbstractController
             ]
         );
     }
+
+    #[Route('/delete', name: 'delete', methods: ['DELETE'])]
+    public function delete(): Response
+    {
+        $client = $this->security->getUser();
+        if (!$client) {
+            return new JsonResponse(['error' => 'Client not found'], 404);
+        }
+
+        $this->entityManager->remove($client);
+        $this->entityManager->flush();
+
+        return new JsonResponse(['message' => 'Client deleted'], 200);
+    }
 }

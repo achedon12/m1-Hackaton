@@ -10,7 +10,12 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         await login(credentials.email, credentials.password);
-        navigate("/");
+        if (!localStorage.getItem("token")) {
+            alert("Identifiants invalides");
+            return;
+        } else {
+            navigate("/");
+        }
     };
 
     return (

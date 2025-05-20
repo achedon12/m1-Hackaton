@@ -10,7 +10,6 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/model', name: 'api_model_')]
 final class ModelController extends AbstractController
 {
-
     public function __construct(private readonly ModelRepository $modelRepository
     )
     {

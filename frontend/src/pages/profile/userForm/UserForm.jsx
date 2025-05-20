@@ -1,11 +1,13 @@
-import {useState} from "react";
+import {useRef, useState} from "react";
 import {Trash} from "lucide-react";
 import config from "../../../providers/apiConfig.js";
+import UserEdit from "./UserEdit.jsx";
+import {useNavigate} from "react-router-dom";
 
 const UserForm = () => {
     const client = JSON.parse(localStorage.getItem("client"));
+    const navigate = useNavigate();
     const [isEditingEmail, setIsEditingEmail] = useState(false);
-    const [isEditingBillingInformation, setIsEditingBillingInformation] = useState(false);
     const [formData, setFormData] = useState({
         email: client.email,
         firstname: client.firstname,
@@ -17,6 +19,7 @@ const UserForm = () => {
         societyName: client.societyName,
         birth: client.birth,
     });
+    const editModalRef = useRef(null);
 
     const handleUpdate = async (params) => {
         try {
@@ -31,6 +34,7 @@ const UserForm = () => {
                 localStorage.setItem("client", JSON.stringify(data.client));
                 alert("Utilisateur mis à jour avec succès !");
                 setIsEditingEmail(false);
+                navigate("/");
             } else {
                 const error = await response.json();
                 alert(`Erreur : ${error.error}`);
@@ -40,6 +44,27 @@ const UserForm = () => {
             alert("Une erreur est survenue.");
         }
     };
+
+    const handleDelete = async () => {
+        try {
+            const response = await fetch(`${config.apiBaseUrl}/client/delete`, {
+                method: "DELETE",
+                headers: config.headers,
+            });
+
+            if (response.ok) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("client");
+                alert("Compte supprimé avec succès !");
+            } else {
+                const error = await response.json();
+                alert(`Erreur : ${error.error}`);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la suppression du compte :", error);
+            alert("Une erreur est survenue.");
+        }
+    }
 
     return (
         <div className={"flex flex-col items-center justify-center w-full p-6 bg-base-200"}>
@@ -53,7 +78,7 @@ const UserForm = () => {
                             <input
                                 type="email"
                                 className="input flex-1"
-                                value={client.email}
+                                value={formData.email}
                                 onChange={(e) => setFormData({...formData, email: e.target.value})}
                             />
                             <button className="btn btn-primary ml-2" onClick={handleUpdate.bind(null, {email: formData.email})}>
@@ -92,7 +117,12 @@ const UserForm = () => {
                     {client.zipcode}, {client.city}
                 </p>
                 <p>{client.phone}</p>
-                <button className="btn btn-secondary mt-4">Modifier</button>
+                <button
+                    className="btn btn-secondary mt-4"
+                    onClick={() => editModalRef.current.showModal()}
+                >
+                    Modifier
+                </button>
             </fieldset>
 
             <fieldset className="fieldset bg-white border-base-300 rounded-box w-full border p-4">
@@ -105,6 +135,13 @@ const UserForm = () => {
                     </button>
                 </div>
             </fieldset>
+
+            <UserEdit
+                ref={editModalRef}
+                user={formData}
+                setUser={setFormData}
+                onSave={handleUpdate}
+            />
         </div>
     );
 };
