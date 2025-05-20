@@ -5,6 +5,7 @@ import config from "../../../providers/apiConfig.js";
 const UserForm = () => {
     const client = JSON.parse(localStorage.getItem("client"));
     const [isEditingEmail, setIsEditingEmail] = useState(false);
+    const [isEditingBillingInformation, setIsEditingBillingInformation] = useState(false);
     const [formData, setFormData] = useState({
         email: client.email,
         firstname: client.firstname,
@@ -28,14 +29,14 @@ const UserForm = () => {
             if (response.ok) {
                 const data = await response.json();
                 localStorage.setItem("client", JSON.stringify(data.client));
-                alert("Adresse e-mail mise à jour avec succès !");
+                alert("Utilisateur mis à jour avec succès !");
                 setIsEditingEmail(false);
             } else {
                 const error = await response.json();
                 alert(`Erreur : ${error.error}`);
             }
         } catch (error) {
-            console.error("Erreur lors de la mise à jour de l'e-mail :", error);
+            console.error("Erreur lors de la mise à jour de l'utilisateur :", error);
             alert("Une erreur est survenue.");
         }
     };
@@ -52,16 +53,16 @@ const UserForm = () => {
                             <input
                                 type="email"
                                 className="input flex-1"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                value={client.email}
+                                onChange={(e) => setFormData({...formData, email: e.target.value})}
                             />
-                            <button className="btn btn-primary ml-2" onClick={handleUpdate}>
+                            <button className="btn btn-primary ml-2" onClick={handleUpdate.bind(null, {email: formData.email})}>
                                 Enregistrer
                             </button>
                             <button
                                 className="btn btn-secondary ml-2"
                                 onClick={() => {
-                                    setEmail(client.email);
+                                    setFormData({...formData, email: client.email});
                                     setIsEditingEmail(false);
                                 }}
                             >

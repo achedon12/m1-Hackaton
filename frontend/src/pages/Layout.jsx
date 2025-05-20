@@ -65,7 +65,7 @@ const Layout = () => {
                         <div className={`dropdown dropdown-end ${isAuthenticated ? '' : 'hidden'}`}>
                             <div tabIndex="0" role="button">
                                 <div tabIndex="0" role="button" className="btn btn-ghost btn-circle avatar">
-                                    {client.avatar ? (
+                                    {client?.avatar ? (
                                         <img src={client.avatar} alt="Avatar" className="w-10 rounded-full"/>
                                     ) : (
                                         <User className={`text-white`}/>
