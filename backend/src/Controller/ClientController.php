@@ -12,21 +12,23 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 
+#[Route('/api/client', name: 'api_client_')]
 final class ClientController extends AbstractController
 {
-    public function __construct(private readonly EntityManagerInterface $entityManager,
-                                private readonly Security $security,
+    public function __construct(private readonly EntityManagerInterface      $entityManager,
+                                private readonly Security                    $security,
                                 private readonly UserPasswordHasherInterface $userPasswordHasher,
-                                private readonly EventDispatcherInterface $eventDispatcher,
-                                private readonly TranslatorInterface $translator,
-                                private readonly SluggerInterface $slugger,
-                                private readonly ClientRepository $clientRepository
+                                private readonly EventDispatcherInterface    $eventDispatcher,
+                                private readonly TranslatorInterface         $translator,
+                                private readonly SluggerInterface            $slugger,
+                                private readonly ClientRepository            $clientRepository
     )
     {
     }
@@ -34,10 +36,11 @@ final class ClientController extends AbstractController
     /**
      * @throws RandomException
      */
-    #[Route('/api/client/register', name: 'client_register', methods: ['POST'])]
+    #[Route('/register', name: 'register', methods: ['POST'])]
     public function register(
         Request $request,
-    ): JsonResponse {
+    ): JsonResponse
+    {
         $data = json_decode($request->getContent(), true);
         if (!isset($data['email']) || !isset($data['password']) || !isset($data['phone']) || !isset($data['city']) || !isset($data['zipcode'])) {
             return new JsonResponse(['error' => 'Champs requis : email, mot de passe, numéro de téléphone, ville, zipcode'], 400);
@@ -99,5 +102,79 @@ final class ClientController extends AbstractController
         $this->eventDispatcher->dispatch($event, ClientCreatedEvent::NAME);
 
         return new JsonResponse(['message' => 'Client registered'], 201);
+    }
+
+    #[Route('/update', name: 'update', methods: ['PUT'])]
+    public function update(Request $request): Response
+    {
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
+
+        $client = $this->security->getUser();
+
+        if (isset($data['firstname'])) {
+            $client->setFirstname($data['firstname']);
+        }
+        if (isset($data['lastname'])) {
+            $client->setLastname($data['lastname']);
+        }
+        if (isset($data['phone'])) {
+            $client->setPhone($data['phone']);
+        }
+        if (isset($data['city'])) {
+            $client->setCity($data['city']);
+        }
+        if (isset($data['zipcode'])) {
+            $client->setZipcode($data['zipcode']);
+        }
+        if (isset($data['gender'])) {
+            $client->setGender($data['gender']);
+        }
+        if (isset($data['societyName'])) {
+            $client->setSocietyName($data['societyName']);
+        }
+        if (isset($data['birth'])) {
+            try {
+                $newDate = \DateTime::createFromFormat('Y-m-d', $data['birth']);
+                $client->setBirth($newDate);
+            } catch (\Exception $e) {
+                return new JsonResponse(['error' => 'Invalid date format for birth (expected Y-m-d)'], 400);
+            }
+        }
+        if (isset($data['password'])) {
+            if (strlen($data['password']) < 8) {
+                return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins 8 caractères'], 400);
+            }
+            if (!preg_match('/[A-Z]/', $data['password'])) {
+                return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins une majuscule'], 400);
+            }
+            if (!preg_match('/[0-9]/', $data['password'])) {
+                return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins un chiffre'], 400);
+            }
+            if (!preg_match('/[\W_]/', $data['password'])) {
+                return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins un caractère spéciale'], 400);
+            }
+            $client->setPassword(
+                $this->userPasswordHasher->hashPassword($client, $data['password'])
+            );
+        }
+        if (isset($data['email'])) {
+            if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                return new JsonResponse(['error' => 'Email invalide'], 400);
+            }
+            $existingClient = $this->clientRepository->findOneBy(['email' => $data['email']]);
+            if ($existingClient && $existingClient->getId() !== $client->getId()) {
+                return new JsonResponse(['error' => 'Cette email est déjà utilisé'], 409);
+            }
+            $client->setEmail($data['email']);
+        }
+
+        $this->entityManager->flush();
+
+        return $this->json(
+            [
+                'message' => 'Client updated',
+                'client' => $client
+            ]
+        );
     }
 }
