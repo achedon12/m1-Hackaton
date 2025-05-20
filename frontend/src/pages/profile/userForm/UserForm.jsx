@@ -17,12 +17,12 @@ const UserForm = () => {
         birth: client.birth,
     });
 
-    const handleUpdate = async () => {
+    const handleUpdate = async (params) => {
         try {
             const response = await fetch(`${config.apiBaseUrl}/client/update`, {
                 method: "PUT",
                 headers: config.headers,
-                body: JSON.stringify({email}),
+                body: JSON.stringify(params),
             });
 
             if (response.ok) {
@@ -70,7 +70,7 @@ const UserForm = () => {
                         </>
                     ) : (
                         <>
-                            <input type="email" className="input flex-1" value={email} disabled/>
+                            <input type="email" className="input flex-1" value={client.email} disabled/>
                             <button
                                 className="btn btn-secondary ml-2"
                                 onClick={() => setIsEditingEmail(true)}
