@@ -21,6 +21,14 @@ class OperationController extends AbstractController
         private VehicleRepository $vehicleRepository,
     ) {}
 
+    #[Route('/list', name: 'list', methods: ['GET'])]
+    public function list(): Response
+    {
+        $operations = $this->operationRepository->findAll();
+
+        return $this->json(['operations' => $operations], Response::HTTP_OK);
+    }
+
     #[Route('/create', name: 'create', methods: ['POST'])]
     public function create(Request $request): Response
     {
@@ -125,13 +133,7 @@ class OperationController extends AbstractController
         }
     }
 
-    #[Route('/list', name: 'list', methods: ['GET'])]
-    public function list(): Response
-    {
-        $operations = $this->operationRepository->findAll();
 
-        return $this->json($operations, Response::HTTP_OK, [], ['groups' => 'operation:read']);
-    }
 
     // find all operation by category
     #[Route('/category/{id}', name: 'category', methods: ['GET'])]
