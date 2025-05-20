@@ -16,6 +16,19 @@ class OperationRepository extends ServiceEntityRepository
         parent::__construct($registry, Operation::class);
     }
 
+    public function findMostPopularOperations(): array
+    {
+        return $this->getEntityManager()->createQueryBuilder()
+            ->select('o, COUNT(mo.id) AS operationCount')
+            ->from(Operation::class, 'o')
+            ->leftJoin('App\Entity\MeetingOperation', 'mo', 'WITH', 'mo.operation = o')
+            ->groupBy('o.id')
+            ->orderBy('operationCount', 'DESC')
+            ->setMaxResults(5)
+            ->getQuery()
+            ->getResult();
+    }
+
     //    /**
     //     * @return Operation[] Returns an array of Operation objects
     //     */

@@ -27,6 +27,18 @@ class OperationController extends AbstractController
         return $this->json(['operations' => $operations], Response::HTTP_OK);
     }
 
+    #[Route('/popular', name: 'popular', methods: ['GET'])]
+    public function getMostPopularOperations(): Response
+    {
+        $operations = $this->operationRepository->findMostPopularOperations();
+
+        $operations = array_map(function ($operation) {
+            return $operation[0];
+        }, $operations);
+
+        return $this->json($operations, Response::HTTP_OK);
+    }
+
 
     #[Route('/create', name: 'create', methods: ['POST'])]
     public function create(Request $request): Response
