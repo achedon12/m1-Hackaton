@@ -4,12 +4,14 @@ import {ShoppingCart, User, MapPin} from "lucide-react";
 import {useAuth} from "../providers/AuthProvider.jsx";
 
 const Layout = () => {
-    const {isAuthenticated} = useAuth();
+    const {isAuthenticated, logout} = useAuth();
     const [location, setLocation] = useState(null);
-    const user = {
-        name: "John Doe",
-        avatar: "https://www.w3schools.com/howto/img_avatar.png",
-    };
+    const client = JSON.parse(localStorage.getItem("client"));
+
+    const navItems = [
+        {name: "Prestations", path: "/catalog"},
+        {name: "Prendre rendez-vous", path: "/rdv"},
+    ];
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -29,11 +31,11 @@ const Layout = () => {
 
     return (
         <>
-            <nav className="navbar shadow-sm md:px-20 lg:px-60 bg-primary">
+            <header className="navbar shadow-sm md:px-20 lg:px-60 bg-secondary">
                 <div className={"flex-1"}>
                     <NavLink to="/" className="btn btn-ghost text-xl text-white">
-                        <img src={"logo.svg"} alt={"logo"} className={"w-8 h-8 mr-2 fill-white"} />
-                        <h1 className={"text-2xl font-bold text-white"}>
+                        <img src={"logo-white.png"} alt={"logo"} className={"h-8 mr-2 fill-white"} />
+                        <h1 className={"text-xl md:text-2xl text-white"}>
                             RD-Vroum
                         </h1>
                     </NavLink>
@@ -63,16 +65,35 @@ const Layout = () => {
                         <div className={`dropdown dropdown-end ${isAuthenticated ? '' : 'hidden'}`}>
                             <div tabIndex="0" role="button">
                                 <div tabIndex="0" role="button" className="btn btn-ghost btn-circle avatar">
-                                    {user.avatar ? (
-                                        <img src={user.avatar} alt="Avatar" className="w-10 rounded-full"/>
+                                    {client.avatar ? (
+                                        <img src={client.avatar} alt="Avatar" className="w-10 rounded-full"/>
                                     ) : (
                                         <User className={`text-white`}/>
                                     )}
                                 </div>
                             </div>
+                            <ul tabIndex="0" className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+                                <li>
+                                    <NavLink to="/profile">Modifier son profil</NavLink>
+                                </li>
+                                <li>
+                                    <button onClick={logout}>Se déconnecter</button>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
+            </header>
+            <nav className="bg-tertiary w-full h-12 flex items-center justify-center px-8">
+                <ul className="flex space-x-8">
+                    {navItems.map((item) => (
+                        <li key={item.name} className="text-sm md:text-base hover:text-primary">
+                            <NavLink to={item.path} className={({isActive}) => (isActive ? 'text-primary' : 'text-quaternary')}>
+                                {item.name}
+                            </NavLink>
+                        </li>
+                    ))}
+                </ul>
             </nav>
 
             <Outlet/>

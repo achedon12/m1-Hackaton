@@ -25,6 +25,7 @@ security:
             logout: ~
 
     access_control:
+        - { path: ^/api/operations/popular, roles: PUBLIC_ACCESS }
         - { path: ^/api/operations/list, roles: PUBLIC_ACCESS }
         - { path: ^/api/client/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/client/login, roles: PUBLIC_ACCESS }

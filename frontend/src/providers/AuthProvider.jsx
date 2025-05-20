@@ -3,7 +3,7 @@ import config from "./apiConfig.js";
 
 export const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({children}) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -31,7 +31,9 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         const response = await fetch(`${config.apiBaseUrl}/client/login`, {
             method: 'POST',
-            headers: config.headers,
+            headers: {
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify({email, password})
         });
 
@@ -43,15 +45,18 @@ export const AuthProvider = ({ children }) => {
 
     const logout = () => {
         setIsAuthenticated(false);
+        localStorage.removeItem('token');
+        localStorage.removeItem('client');
     };
 
     const handleStoreData = (data) => {
         localStorage.setItem('token', data.token);
+        localStorage.setItem('client', JSON.stringify(data.client));
         setIsAuthenticated(true);
     }
 
-        return (
-        <AuthContext.Provider value={{ isAuthenticated, login, register, logout, loading }}>
+    return (
+        <AuthContext.Provider value={{isAuthenticated, login, register, logout, loading}}>
             {children}
         </AuthContext.Provider>
     );

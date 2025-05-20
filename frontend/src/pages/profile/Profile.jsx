@@ -1,4 +1,4 @@
-import {User, Car, History} from "lucide-react";
+import {User, Car} from "lucide-react";
 import {useState} from "react";
 import UserForm from "./userForm/UserForm.jsx";
 import CarForm from "./carForm/CarForm.jsx";
@@ -8,7 +8,6 @@ const Profile = () => {
 
     return (
         <>
-
             <div className="flex justify-center p-2 mt-4">
                 <button
                     className={`btn btn-ghost ${activeTab === "person" ? "bg-secondary" : "text-secondary"}`}
@@ -25,12 +24,11 @@ const Profile = () => {
             </div>
 
 
-            <div className="p-6 md:px-60">
-                <div className={'w-full mb-6 bg-tertiary'}>
+            <div className="p-6 md:px-60 bg-slate-100">
+                <div className={'w-full mb-2 bg-tertiary'}>
                     <h1 className={"text-xl"}>
                         {activeTab === "person" && "Mes informations personnelles"}
                         {activeTab === "car" && "Mes véhicules"}
-                        {activeTab === "history" && "Historique"}
                     </h1>
                     <hr className={'border-2 border-secondary w-20 mt-4'}/>
                 </div>
@@ -39,12 +37,6 @@ const Profile = () => {
                 )}
                 {activeTab === "car" && (
                     <CarForm/>
-                )}
-                {activeTab === "history" && (
-                    <div>
-                        <h1 className="text-xl">Historique</h1>
-                        <p>Contenu lié à l'historique...</p>
-                    </div>
                 )}
             </div>
         </>
