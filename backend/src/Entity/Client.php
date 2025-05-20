@@ -43,6 +43,9 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $zipcode = null;
 
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $address = null;
+
     #[ORM\Column(length: 255)]
     private ?string $city = null;
 
@@ -63,6 +66,12 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: Types::FLOAT, nullable: true)]
     private ?float $latitude = null;
+
+    #[ORM\Column(type: Types::STRING, nullable: true)]
+    private ?string $hash = null;
+
+    #[ORM\Column(type: Types::STRING, nullable: true)]
+    private ?string $avatar = null;
 
     public function getId(): ?int
     {
@@ -231,6 +240,42 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
     public function setLatitude(?float $latitude = null): static
     {
         $this->latitude = $latitude;
+
+        return $this;
+    }
+
+    public function getAddress(): ?string
+    {
+        return $this->address;
+    }
+
+    public function setAddress(?string $address = null): static
+    {
+        $this->address = $address;
+
+        return $this;
+    }
+
+    public function getHash(): ?string
+    {
+        return $this->hash ?? hash('sha256', $this->getFirstname() . $this->getLastname() . $this->getEmail() . $this->getPhone());
+    }
+
+    public function setHash(?string $hash = null): static
+    {
+        $this->hash = $hash;
+
+        return $this;
+    }
+
+    public function getAvatar(): ?string
+    {
+        return $this->avatar;
+    }
+
+    public function setAvatar(?string $avatar = null): static
+    {
+        $this->avatar = $avatar;
 
         return $this;
     }
