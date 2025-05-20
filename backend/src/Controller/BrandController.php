@@ -15,6 +15,14 @@ final class BrandController extends AbstractController
     {
     }
 
+    #[Route('/list', name: 'get', methods: ['GET'])]
+    public function getBrands(): Response
+    {
+        $brands = $this->brandRepository->findAll();
+
+        return $this->json($brands, Response::HTTP_OK);
+    }
+
     #[Route('/{id}', name: 'get', methods: ['GET'])]
     public function getBrand(int $id): Response
     {
@@ -25,14 +33,6 @@ final class BrandController extends AbstractController
         }
 
         return $this->json($brand, Response::HTTP_OK);
-    }
-
-    #[Route('/list', name: 'get', methods: ['GET'])]
-    public function getBrands(): Response
-    {
-        $brands = $this->brandRepository->findAll();
-
-        return $this->json($brands, Response::HTTP_OK);
     }
 
 }

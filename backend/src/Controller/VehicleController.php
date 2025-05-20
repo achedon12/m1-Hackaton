@@ -23,22 +23,6 @@ final class VehicleController extends AbstractController
     {
     }
 
-    #[Route('/{id}', name: 'get', methods: ['GET'])]
-    public function getVehicle(int $id): Response
-    {
-        $vehicle = $this->entityManager->getRepository(Vehicle::class)->find($id);
-
-        if (!$vehicle) {
-            return $this->json(['error' => 'Vehicle not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        if (!$vehicle->getClient()->getId() !== $this->security->getUser()->getId()) {
-            return $this->json(['error' => 'You are not authorized to update this vehicle'], Response::HTTP_FORBIDDEN);
-        }
-
-        return $this->json($vehicle, Response::HTTP_OK);
-    }
-
     #[Route('/delete/{id}', name: 'delete', methods: ['DELETE'])]
     public function deleteVehicle(int $id): Response
     {
@@ -156,5 +140,21 @@ final class VehicleController extends AbstractController
         $this->entityManager->flush();
 
         return $this->json(['message' => 'Vehicle created successfully'], Response::HTTP_CREATED);
+    }
+
+    #[Route('/{id}', name: 'get', methods: ['GET'])]
+    public function getVehicle(int $id): Response
+    {
+        $vehicle = $this->entityManager->getRepository(Vehicle::class)->find($id);
+
+        if (!$vehicle) {
+            return $this->json(['error' => 'Vehicle not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if (!$vehicle->getClient()->getId() !== $this->security->getUser()->getId()) {
+            return $this->json(['error' => 'You are not authorized to update this vehicle'], Response::HTTP_FORBIDDEN);
+        }
+
+        return $this->json($vehicle, Response::HTTP_OK);
     }
 }

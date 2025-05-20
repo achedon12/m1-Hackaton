@@ -46,6 +46,8 @@ class Garage
     #[ORM\Column(length: 255)]
     private ?string $latitude = null;
 
+    public ?string $distance = null;
+
     public function getId(): ?int
     {
         return $this->id;
