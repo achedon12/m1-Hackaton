@@ -15,11 +15,11 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const register = async (firstname, lastname, email, password) => {
+    const register = async (registerForm) => {
         const response = await fetch(`${config.apiBaseUrl}/client/register`, {
             method: 'POST',
             headers: config.headers,
-            body: JSON.stringify({firstname, lastname, email, password})
+            body: JSON.stringify(registerForm)
         });
 
         if (response.ok) {

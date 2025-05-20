@@ -29,7 +29,7 @@ const Layout = () => {
 
     return (
         <>
-            <nav className="navbar bg-base-100 shadow-sm md:px-20 lg:px-60 bg-primary">
+            <nav className="navbar shadow-sm md:px-20 lg:px-60 bg-primary">
                 <div className={"flex-1"}>
                     <NavLink to="/" className="btn btn-ghost text-xl text-white">
                         <img src={"logo.svg"} alt={"logo"} className={"w-8 h-8 mr-2 fill-white"} />
