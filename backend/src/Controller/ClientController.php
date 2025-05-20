@@ -35,6 +35,46 @@ final class ClientController extends AbstractController
     {
     }
 
+    #[Route('/login', name: 'login', methods: ['POST'])]
+    public function login(Request $request, JWTTokenManagerInterface $jwtManager): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!isset($data['email']) || !isset($data['password'])) {
+            return new JsonResponse(['error' => 'Champs requis : email, mot de passe'], 400);
+        }
+
+        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            return new JsonResponse(['error' => 'Email invalide'], 400);
+        }
+
+        $client = $this->clientRepository->findOneBy(['email' => $data['email']]);
+        if (!$client) {
+            return new JsonResponse(['error' => 'Client not found'], 404);
+        }
+
+        if (!$this->userPasswordHasher->isPasswordValid($client, $data['password'])) {
+            return new JsonResponse(['error' => 'Invalid password'], 401);
+        }
+
+        $token = $jwtManager->create($client);
+
+        return new JsonResponse([
+            'token' => $token,
+            'client' => [
+                'id' => $client->getId(),
+                'email' => $client->getEmail(),
+                'firstname' => $client->getFirstname(),
+                'lastname' => $client->getLastname(),
+                'phone' => $client->getPhone(),
+                'city' => $client->getCity(),
+                'gender' => $client->getGender(),
+                'zipcode' => $client->getZipcode(),
+                'societyName' => $client->getSocietyName(),
+                'birth' => $client->getBirth(),
+            ],
+        ], 200);
+    }
+
     /**
      * @throws RandomException
      */
@@ -111,7 +151,18 @@ final class ClientController extends AbstractController
 
         return new JsonResponse([
             'token' => $token,
-            'message' => 'Client registered successfully',
+            'client' => [
+                'id' => $client->getId(),
+                'email' => $client->getEmail(),
+                'firstname' => $client->getFirstname(),
+                'lastname' => $client->getLastname(),
+                'phone' => $client->getPhone(),
+                'city' => $client->getCity(),
+                'gender' => $client->getGender(),
+                'zipcode' => $client->getZipcode(),
+                'societyName' => $client->getSocietyName(),
+                'birth' => $client->getBirth(),
+            ],
         ], 201);
     }
 
