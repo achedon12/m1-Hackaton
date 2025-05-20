@@ -51,18 +51,35 @@ final class VehicleController extends AbstractController
             return $this->json(['error' => 'Vehicle not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if (!$vehicle->getClient()->getId() !== $this->security->getUser()->getId()) {
+        if ($vehicle->getClient()->getId() !== $this->security->getUser()->getId()) {
             return $this->json(['error' => 'You are not authorized to update this vehicle'], Response::HTTP_FORBIDDEN);
         }
 
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
 
-        if (isset($data['model'])) {
-            $vehicle->setModel($this->modelRepository->find($data['model']));
-        }
         if (isset($data['brand'])) {
-            $vehicle->setBrand($this->brandRepository->find($data['brand']));
+            $brand = $this->brandRepository->find($data['brand']);
+            if (!$brand) {
+                return $this->json(['error' => 'Brand not found'], Response::HTTP_BAD_REQUEST);
+            }
+            $vehicle->setBrand($brand);
+        } else {
+            $brand = $vehicle->getBrand();
         }
+
+        if (isset($data['model'])) {
+            $model = $this->modelRepository->find($data['model']);
+            if (!$model) {
+                return $this->json(['error' => 'Model not found'], Response::HTTP_BAD_REQUEST);
+            }
+
+            if ($model->getBrand()->getId() !== $brand->getId()) {
+                return $this->json(['error' => 'This model does not belong to the specified brand'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $vehicle->setModel($model);
+        }
+
         if (isset($data['circulationDate'])) {
             $vehicle->setCirculationDate(new \DateTime($data['circulationDate']));
         }
@@ -119,6 +136,11 @@ final class VehicleController extends AbstractController
             return $this->json(['error' => 'Model not found'], Response::HTTP_BAD_REQUEST);
         }
 
+        // Vérification de la cohérence entre le modèle et la marque
+        if ($model->getBrand()->getId() !== $brand->getId() ) {
+            return $this->json(['error' => 'This model does not belong to the specified brand'], Response::HTTP_BAD_REQUEST);
+        }
+
         $vehicle = $this->entityManager->getRepository(Vehicle::class)->findOneBy(['vin' => $data['vin']]);
 
         if ($vehicle) {
@@ -140,6 +162,18 @@ final class VehicleController extends AbstractController
         $this->entityManager->flush();
 
         return $this->json(['message' => 'Vehicle created successfully'], Response::HTTP_CREATED);
+    }
+
+    #[Route('/client/{id}', name: 'get_by_client', methods: ['GET'])]
+    public function getByClient(int $id): Response
+    {
+        $vehicles = $this->entityManager->getRepository(Vehicle::class)->findBy(['client' => $id]);
+
+        if (!$vehicles) {
+            return $this->json(['error' => 'No vehicles found for this client'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json($vehicles, Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get', methods: ['GET'])]
