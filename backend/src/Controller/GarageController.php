@@ -36,7 +36,7 @@ final class GarageController extends AbstractController
         return $this->json($garage, Response::HTTP_OK);
     }
 
-    #[Route('/nearby', name: 'nerby', methods: ['POST'])]
+    #[Route('/nearby', name: 'nearby', methods: ['POST'])]
     public function nearby(Request $request): Response
     {
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
@@ -61,11 +61,12 @@ final class GarageController extends AbstractController
 
         if (empty($garages)) {
             return $this->json(['error' => 'No garages found nearby'], Response::HTTP_NOT_FOUND);
-        } else {
-            $garages = array_map(function ($garage) {
-                return $garage[0];
-            }, $garages);
         }
+
+        $garages = array_map(function ($garage) {
+            $garage[0]->distance = round($garage['distance'], 2);
+            return $garage[0];
+        }, $garages);
 
         return $this->json($garages, Response::HTTP_OK);
     }
