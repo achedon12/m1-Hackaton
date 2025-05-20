@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\Operation;
 use App\Entity\OperationCategory;
 use App\Repository\OperationRepository;
-use App\Repository\VehicleRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,7 +17,6 @@ class OperationController extends AbstractController
     public function __construct(
         private EntityManagerInterface $entityManager,
         private OperationRepository $operationRepository,
-        private VehicleRepository $vehicleRepository,
     ) {}
 
     #[Route('/list', name: 'list', methods: ['GET'])]
@@ -28,6 +26,7 @@ class OperationController extends AbstractController
 
         return $this->json(['operations' => $operations], Response::HTTP_OK);
     }
+
 
     #[Route('/create', name: 'create', methods: ['POST'])]
     public function create(Request $request): Response
@@ -133,9 +132,6 @@ class OperationController extends AbstractController
         }
     }
 
-
-
-    // find all operation by category
     #[Route('/category/{id}', name: 'category', methods: ['GET'])]
     public function findByCategory(int $id): Response
     {
@@ -147,6 +143,6 @@ class OperationController extends AbstractController
 
         $operations = $this->operationRepository->findBy(['category' => $category]);
 
-        return $this->json($operations, Response::HTTP_OK, [], ['groups' => 'operation:read']);
+        return $this->json($operations, Response::HTTP_OK);
     }
 }
