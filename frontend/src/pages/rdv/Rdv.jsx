@@ -1,8 +1,8 @@
 import React from 'react';
-import {Checkbox, FormControlLabel, FormGroup, Select, TextField, FormControl, InputLabel, MenuItem, Typography, Button, StepLabel, Box, Stepper, Step} from "@mui/material";
-import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
+import {Checkbox, FormControlLabel, FormGroup, Select, FormControl, InputLabel, MenuItem, Typography, Button, StepLabel, Box, Stepper, Step} from "@mui/material";
+import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import frLocale from "date-fns/locale/fr"; // Pour affichage en français
+import frLocale from "date-fns/locale/fr"; // French displaying
 
 
 const steps = ['Identifiez votre véhicule', 'Choix de l\'atelier', 'Votre panier', 'Votre rendez-vous', 'Récapitulatif']
@@ -16,6 +16,7 @@ const Rdv = () => {
     const [formData, setFormData] = React.useState({
         vehiclePlate: '',
         place:'',
+        category: [],
         cart:[],
         meetingTime: null,
     });
@@ -24,9 +25,112 @@ const Rdv = () => {
     const [errors, setErrors] = React.useState({
         vehiclePlate: '',
         place:'',
+        category: [],
         cart:'',
         meetingTime: '',
     });
+
+    const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NDc3NDgzNTksImV4cCI6MTc0Nzc1MTk1OSwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoiamVhbi5kdXBvbnQ2QGV4YW1wbGUuY29tIn0.G6oIU9MgreUWUyD38YTZW7vhtis3xWC-ndgDATB4XKH4MmaktYhvDCVz9vfh6z3mBBlggLnilt86M1geXuYCJddLrpTmCenRNJ8VHYm7uPf827YNJxPOjQgSYMe0nYfyVqs8ySz-j3Lih8slHRonk4wXCEv6LTyqhxiCfkUno3cdeXmRfQHtycQpQL3NS2-Hnfb74DRgQ44q5l0VARNQkDcYCDVD2q6lrLxcUJ0C-OfIR-kQy1V4rLk1p0uN937RO057wXNPTSdK5ybA1_GD2bgDnkhztaaKq4ll9bLVFe0BKZhlJZse6KhKVIVSWqJezxpGP0vdU2aKNH6MDkThhQ"
+    const [clientVehicles, setClientVehicles] = React.useState([]);
+    const [vehicleLoadError, setVehicleLoadError] = React.useState(null);
+
+    const [nearByGarages, setNearByGarages] = React.useState([]);
+    const [nearByGaragesError, setNearByGaragesError] = React.useState(null);
+
+    const [categories, setCategories] = React.useState([]);
+    const [categoriesError, setCategoriesError] = React.useState(null);
+
+    const [operations, setOperations] = React.useState([]);
+
+    React.useEffect(() => {
+
+        //  Fetching vehicle(s) based on clientId
+        const fetchVehicles = async () => {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/api/vehicle/client/3", // TODO : CHANGE IP
+                    {
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Accept": "application/json"
+                        }
+                    });
+
+                if (!response.ok) {
+                    throw new Error(`Erreur ${response.status}`);
+                }
+
+                const data = await response.json();
+                setClientVehicles(data);
+
+            } catch (error) {
+                setVehicleLoadError(error);
+                console.error("Erreur lors de la récupération des véhicules :", error);
+            }
+        };
+
+        const fetchGarages = async () => {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/api/garage/nearby", // TODO : CHANGE IP + USE DYNAMIC COORDS
+                    {
+                        method: 'POST',
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Accept": "application/json",
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(
+                            {
+                                "longitude": 45.74,
+                                "latitude": 4.87,
+                                "radius": -1
+                            }
+                        )
+                    });
+
+                if (!response.ok) {
+                    throw new Error(`Erreur ${response.status}`);
+                }
+
+                const data = await response.json();
+                setNearByGarages(data);
+
+            } catch (error) {
+                setNearByGaragesError(error);
+                console.error("Erreur lors de la récupération des garages proches :", error);
+            }
+
+        }
+
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/api/operations/category/list", // TODO : CHANGE IP
+                    {
+                        method: 'GET',
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Accept": "application/json",
+                        }
+                    });
+
+                if (!response.ok) {
+                    throw new Error(`Erreur ${response.status}`);
+                }
+
+                const data = await response.json();
+                setCategories(data);
+
+            } catch (error) {
+                setCategoriesError(error);
+                console.error("Erreur lors de la récupération des opérations :", error);
+            }
+        }
+
+        fetchVehicles();
+        fetchGarages();
+        fetchCategories();
+
+    }, []);
+
 
 
     // Update form value based on field
@@ -34,117 +138,223 @@ const Rdv = () => {
         setFormData({ ...formData, [field]: event.target.value });
     };
 
-    // Handle updates on chosen options
-    const handleCheckboxChange = (value) => () => {
-        setFormData((prev) => {
-            const current = prev.cart;
-            const newCart = current.includes(value)
-                ? current.filter((item) => item !== value)
-                : [...current, value];
-            return { ...prev, cart: newCart };
-        });
-    };
-
-
     // Fetch content based on which step is active
     const getStepContent = (step) => {
         switch (step){
             case 0:
-                // TODO : Check if vehicle plate exists in bdd
                 return (
                     <FormControl fullWidth>
-                        <TextField
-                            id="plate"
-                            label="Immatriculation de votre véhicule"
+                        <InputLabel id="vehicle-select-label">Choisissez un véhicule</InputLabel>
+                        <Select
+                            labelId="vehicle-select-label"
+                            id="vehicle-select"
                             value={formData.vehiclePlate}
                             onChange={handleChange('vehiclePlate')}
                             error={!!errors.vehiclePlate}
-                            helperText={errors.vehiclePlate}
-                        />
+                        >
+                            {clientVehicles.map((vehicle) => (
+                                <MenuItem key={vehicle.id} value={vehicle.registrationNumber}>
+                                    {vehicle.registrationNumber} – {vehicle.brand.name} {vehicle.model.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                        {errors.vehiclePlate && (
+                            <Typography variant="caption" color="error">{errors.vehiclePlate}</Typography>
+                        )}
+                        {vehicleLoadError && (
+                            <Typography variant="caption" color="error">{vehicleLoadError}</Typography>
+                        )}
                     </FormControl>
                 );
             case 1:
-                // TODO : Load list of possible places based on proximity
                 return (
                     <FormControl fullWidth>
                         <InputLabel id="place-label">Choisissez un atelier</InputLabel>
                         <Select
-                            labelId="place-label"
+                            labelId="place-select-label"
                             id="place-select"
-                            fullWidth
                             value={formData.place}
-                            label="Choisissez un atelier"
                             onChange={handleChange('place')}
+                            error={!!errors.place}
+                            MenuProps={{
+                                PaperProps: {
+                                    style: {
+                                        maxHeight: 48 * 5,
+                                        overflowY: 'auto',
+                                    },
+                                },
+                            }}
                         >
-                            <MenuItem value="place1">Atelier de Paris</MenuItem>
-                            <MenuItem value="place2">Atelier de Lyon</MenuItem>
-                            <MenuItem value="place3">Atelier de Marseille</MenuItem>
+                            {nearByGarages.slice(0, 50).map((garage) => (
+                                <MenuItem key={garage.id} value={garage.id}>
+                                    {garage.name} – {garage.zipcode} {garage.city}
+                                </MenuItem>
+                            ))}
                         </Select>
-                        {errors.place && (
-                            <Typography variant="caption" color="error">{errors.place}</Typography>
+
+                        {nearByGaragesError && (
+                            <Typography variant="caption" color="error">{nearByGaragesError}</Typography>
                         )}
                     </FormControl>
                 );
             case 2:
-                // TODO : Load list of possible operations
                 return (
-                    <>
-                        <FormGroup>
-                            <FormControlLabel
-                            control={
-                                <Checkbox
-                                    checked={formData.cart.includes('vidange')}
-                                    onChange={handleCheckboxChange('vidange')}
-                                />
-                            }
-                            label="Vidange"
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={formData.cart.includes('pneus')}
-                                        onChange={handleCheckboxChange('pneus')}
-                                    />
+                    <FormControl fullWidth>
+                        <InputLabel id="category-label">Choisissez une catégorie de maintenance</InputLabel>
+                        <Select
+                            labelId="category-select-label"
+                            id="category-select"
+                            value={formData.category}
+                            onChange={async (event) => {
+                                const selectedCategoryId = event.target.value;
+                                setFormData({ ...formData, category: selectedCategoryId, cart: [] });
+
+                                try {
+                                    const response = await fetch(`http://127.0.0.1:8000/api/operations/category/${selectedCategoryId}`, {
+                                        headers: {
+                                            "Authorization": `Bearer ${token}`,
+                                            "Accept": "application/json"
+                                        }
+                                    });
+
+                                    if (!response.ok) {
+                                        throw new Error(`Erreur ${response.status}`);
+                                    }
+
+                                    const data = await response.json();
+                                    setOperations(data); // data doit être un tableau d'opérations
+                                } catch (error) {
+                                    console.error("Erreur lors du chargement des opérations :", error);
+                                    setOperations([]);
                                 }
-                                label="Pneus"
-                            />
-                        </FormGroup>
-                        {errors.cart && (
-                            <Typography variant="caption" color="error">{errors.cart}</Typography>
+                            }}
+                            error={!!errors.category}
+                            MenuProps={{
+                                PaperProps: {
+                                    style: {
+                                        maxHeight: 48 * 5,
+                                        overflowY: 'auto',
+                                    },
+                                },
+                            }}
+                        >
+                            {categories.map((category) => (
+                                <MenuItem key={category.id} value={category.id}>
+                                    {category.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+
+                        {operations.length > 0 && (
+                            <FormGroup className="mt-4">
+                                {operations.map((op) => (
+                                    <FormControlLabel
+                                        key={op.id}
+                                        control={
+                                            <Checkbox
+                                                checked={formData.cart.includes(op.libelle)}
+                                                onChange={(e) => {
+                                                    const checked = e.target.checked;
+                                                    setFormData((prev) => {
+                                                        const updatedCart = checked
+                                                            ? [...prev.cart, op.libelle]
+                                                            : prev.cart.filter((item) => item !== op.libelle);
+                                                        return { ...prev, cart: updatedCart };
+                                                    });
+
+                                                    if (errors.cart) {
+                                                        setErrors((prev) => ({
+                                                            ...prev,
+                                                            cart: '',
+                                                        }));
+                                                    }
+                                                }}
+                                                name={op.libelle}
+                                            />
+                                        }
+                                        label={op.libelle}
+                                    />
+                                ))}
+                                {errors.cart && (
+                                    <Typography variant="caption" color="error">{errors.cart}</Typography>
+                                )}
+                            </FormGroup>
                         )}
-                    </>
+
+                        {categoriesError && (
+                            <Typography variant="caption" color="error">{categoriesError}</Typography>
+                        )}
+                    </FormControl>
                 );
             case 3:
-                // TODO : Prendre en compte les créneaux déjà pris
                 return (
-                    <>
-                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={frLocale} fullWidth>
-                            <DateTimePicker
-                                label="Date et heure du rendez-vous"
-                                value={formData.meetingTime}
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={frLocale}>
+                        <Box display="flex" gap={2}>
+                            <DatePicker
+                                label="Chercher au plus tôt"
+                                value={formData.startDate || null}
                                 onChange={(newValue) => {
-                                    setFormData({ ...formData, meetingTime: newValue });
-                                    if (errors.meetingTime) {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        startDate: newValue,
+                                    }));
+
+                                    // Reset error when startDate is valid
+                                    if (formData.endDate && newValue > formData.endDate) {
                                         setErrors((prev) => ({
                                             ...prev,
-                                            meetingTime: '',
+                                            dateRange: "La date de début ne peut pas être après la date de fin.",
+                                        }));
+                                    } else {
+                                        setErrors((prev) => ({
+                                            ...prev,
+                                            dateRange: '',
                                         }));
                                     }
                                 }}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        fullWidth
-                                        error={!!errors.meetingTime}
-                                        helperText={errors.meetingTime}
-                                    />
-                                )}
+                                slotProps={{
+                                    textField: {
+                                        fullWidth: true,
+                                    },
+                                }}
                             />
-                        </LocalizationProvider>
-                        {errors.meetingTime && (
-                            <Typography variant="caption" color="error">{errors.meetingTime}</Typography>
+
+                            <DatePicker
+                                label="Chercher au plus tard"
+                                value={formData.endDate || null}
+                                onChange={(newValue) => {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        endDate: newValue,
+                                    }));
+
+                                    // Reset error when endDate is valid
+                                    if (formData.startDate && newValue < formData.startDate) {
+                                        setErrors((prev) => ({
+                                            ...prev,
+                                            dateRange: "La date de fin ne peut pas être avant la date de début.",
+                                        }));
+                                    } else {
+                                        setErrors((prev) => ({
+                                            ...prev,
+                                            dateRange: '',
+                                        }));
+                                    }
+                                }}
+                                slotProps={{
+                                    textField: {
+                                        fullWidth: true,
+                                    },
+                                }}
+                            />
+                        </Box>
+
+                        {errors.dateRange && (
+                            <Typography variant="caption" color="error">
+                                {errors.dateRange}
+                            </Typography>
                         )}
-                    </>
+                    </LocalizationProvider>
                 );
 
             case 4:
@@ -152,14 +362,13 @@ const Rdv = () => {
                     <Box>
                         <Typography variant="h6" gutterBottom>Récapitulatif de votre demande</Typography>
                         <Typography><strong>Immatriculation :</strong> {formData.vehiclePlate}</Typography>
-                        <Typography><strong>Atelier choisi :</strong> {(() => {
-                            switch(formData.place){
-                                case 'place1': return "Atelier de Paris";
-                                case 'place2': return "Atelier de Lyon";
-                                case 'place3': return "Atelier de Marseille";
-                                default: return "Non sélectionné";
-                            }
-                        })()}</Typography>
+                        <Typography><strong>Atelier choisi :</strong> {
+                            (() => {
+                                const selectedGarage = nearByGarages.find(g => g.id === formData.place);
+                                return selectedGarage ? `${selectedGarage.name} – ${selectedGarage.zipcode} ${selectedGarage.city}` : "Non sélectionné";
+                            })()
+                        }</Typography>
+
                         <Typography><strong>Opérations choisies :</strong> {formData.cart.length > 0 ? formData.cart.join(', ') : "Aucune"}</Typography>
                         <Typography><strong>Rendez-vous :</strong> {formData.meetingTime ? formData.meetingTime.toLocaleString('fr-FR') : "Non sélectionné"}</Typography>
                     </Box>
@@ -173,15 +382,14 @@ const Rdv = () => {
 
     // Check on submit if step is complete, if not, error is written
     const checkStepComplete = (step) => {
-        const immatRegex = /^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
         let valid = true;
 
         switch (step) {
             case 0:
-                if (!immatRegex.test(formData.vehiclePlate)) {
+                if (!formData.vehiclePlate) {
                     setErrors((prev) => ({
                         ...prev,
-                        vehiclePlate: "Le format de plaque est invalide. Exemple : AB-123-CD",
+                        vehiclePlate: "Veuillez sélectionner un véhicule.",
                     }));
                     valid = false;
                 } else {
@@ -220,16 +428,22 @@ const Rdv = () => {
                 }
                 break;
             case 3:
-                if (!formData.meetingTime) {
+                if (!formData.startDate || !formData.endDate) {
                     setErrors((prev) => ({
                         ...prev,
-                        meetingTime: "Veuillez choisir une date et une heure de rendez-vous.",
+                        dateRange: "Veuillez sélectionner une date de début et une date de fin.",
+                    }));
+                    valid = false;
+                } else if (formData.startDate > formData.endDate) {
+                    setErrors((prev) => ({
+                        ...prev,
+                        dateRange: "La date de début ne peut pas être après la date de fin.",
                     }));
                     valid = false;
                 } else {
                     setErrors((prev) => ({
                         ...prev,
-                        meetingTime: '',
+                        dateRange: '',
                     }));
                 }
                 break;
@@ -255,45 +469,45 @@ const Rdv = () => {
 
 
     return (
-            <Box className="m-20 bg-white p-10">
-                <Stepper activeStep={activeStep}>
-                    {steps.map((label) => {
-                        const stepProps = {};
-                        const labelProps = {};
-                        return (
-                            <Step key={label} {...stepProps}>
-                                <StepLabel {...labelProps}>{label}</StepLabel>
-                            </Step>
-                        );
-                    })}
-                </Stepper>
-                {activeStep === steps.length ? (
-                    <React.Fragment>
-                        <Typography className="text-green-800 pt-10">
-                            Votre demande a bien été prise en compte.
-                        </Typography>
-                        <Box>
-                            <Box/>
-                        </Box>
-                    </React.Fragment>
-                ) : (
-                    <React.Fragment>
-                        <Box className="my-10">{getStepContent(activeStep)}</Box>
-                        <Box className="flex justify-center">
-                            <Button
-                                disabled={activeStep === 0}
-                                onClick={handleBack}
-                            >
-                                Précédent
-                            </Button>
-                            <Box/>
-                            <Button onClick={handleNext}>
-                                {activeStep === steps.length - 1 ? 'Valider' : 'Suivant'}
-                            </Button>
-                        </Box>
-                    </React.Fragment>
-                )}
-            </Box>
+        <Box className="m-20 bg-white p-10">
+            <Stepper activeStep={activeStep}>
+                {steps.map((label) => {
+                    const stepProps = {};
+                    const labelProps = {};
+                    return (
+                        <Step key={label} {...stepProps}>
+                            <StepLabel {...labelProps}>{label}</StepLabel>
+                        </Step>
+                    );
+                })}
+            </Stepper>
+            {activeStep === steps.length ? (
+                <React.Fragment>
+                    <Typography className="text-green-800 pt-10">
+                        Votre demande a bien été prise en compte.
+                    </Typography>
+                    <Box>
+                        <Box/>
+                    </Box>
+                </React.Fragment>
+            ) : (
+                <React.Fragment>
+                    <Box className="my-10">{getStepContent(activeStep)}</Box>
+                    <Box className="flex justify-center">
+                        <Button
+                            disabled={activeStep === 0}
+                            onClick={handleBack}
+                        >
+                            Précédent
+                        </Button>
+                        <Box/>
+                        <Button onClick={handleNext}>
+                            {activeStep === steps.length - 1 ? 'Valider' : 'Suivant'}
+                        </Button>
+                    </Box>
+                </React.Fragment>
+            )}
+        </Box>
     );
 };
 
