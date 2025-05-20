@@ -11,14 +11,15 @@ use Random\RandomException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 
 #[Route('/api/client', name: 'api_client_')]
@@ -80,10 +81,11 @@ final class ClientController extends AbstractController
      */
     #[Route('/register', name: 'register', methods: ['POST'])]
     public function register(
-        Request $request,
+        Request                  $request,
         JWTTokenManagerInterface $jwtManager,
-    ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
+    ): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
         if (!isset($data['email']) || !isset($data['password']) || !isset($data['phone']) || !isset($data['city']) || !isset($data['zipcode'])) {
             return new JsonResponse(['error' => 'Champs requis : email, mot de passe, numéro de téléphone, ville, zipcode'], 400);
         }
@@ -120,7 +122,9 @@ final class ClientController extends AbstractController
         $client->setLastname($data['lastname'] ?? null);
         $client->setPhone($data['phone']);
         $client->setCity($data['city']);
-        $client->setZipcode($data['zipcode'] ?? '');
+        $client->setAddress($data['address'] ?? null);
+        $client->setHash(hash('sha256', $data['firstname'] . $data['lastname'] . $data['email'] . $data['phone']));
+        $client->setZipcode($data['zipcode']);
         $client->setGender($data['gender'] ?? null);
         $client->setSocietyName($data['societyName'] ?? null);
         $client->setVerifiedAccount(false);
@@ -132,6 +136,28 @@ final class ClientController extends AbstractController
                 $client->setBirth($newDate);
             } catch (\Exception $e) {
                 return new JsonResponse(['error' => 'Invalid date format for birth (expected Y-m-d)'], 400);
+            }
+        }
+
+        $files = $request->files->all();
+        $avatar = $files['avatar'] ?? null;
+        if ($avatar) {
+            $originalFilename = pathinfo($avatar->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $this->slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $avatar->guessExtension();
+
+            try {
+                if (!is_dir($avatarDirectory = $this->getParameter('avatars_directory'))) {
+                    mkdir($avatarDirectory, 0777, true);
+                }
+                $avatar->move(
+                    $avatarDirectory,
+                    $newFilename
+                );
+                $client->setAvatar($newFilename);
+
+            } catch (FileException $e) {
+                return new JsonResponse(['error' => 'Échec de l\'upload de l\'avatar'], 500);
             }
         }
 
