@@ -6,6 +6,7 @@ use App\Entity\Client;
 use App\Event\ClientCreatedEvent;
 use App\Repository\ClientRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Random\RandomException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -17,6 +18,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 
 #[Route('/api/client', name: 'api_client_')]
@@ -39,8 +41,8 @@ final class ClientController extends AbstractController
     #[Route('/register', name: 'register', methods: ['POST'])]
     public function register(
         Request $request,
-    ): JsonResponse
-    {
+        JWTTokenManagerInterface $jwtManager,
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         if (!isset($data['email']) || !isset($data['password']) || !isset($data['phone']) || !isset($data['city']) || !isset($data['zipcode'])) {
             return new JsonResponse(['error' => 'Champs requis : email, mot de passe, numéro de téléphone, ville, zipcode'], 400);
@@ -101,7 +103,16 @@ final class ClientController extends AbstractController
         $event = new ClientCreatedEvent($client);
         $this->eventDispatcher->dispatch($event, ClientCreatedEvent::NAME);
 
-        return new JsonResponse(['message' => 'Client registered'], 201);
+        try {
+            $token = $jwtManager->create($client);
+        } catch (AuthenticationException $e) {
+            return new JsonResponse(['error' => 'Échec de génération du token'], 500);
+        }
+
+        return new JsonResponse([
+            'token' => $token,
+            'message' => 'Client registered successfully',
+        ], 201);
     }
 
     #[Route('/update', name: 'update', methods: ['PUT'])]
