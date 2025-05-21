@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Demande de rappel client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            background-color: #f9f9f9;
+            padding: 20px;
+        }
+        .email-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        h2 {
+            color: #2c3e50;
+        }
+        p {
+            line-height: 1.5;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #888;
+        }
+        .title {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <h2 class="title">Demande de rappel d'un client</h2>
+    <p>Bonjour,</p>
+    <p>Le client <strong>{{ client.firstname }} {{ client.lastname }}</strong> souhaite être rappelé.</p>
+    <p>Voici ses coordonnées :</p>
+    <ul>
+        <li><strong>Téléphone :</strong> {{ client.phone }}</li>
+        <li><strong>Email :</strong> {{ client.email }}</li>
+    </ul>
+    <p>Message du client :</p>
+    <blockquote>{{ message }}</blockquote>
+    <p>Merci de le contacter dans les plus brefs délais.</p>
+    <div class="footer">
+        — Système de notification automatique
+    </div>
+</div>
+</body>
+</html>

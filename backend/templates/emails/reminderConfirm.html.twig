@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmation de l'envoi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            padding: 20px;
+            color: #333;
+        }
+        .confirmation-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 5px;
+            max-width: 600px;
+            margin: auto;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        p {
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+<div class="confirmation-container">
+    <h1>Demande de rappel envoyée avec succès</h1>
+    <p>Votre demande a été transmise au garage <strong>{{ garage.name }}</strong>.</p>
+    <p>Un conseiller vous contactera dans les plus brefs délais.</p>
+</div>
+</body>
+</html>
