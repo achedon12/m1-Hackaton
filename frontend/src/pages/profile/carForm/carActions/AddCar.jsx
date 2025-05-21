@@ -1,5 +1,5 @@
 import {useState, forwardRef, useEffect} from "react";
-import config from "../../../providers/apiConfig.js";
+import config from "../../../../providers/apiConfig.js";
 
 const AddCar = forwardRef((props, ref) => {
     const [brandsAndModelsList, setBrandsAndModelsList] = useState([]);
