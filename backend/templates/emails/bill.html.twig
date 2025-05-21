@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Facture n°{{ bill.id }}</title>
+    <title>Facture n°{{ billID }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -47,7 +47,7 @@
     </style>
 </head>
 <body>
-<h1>Facture n°{{ bill.id }}</h1>
+<h1>Facture n°{{ billID }}</h1>
 
 <div class="company">
     <strong>{{ company.name }}</strong><br>
@@ -74,7 +74,7 @@
 </div>
 
 <p><strong>Date :</strong> {{ request_date }}</p>
-<p><strong>Numéro de facture :</strong> {{ bill.id }}</p>
+<p><strong>Numéro de facture :</strong> {{ billID }}</p>
 
 <table>
     <thead>

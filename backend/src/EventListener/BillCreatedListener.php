@@ -52,6 +52,7 @@ readonly class BillCreatedListener
         $html = $this->twig->render('emails/bill.html.twig', [
             'client' => $bill->getMeeting()->getClient(),
             'company' => $company,
+            'billID' => $bill->getId(),
             'bill' => $bill->getMeeting()->getQuotation(),
             'request_date' => $bill->getMeeting()->getQuotation()->getRequestDate()->format('d/m/Y'),
             'end_date' => date('Y-m-d'),
