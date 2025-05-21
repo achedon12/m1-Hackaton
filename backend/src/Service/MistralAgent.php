@@ -55,7 +55,7 @@ EOT;
                 'Content-Type' => 'application/json',
             ],
             'json' => [
-                'model' => 'mistral-small', // ou 'mistral-large' || 'mistral-large-latest' si besoin
+                'model' => 'mistral-medium', // ou 'mistral-large' || 'mistral-large-latest' || 'mistral-medium' si besoin
                 'messages' => [
                     ['role' => 'system', 'content' => $systemMessage],
                     ['role' => 'user', 'content' => $userMessage],
