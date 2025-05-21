@@ -53,6 +53,12 @@ class Quotation
     #[Groups(['quotation:read'])]
     private Collection $quotationOperations;
 
+    #[ORM\ManyToOne(targetEntity: Vehicle::class, inversedBy: 'quotations')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[MaxDepth(1)]
+    #[Groups(['vehicle:read'])]
+    private Vehicle $vehicle;
+
     public function __construct()
     {
         $this->quotationOperations = new ArrayCollection();
@@ -161,6 +167,23 @@ class Quotation
         }
 
         return $this;
+    }
+
+    public function getVehicle(): ?Vehicle
+    {
+        return $this->vehicle;
+    }
+
+    public function setVehicle(Vehicle $vehicle): static
+    {
+        $this->vehicle = $vehicle;
+
+        return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getId() . ' - ' . $this->getRequestDate()->format('d/m/Y') . ' - ' . $this->getPrice() . '€';
     }
 
 }

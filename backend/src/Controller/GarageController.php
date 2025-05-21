@@ -35,11 +35,20 @@ final class GarageController extends AbstractController
     }
 
     #[Route('/availabilities', name: 'availabilities', methods: ['GET'])]
-    public function availabilities(): Response
+    public function availabilities(Request $request): Response
     {
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
         $client = $this->security->getUser();
 
-        $garages = $this->garageRepository->findNearby($client->getLatitude() ?? 0, $client->getLongitude() ?? 0, -1);
+        $zipcode = $data['zipcode'] ?? $client->getZipcode();
+        $city = $data['city'] ?? $client->getCity();
+
+        $coordinates = ClientController::getCoordinatesFromZipcode($zipcode, $city);
+        $longitude = $coordinates['longitude'];
+        $latitude = $coordinates['latitude'];
+
+
+        $garages = $this->garageRepository->findNearby($latitude, $longitude, -1);
 
         $garages = array_map(function ($garage) {
             $garage[0]->distance = round($garage['distance'], 2);

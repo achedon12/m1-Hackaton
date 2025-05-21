@@ -8,6 +8,7 @@ use App\Event\QuotationCreatedEvent;
 use App\Repository\OperationRepository;
 use App\Repository\QuotationRepository;
 use App\Repository\QuotationStateRepository;
+use App\Repository\VehicleRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -27,7 +28,8 @@ final class QuotationController extends AbstractController
                                 private readonly OperationRepository      $operationRepository,
                                 private readonly EventDispatcherInterface $eventDispatcher,
                                 private readonly QuotationRepository      $quotationRepository,
-                                private readonly SerializerInterface      $serializer)
+                                private readonly SerializerInterface      $serializer,
+                                private readonly VehicleRepository        $vehicleRepository)
     {
     }
 
@@ -48,15 +50,31 @@ final class QuotationController extends AbstractController
             return $this->json(['error' => 'Date is required'], Response::HTTP_BAD_REQUEST);
         }
 
+        if (!isset($data['vehicle'])) {
+            return $this->json(['error' => 'Vehicle is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $client = $this->security->getUser();
+
+        $vehicle = $this->vehicleRepository->find($data['vehicle']);
+        if (!$vehicle) {
+            return $this->json(['error' => 'Vehicle not found'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($vehicle->getClient()->getId() !== $client->getId()) {
+            return $this->json(['error' => 'Vehicle does not belong to the client'], Response::HTTP_BAD_REQUEST);
+        }
+
         $price = 0;
 
         $quotation = new Quotation();
         $quotation->setTva(0.20);
         $quotation->setQuotationState($this->quotationStateRepository->findOneBy(['name' => 'created']));
-        $quotation->setClient($this->security->getUser());
+        $quotation->setClient($client);
         $quotation->setHash(bin2hex(random_bytes(16)));
         $quotation->setRequestDate(new \DateTime($data['date']));
         $quotation->setCreationDate(new \DateTimeImmutable());
+        $quotation->setVehicle($vehicle);
 
         $this->entityManager->persist($quotation);
 
@@ -82,7 +100,7 @@ final class QuotationController extends AbstractController
         $event = new QuotationCreatedEvent($quotation);
         $this->eventDispatcher->dispatch($event, QuotationCreatedEvent::NAME);
 
-        return $this->json($quotation, Response::HTTP_CREATED, [], ['groups' => ['quotation:read', 'operation:read', 'quotationState:read', 'client:read']]);
+        return $this->json($quotation, Response::HTTP_CREATED, [], ['groups' => ['quotation:read', 'operation:read', 'quotationState:read', 'client:read', 'vehicle:read']]);
     }
 
     #[Route('/update/{quotationId}', name: 'update', methods: ['PUT'])]
