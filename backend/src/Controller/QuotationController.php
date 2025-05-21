@@ -15,6 +15,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/quotation', name: 'api_quotation_')]
 final class QuotationController extends AbstractController
@@ -25,7 +26,8 @@ final class QuotationController extends AbstractController
                                 private readonly Security                 $security,
                                 private readonly OperationRepository      $operationRepository,
                                 private readonly EventDispatcherInterface $eventDispatcher,
-                                private readonly QuotationRepository      $quotationRepository)
+                                private readonly QuotationRepository      $quotationRepository,
+                                private readonly SerializerInterface      $serializer)
     {
     }
 
@@ -80,7 +82,7 @@ final class QuotationController extends AbstractController
         $event = new QuotationCreatedEvent($quotation);
         $this->eventDispatcher->dispatch($event, QuotationCreatedEvent::NAME);
 
-        return $this->json($quotation, Response::HTTP_CREATED);
+        return $this->json($quotation, Response::HTTP_CREATED, [], ['groups' => ['quotation:read', 'operation:read', 'quotationState:read', 'client:read']]);
     }
 
     #[Route('/update/{quotationId}', name: 'update', methods: ['PUT'])]

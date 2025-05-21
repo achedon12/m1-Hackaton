@@ -1,4 +1,4 @@
-import {Composer, Fab, Header, useWebchat, MessageList} from '@botpress/webchat'
+// import {Composer, Fab, Header, useWebchat, MessageList} from '@botpress/webchat'
 import {useMemo, useState} from "react";
 
 const Botpress = () => {

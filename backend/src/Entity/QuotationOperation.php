@@ -6,7 +6,6 @@ use App\Repository\QuotationOperationRepository;
 use App\Trait\TimeStampTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: QuotationOperationRepository::class)]
 class QuotationOperation
@@ -25,7 +24,7 @@ class QuotationOperation
 
     #[ORM\ManyToOne(targetEntity: Operation::class)]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['operation:read'])]
+    #[Groups(['quotation:read', 'operation:read'])]
     private Operation $operation;
 
     public function getId(): ?int

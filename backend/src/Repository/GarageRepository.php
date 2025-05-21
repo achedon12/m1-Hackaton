@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Controller\ClientController;
 use App\Entity\Garage;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -19,10 +20,16 @@ class GarageRepository extends ServiceEntityRepository
     public function findNearby(float $latitude, float $longitude, float $radius): array
     {
         $qb = $this->createQueryBuilder('g')
-            ->select('g, (6371 * acos(cos(radians(:latitude)) * cos(radians(g.latitude)) * cos(radians(g.longitude) - radians(:longitude)) + sin(radians(:latitude)) * sin(radians(g.latitude)))) AS distance')
-            ->orderBy('distance', 'ASC')
+            ->addSelect(
+                '(6371 * ACOS(
+                COS(RADIANS(:latitude)) * COS(RADIANS(g.latitude)) *
+                COS(RADIANS(g.longitude) - RADIANS(:longitude)) +
+                SIN(RADIANS(:latitude)) * SIN(RADIANS(g.latitude))
+            )) AS distance'
+            )
             ->setParameter('latitude', $latitude)
-            ->setParameter('longitude', $longitude);
+            ->setParameter('longitude', $longitude)
+            ->orderBy('distance', 'ASC');
 
         if ($radius > 0) {
             $qb->having('distance <= :radius')
@@ -32,13 +39,12 @@ class GarageRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    public function findNearbyByZipcode(string $zipcode): array
+
+    public function findNearbyByZipcode(string $zipcode, string $city, $radius): array
     {
-        return $this->createQueryBuilder('g')
-            ->where('g.zipcode = :zipcode')
-            ->setParameter('zipcode', $zipcode)
-            ->getQuery()
-            ->getResult();
+        $coordinates = ClientController::getCoordinatesFromZipcode($zipcode, $city);
+
+        return $this->findNearby($coordinates['longitude'], $coordinates['latitude'], $radius);
     }
 
 
