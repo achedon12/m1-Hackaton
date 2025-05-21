@@ -180,12 +180,6 @@ final class VehicleController extends AbstractController
         }
 
         foreach ($vehicles as $vehicle) {
-            $operations = $this->entityManager->getRepository(Meeting::class)->findBy(['vehicle' => $vehicle->getId()]);
-            $drivers = $this->entityManager->getRepository(Driver::class)->findBy(['vehicle' => $vehicle->getId()]);
-
-            $vehicle->setOperations(new ArrayCollection($operations));
-            $vehicle->setDrivers(new ArrayCollection($drivers));
-
             $brandNameLowercase = strtolower($vehicle->getBrand()->getName());
             $logoPath = 'uploads/brands/' . $brandNameLowercase . '.png';
 

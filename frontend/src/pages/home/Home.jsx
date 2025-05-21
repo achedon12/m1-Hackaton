@@ -33,7 +33,6 @@ const Home = () => {
             } catch (error) {
                 console.error('Error fetching popular operations:', error);
             } finally {
-                console.log(popularOperations)
                 setLoading(false);
             }
         }

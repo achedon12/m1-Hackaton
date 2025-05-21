@@ -85,4 +85,17 @@ final class MeetingController extends AbstractController
 
         return $this->json($meeting, Response::HTTP_CREATED, ['groups' => ['meeting']]);
     }
+
+    #[Route('/vehicle/{id}', name: 'vehicle', methods: ['GET'])]
+    public function getVehicleMeetings(int $id): Response
+    {
+        $vehicle = $this->vehicleRepository->find($id);
+        if (!$vehicle) {
+            return $this->json(['error' => 'Vehicle not found'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $meetings = $this->meetingRepository->findBy(['vehicle' => $vehicle]);
+
+        return $this->json($meetings, Response::HTTP_OK, ['groups' => ['meeting']]);
+    }
 }
