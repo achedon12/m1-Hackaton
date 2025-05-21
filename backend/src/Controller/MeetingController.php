@@ -84,24 +84,24 @@ final class MeetingController extends AbstractController
         $meeting->setMeetingState($this->meetingStateRepository->findOneBy(['name' => 'created']));
         $meeting->setCreationDate(new \DateTimeImmutable());
 
-        // save meeting operations
-
         $this->entityManager->persist($meeting);
         $this->entityManager->flush();
 
         return $this->json($meeting, Response::HTTP_CREATED, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read']]);
     }
 
-    #[Route('/vehicle/{id}', name: 'vehicle', methods: ['GET'])]
-    public function getVehicleMeetings(int $id): Response
+    #[Route('/{clientId}', name: 'get', methods: ['GET'])]
+    public function get(int $clientId): Response
     {
-        $vehicle = $this->vehicleRepository->find($id);
-        if (!$vehicle) {
-            return $this->json(['error' => 'Vehicle not found'], Response::HTTP_BAD_REQUEST);
+        $client = $this->security->getUser();
+
+        if ($client->getId() !== $clientId) {
+            return $this->json(['error' => 'You are not the owner of this vehicle'], Response::HTTP_FORBIDDEN);
         }
 
-        $meetings = $this->meetingRepository->findBy(['vehicle' => $vehicle]);
+        $meetings = $this->meetingRepository->findBy(['client' => $client]);
 
-        return $this->json($meetings, Response::HTTP_OK, ['groups' => ['meeting']]);
+        return $this->json($meetings, Response::HTTP_OK);
     }
+
 }
