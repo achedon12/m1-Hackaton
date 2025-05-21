@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\MeetingRepository;
 use App\Trait\TimeStampTrait;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: MeetingRepository::class)]
@@ -38,6 +40,14 @@ class Meeting
     #[ORM\ManyToOne(targetEntity: Client::class)]
     #[ORM\JoinColumn(nullable: false)]
     private Client $client;
+
+    #[ORM\OneToMany(targetEntity: MeetingOperation::class, mappedBy: 'meeting', cascade: ['persist', 'remove'])]
+    private Collection $meetingOperations;
+
+    public function __construct()
+    {
+        $this->meetingOperations = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -112,6 +122,32 @@ class Meeting
     public function setClient(Client $client): static
     {
         $this->client = $client;
+
+        return $this;
+    }
+
+    public function getMeetingOperations(): Collection
+    {
+        return $this->meetingOperations;
+    }
+
+    public function addMeetingOperation(MeetingOperation $meetingOperation): static
+    {
+        if (!$this->meetingOperations->contains($meetingOperation)) {
+            $this->meetingOperations[] = $meetingOperation;
+            $meetingOperation->setMeeting($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMeetingOperation(MeetingOperation $meetingOperation): static
+    {
+        if ($this->meetingOperations->removeElement($meetingOperation)) {
+            if ($meetingOperation->getMeeting() === $this) {
+                $meetingOperation->setMeeting(null);
+            }
+        }
 
         return $this;
     }

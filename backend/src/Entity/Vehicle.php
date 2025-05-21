@@ -42,9 +42,6 @@ class Vehicle
     #[ORM\JoinColumn(nullable: false)]
     private Client $client;
 
-    private ArrayCollection $operations;
-    private ArrayCollection $drivers;
-
     public function getId(): ?int
     {
         return $this->id;
@@ -130,30 +127,6 @@ class Vehicle
     public function setClient(Client $client): static
     {
         $this->client = $client;
-
-        return $this;
-    }
-
-    public function getOperations(): ArrayCollection
-    {
-        return $this->operations;
-    }
-
-    public function setOperations(ArrayCollection $operations): static
-    {
-        $this->operations = $operations;
-
-        return $this;
-    }
-
-    public function getDrivers(): ArrayCollection
-    {
-        return $this->drivers;
-    }
-
-    public function setDrivers(ArrayCollection $drivers): static
-    {
-        $this->drivers = $drivers;
 
         return $this;
     }

@@ -2,20 +2,22 @@ import {forwardRef, useState, useEffect} from "react";
 
 const AddOrEditDriver = forwardRef(({car, driver, onSave}, ref) => {
     const [errors, setErrors] = useState({});
+    const client = JSON.parse(localStorage.getItem("client"));
     const [isFormValid, setIsFormValid] = useState(false);
-    console.log(car)
     const [formData, setFormData] = useState({
+        id: "",
         driver: true,
         driverPhone: "",
         driverFirstname: "",
         driverLastname: "",
-        clientId: "",
+        clientId: client.id,
         vehicleId: car?.id
     });
 
     useEffect(() => {
         if (driver) {
             setFormData({
+                id: driver.id,
                 driver: driver.driver,
                 driverPhone: driver.driverPhone,
                 driverFirstname: driver.driverFirstname,

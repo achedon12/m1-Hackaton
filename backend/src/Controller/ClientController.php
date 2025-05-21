@@ -6,11 +6,17 @@ use App\Entity\Client;
 use App\Event\ClientCreatedEvent;
 use App\Repository\ClientRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Geocoder\Provider\Nominatim\Nominatim;
+use Geocoder\Query\GeocodeQuery;
+use Geocoder\StatefulGeocoder;
+use Http\Discovery\Psr17Factory;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Random\RandomException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpClient\Psr18Client;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -39,7 +45,7 @@ final class ClientController extends AbstractController
     #[Route('/login', name: 'login', methods: ['POST'])]
     public function login(Request $request, JWTTokenManagerInterface $jwtManager): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
         if (!isset($data['email']) || !isset($data['password'])) {
             return new JsonResponse(['error' => 'Champs requis : email, mot de passe'], 400);
         }
@@ -120,6 +126,16 @@ final class ClientController extends AbstractController
 
         $client->setFirstname($data['firstname'] ?? null);
         $client->setLastname($data['lastname'] ?? null);
+        $client->setLongitude($data['longitude'] ?? null);
+        $client->setLatitude($data['latitude'] ?? null);
+
+        if (!$client->getLongitude() || !$client->getLatitude()) {
+            $coordinates = $this->getCoordinatesFromZipcode($data['zipcode']);
+            if ($coordinates) {
+                $client->setLatitude($coordinates['latitude']);
+                $client->setLongitude($coordinates['longitude']);
+            }
+        }
         $client->setPhone($data['phone']);
         $client->setCity($data['city']);
         $client->setAddress($data['address'] ?? null);
@@ -190,6 +206,23 @@ final class ClientController extends AbstractController
                 'birth' => $client->getBirth(),
             ],
         ], 201);
+    }
+
+    private function getCoordinatesFromZipcode(string $zipcode): ?array
+    {
+        $httpClient = HttpClient::create();
+        $psr17Factory = new Psr17Factory();
+        $httpClient = new Psr18Client($httpClient, $psr17Factory, $psr17Factory);
+
+        $provider = Nominatim::withOpenStreetMapServer($httpClient, 'mon-app/1.0');
+        $geocoder = new StatefulGeocoder($provider, 'fr');
+
+        $results = $geocoder->geocodeQuery(GeocodeQuery::create($zipcode . ', France'));
+
+        return $results->isEmpty() ? null : [
+            'latitude' => $results->first()->getCoordinates()->getLatitude(),
+            'longitude' => $results->first()->getCoordinates()->getLongitude(),
+        ];
     }
 
     #[Route('/update', name: 'update', methods: ['PUT'])]

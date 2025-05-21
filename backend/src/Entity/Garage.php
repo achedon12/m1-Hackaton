@@ -48,6 +48,8 @@ class Garage
 
     public ?string $distance = null;
 
+    public ?string $workingTime = '00:00:00';
+
     public function getId(): ?int
     {
         return $this->id;
@@ -172,4 +174,30 @@ class Garage
 
         return $this;
     }
+
+    public function getDistance(): ?string
+    {
+        return $this->distance;
+    }
+
+    public function setDistance(?string $distance): void
+    {
+        $this->distance = $distance;
+    }
+
+    public function getWorkingTime(): ?string
+    {
+        return $this->workingTime;
+    }
+
+    public function setWorkingTime(?string $workingTime): void
+    {
+        $this->workingTime = $workingTime;
+    }
+
+    public function __toString(): string
+    {
+        return $this->name;
+    }
+
 }

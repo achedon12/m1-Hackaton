@@ -43,7 +43,7 @@ class AppFixtures extends Fixture
         $file = fopen(__DIR__ . '/concessions.csv', 'r');
         if ($file !== false) {
             while (($data = fgetcsv($file, 1000, ';')) !== false) {
-                if ($data[0] === '﻿dealership_name') {
+                if ($data[0] === 'dealership_name') {
                     continue;
                 }
                 $garage = new Garage();
@@ -55,8 +55,8 @@ class AppFixtures extends Fixture
                 $garage->setLatitude($data[5]);
                 $garage->setPhone($faker->phoneNumber());
                 $garage->setEmail($faker->email());
-                $garage->setTotalWorkers($totalWorker = $faker->numberBetween(1, 10));
-                $garage->setAvailableWorkers($faker->numberBetween(1, $totalWorker));
+                $garage->setTotalWorkers(1);
+                $garage->setAvailableWorkers(1);
                 $garage->setCreationDate(new \DateTimeImmutable());
                 $manager->persist($garage);
             }

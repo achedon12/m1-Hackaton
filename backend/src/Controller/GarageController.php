@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\GarageRepository;
+use App\Repository\MeetingRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,10 +17,11 @@ use Twig\Environment;
 #[Route('/api/garage', name: 'api_garage_')]
 final class GarageController extends AbstractController
 {
-    public function __construct(private readonly GarageRepository $garageRepository,
-                                private readonly Security         $security,
-                                private MailerInterface           $mailer,
-                                private Environment               $twig
+    public function __construct(private readonly GarageRepository  $garageRepository,
+                                private readonly Security          $security,
+                                private MailerInterface            $mailer,
+                                private Environment                $twig,
+                                private readonly MeetingRepository $meetingRepository,
     )
     {
     }
@@ -28,6 +30,24 @@ final class GarageController extends AbstractController
     public function getGarages(): Response
     {
         $garages = $this->garageRepository->findAll();
+
+        return $this->json($garages, Response::HTTP_OK);
+    }
+
+    #[Route('/availabilities', name: 'availabilities', methods: ['GET'])]
+    public function availabilities(): Response
+    {
+        $client = $this->security->getUser();
+
+        $garages = $this->garageRepository->findNearby($client->getLatitude() ?? 0, $client->getLongitude() ?? 0, -1);
+
+        $garages = array_map(function ($garage) {
+            $garage[0]->distance = round($garage['distance'], 2);
+
+            $garagesMeeting = $this->meetingRepository->findAvailabilitiesTime($garage[0]->getId());
+            $garage[0]->workingTime = $garagesMeeting;
+            return $garage[0];
+        }, $garages);
 
         return $this->json($garages, Response::HTTP_OK);
     }
@@ -99,7 +119,6 @@ final class GarageController extends AbstractController
         return $this->json($garages, Response::HTTP_OK);
     }
 
-    // demande de rappel
     #[Route('/reminder', name: 'reminder', methods: ['POST'])]
     public function reminder(Request $request): Response
     {

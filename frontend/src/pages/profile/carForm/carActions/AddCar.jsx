@@ -11,7 +11,6 @@ const AddCar = forwardRef((props, ref) => {
         kms: "",
         circulationDate: "",
         registrationNumber: "",
-        vin: "",
     });
 
     useEffect(() => {
@@ -48,10 +47,6 @@ const AddCar = forwardRef((props, ref) => {
                 const currentYear = new Date().getFullYear();
                 if (value < 1886 || value > currentYear) error = "L'année de circulation est invalide.";
                 break;
-            case "vin":
-                const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
-                if (!vinRegex.test(value)) error = "Le numéro de série (VIN) est invalide.";
-                break;
             default:
                 break;
         }
@@ -82,7 +77,6 @@ const AddCar = forwardRef((props, ref) => {
                     kms: vehiculeForm.kms,
                     circulationDate: vehiculeForm.circulationDate,
                     registrationNumber: vehiculeForm.registrationNumber,
-                    vin: vehiculeForm.vin,
                 })
             });
 
@@ -177,17 +171,6 @@ const AddCar = forwardRef((props, ref) => {
                             onChange={handleChange}
                         />
                         {errors.registrationNumber && <p className="text-red-500">{errors.registrationNumber}</p>}
-
-                        <label className="label w-1/3">Numéro de série (VIN)</label>
-                        <input
-                            type="text"
-                            name="vin"
-                            className="input input-bordered w-full"
-                            placeholder="Ex: 1HGCM82633A123456"
-                            value={vehiculeForm.vin}
-                            onChange={handleChange}
-                        />
-                        {errors.vin && <p className="text-red-500">{errors.vin}</p>}
                     </fieldset>
                 )}
 

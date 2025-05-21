@@ -34,7 +34,7 @@ final class QuotationController extends AbstractController
     {
         $quotations = $this->entityManager->getRepository(Quotation::class)->findAll();
 
-        return $this->json($quotations, Response::HTTP_OK, ['groups' => ['quotation']]);
+        return $this->json($quotations, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read', 'client:read']]);
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
@@ -47,7 +47,6 @@ final class QuotationController extends AbstractController
         }
 
         $price = 0;
-
 
         $quotation = new Quotation();
         $quotation->setTva(0.20);
@@ -107,7 +106,7 @@ final class QuotationController extends AbstractController
         $quotation->setUpdateDate(new \DateTimeImmutable());
         $this->entityManager->flush();
 
-        return $this->json($quotation, Response::HTTP_OK, ['groups' => ['quotation']]);
+        return $this->json($quotation, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read']]);
     }
 
     #[Route('/client', name: 'getClientsQuotations', methods: ['GET'])]
@@ -125,7 +124,7 @@ final class QuotationController extends AbstractController
             return $this->json(['error' => 'No quotations found for this client'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json($quotations, Response::HTTP_OK, ['groups' => ['quotation']]);
+        return $this->json($quotations, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read']]);
     }
 
     #[Route('/{id}', name: 'get', methods: ['GET'])]
@@ -137,6 +136,6 @@ final class QuotationController extends AbstractController
             return $this->json(['error' => 'Quotation not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json($quotation, Response::HTTP_OK, ['groups' => ['quotation']]);
+        return $this->json($quotation, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read', 'client:read']]);
     }
 }
