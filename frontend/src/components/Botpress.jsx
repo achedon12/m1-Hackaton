@@ -1,16 +1,16 @@
-import {Composer, Fab, Header, useWebchat, Configuration, MessageList} from '@botpress/webchat'
+import {Composer, Fab, Header, useWebchat, MessageList} from '@botpress/webchat'
 import {useMemo, useState} from "react";
 
-export function Botpress() {
+const Botpress = () => {
     const [isWebchatOpen, setIsWebchatOpen] = useState(false)
 
     const {
         client,
         clientState,
+        newConversation,
         messages,
         isTyping,
-        user,
-        newConversation
+        user
     } = useWebchat({
         clientId: 'd7b487e3-8fff-4fda-9a7e-17a2b6e48bc1',
     })
@@ -116,3 +116,5 @@ export function Botpress() {
         </div>
     )
 }
+
+export default Botpress;
