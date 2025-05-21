@@ -105,16 +105,28 @@ final class GarageController extends AbstractController
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
 
         $zipcode = $data['zipcode'] ?? null;
+        $city = $data['city'] ?? null;
+
+        $radius = isset($data['radius']) ? (float)$data['radius'] : 50.0;
 
         if (!$zipcode) {
             return $this->json(['error' => 'Zipcode is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        $garages = $this->garageRepository->findNearbyByZipcode($zipcode);
+        if (!$city) {
+            return $this->json(['error' => 'City is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $garages = $this->garageRepository->findNearbyByZipcode($zipcode, $city, $radius);
 
         if (empty($garages)) {
             return $this->json(['error' => 'No garages found nearby'], Response::HTTP_NOT_FOUND);
         }
+
+        $garages = array_map(function ($garage) {
+            $garage[0]->distance = round($garage['distance'], 2);
+            return $garage[0];
+        }, $garages);
 
         return $this->json($garages, Response::HTTP_OK);
     }
