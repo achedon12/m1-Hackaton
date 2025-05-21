@@ -107,7 +107,7 @@ class AppFixtures extends Fixture
 
     private function loadVehicleBrandAndModels(ObjectManager $manager, $faker): void
     {
-        $data = json_decode(file_get_contents(__DIR__ . '/../../../frontend/src/assets/car-list.json'), true);
+        $data = json_decode(file_get_contents(__DIR__ . '/car-list.json'), true);
 
         foreach ($data as $element) {
             $brand = new Brand();
