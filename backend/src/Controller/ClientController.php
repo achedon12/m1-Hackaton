@@ -65,21 +65,10 @@ final class ClientController extends AbstractController
 
         $token = $jwtManager->create($client);
 
-        return new JsonResponse([
+        return $this->json([
             'token' => $token,
-            'client' => [
-                'id' => $client->getId(),
-                'email' => $client->getEmail(),
-                'firstname' => $client->getFirstname(),
-                'lastname' => $client->getLastname(),
-                'phone' => $client->getPhone(),
-                'city' => $client->getCity(),
-                'gender' => $client->getGender(),
-                'zipcode' => $client->getZipcode(),
-                'societyName' => $client->getSocietyName(),
-                'birth' => $client->getBirth(),
-            ],
-        ], 200);
+            'client' => $client
+        ], Response::HTTP_OK, [], ['groups' => ['client:read']]);
     }
 
     /**
@@ -191,21 +180,7 @@ final class ClientController extends AbstractController
             return new JsonResponse(['error' => 'Échec de génération du token'], 500);
         }
 
-        return new JsonResponse([
-            'token' => $token,
-            'client' => [
-                'id' => $client->getId(),
-                'email' => $client->getEmail(),
-                'firstname' => $client->getFirstname(),
-                'lastname' => $client->getLastname(),
-                'phone' => $client->getPhone(),
-                'city' => $client->getCity(),
-                'gender' => $client->getGender(),
-                'zipcode' => $client->getZipcode(),
-                'societyName' => $client->getSocietyName(),
-                'birth' => $client->getBirth(),
-            ],
-        ], 201);
+        return $this->json(['client' => $client, 'token' => $token], Response::HTTP_OK, [], ['groups' => ['client:read']]);
     }
 
     public static function getCoordinatesFromZipcode(string $zipcode, string $city): ?array
