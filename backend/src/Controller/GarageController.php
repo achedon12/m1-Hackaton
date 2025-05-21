@@ -70,4 +70,24 @@ final class GarageController extends AbstractController
 
         return $this->json($garages, Response::HTTP_OK);
     }
+
+    #[Route('/nearbyByZipcode', name: 'nearbyByZipcode', methods: ['POST'])]
+    public function nearbyByZipcode(Request $request): Response
+    {
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
+
+        $zipcode = $data['zipcode'] ?? null;
+
+        if (!$zipcode) {
+            return $this->json(['error' => 'Zipcode is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $garages = $this->garageRepository->findNearbyByZipcode($zipcode);
+
+        if (empty($garages)) {
+            return $this->json(['error' => 'No garages found nearby'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json($garages, Response::HTTP_OK);
+    }
 }

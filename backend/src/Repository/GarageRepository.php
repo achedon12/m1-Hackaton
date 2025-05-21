@@ -32,6 +32,15 @@ class GarageRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    public function findNearbyByZipcode(string $zipcode): array
+    {
+        return $this->createQueryBuilder('g')
+            ->where('g.zipcode = :zipcode')
+            ->setParameter('zipcode', $zipcode)
+            ->getQuery()
+            ->getResult();
+    }
+
 
     //    /**
     //     * @return Garage[] Returns an array of Garage objects
