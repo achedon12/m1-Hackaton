@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import Loader from "../../components/Loader.jsx";
 import config from "../../providers/apiConfig.js";
+import {PageHeader} from "../../components";
 
 const Operations = () => {
     const [operationsByCategory, setOperationsByCategory] = useState({});
@@ -43,15 +44,11 @@ const Operations = () => {
 
     return (
         <div className="w-full">
-            <div className="relative w-full">
-                <img src={"/garage1.jpg"} alt="Background" className="w-full h-50 object-cover opacity-75" />
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className={"bg-white px-20 py-4 rounded-lg shadow-md text-center"}>
-                        <h1 className="text-3xl font-bold">Nos services</h1>
-                        <p className="text-sm mt-2">Découvrez nos opérations et services disponibles</p>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                title={"Nos services"}
+                description={"Découvrez nos opérations et services disponibles"}
+                backgroundImage={"/garage1.jpg"}
+            />
             {loading ? (
                 <Loader/>
             ) : (
