@@ -9,6 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ClientRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -20,57 +21,74 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['client:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['client:read'])]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['client:read'])]
     private ?string $lastname = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['client:read'])]
     private ?\DateTime $birth = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['client:read'])]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['client:read'])]
     private ?string $phone = null;
 
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['client:read'])]
     private ?string $zipcode = null;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    #[Groups(['client:read'])]
     private ?string $address = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['client:read'])]
     private ?string $city = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['client:read'])]
     private ?string $gender = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['client:read'])]
     private ?string $societyName = null;
 
     #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
+    #[Groups(['client:read'])]
     private ?bool $verifiedAccount = null;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    #[Groups(['client:read'])]
     private ?string $verificationToken = null;
 
     #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    #[Groups(['client:read'])]
     private ?float $longitude = null;
 
     #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    #[Groups(['client:read'])]
     private ?float $latitude = null;
 
     #[ORM\Column(type: Types::STRING, nullable: true)]
+    #[Groups(['client:read'])]
     private ?string $hash = null;
 
     #[ORM\Column(type: Types::STRING, nullable: true)]
+    #[Groups(['client:read'])]
     private ?string $avatar = null;
 
     public function getId(): ?int
