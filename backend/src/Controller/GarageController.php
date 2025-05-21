@@ -78,10 +78,8 @@ final class GarageController extends AbstractController
         /** @var Garage $garage */
         foreach ($garages as $garage) {
             if ($garage->getWorkingTime()) {
-                // 12:00:00
                 $workingTime = explode(":", $garage->getWorkingTime());
                 $workingTime = ((int)$workingTime[0] * 3600) + ((int)$workingTime[1] * 60) + (int)$workingTime[2];
-                // si workingTime est supérieur à 8h en secondes
                 $garage->available = $workingTime <= 3 * 8 * 3600;
                 $workingTime = $workingTime / 8 / 3600;
                 $garage->setWorkingTime($workingTime);
