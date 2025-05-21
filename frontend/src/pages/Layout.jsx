@@ -11,7 +11,6 @@ const Layout = () => {
     const client = JSON.parse(localStorage.getItem("client"));
 
     const navItems = [
-        {name: "Prestations", path: "/catalog"},
         {name: "Prendre rendez-vous", path: "/rdv"},
     ];
 
@@ -71,13 +70,6 @@ const Layout = () => {
                             </span>
                             </div>
                         )}
-                        <div className="dropdown dropdown-end">
-                            <div tabIndex="0" role="button" className="btn btn-ghost btn-circle">
-                                <div className="indicator">
-                                    <ShoppingCart className={`text-white`}/>
-                                </div>
-                            </div>
-                        </div>
                         <NavLink to="/login" className={`text-white ${isAuthenticated ? 'hidden' : ''}`}>
                             Se connecter
                         </NavLink>
