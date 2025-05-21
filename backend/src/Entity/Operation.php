@@ -17,36 +17,36 @@ class Operation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['operation:read'])]
+    #[Groups(['meeting:read', 'operation:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
-    #[Groups(['operation:read'])]
+    #[Groups(['meeting:read', 'operation:read'])]
     private ?float $price = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['operation:read'])]
+    #[Groups(['meeting:read', 'operation:read'])]
     private ?string $libelle = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE)]
-    #[Groups(['operation:read'])]
+    #[Groups(['meeting:read', 'operation:read'])]
     private ?\DateTime $estimatedDuration = null;
 
     #[ORM\Column]
-    #[Groups(['operation:read'])]
+    #[Groups(['meeting:read', 'operation:read'])]
     private ?int $workerNeeded = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['operation:read'])]
+    #[Groups(['meeting:read', 'operation:read'])]
     private ?string $comment = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['operation:read'])]
+    #[Groups(['meeting:read', 'operation:read'])]
     private ?string $help = null;
 
     #[ORM\ManyToOne(targetEntity: OperationCategory::class)]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['category:read'])]
+    #[Groups(['meeting:read', 'operation:read'])]
     private OperationCategory $category;
 
     public function getId(): ?int

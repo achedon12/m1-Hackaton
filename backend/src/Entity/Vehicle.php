@@ -7,6 +7,8 @@ use App\Trait\TimeStampTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: VehicleRepository::class)]
 class Vehicle
@@ -16,26 +18,34 @@ class Vehicle
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['vehicle:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['vehicle:read'])]
     private ?string $registrationNumber = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['vehicle:read'])]
     private ?\DateTime $circulationDate = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['vehicle:read'])]
     private ?string $vin = null;
 
     #[ORM\Column(type: Types::BIGINT)]
+    #[Groups(['vehicle:read'])]
     private ?string $kms = null;
 
     #[ORM\ManyToOne(targetEntity: Brand::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['vehicle:read'])]
     private Brand $brand;
 
     #[ORM\ManyToOne(targetEntity: Model::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['vehicle:read'])]
+    #[MaxDepth(1)]
     private Model $model;
 
     #[ORM\ManyToOne(targetEntity: Client::class)]

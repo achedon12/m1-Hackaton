@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\MeetingOperationRepository;
 use App\Trait\TimeStampTrait;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: MeetingOperationRepository::class)]
 class MeetingOperation
@@ -14,6 +15,7 @@ class MeetingOperation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['meeting:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Meeting::class)]
@@ -22,6 +24,7 @@ class MeetingOperation
 
     #[ORM\ManyToOne(targetEntity: Operation::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['meeting:read'])]
     private Operation $operation;
 
     public function getId(): ?int

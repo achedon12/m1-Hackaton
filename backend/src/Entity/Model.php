@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Repository\ModelRepository;
 use App\Trait\TimeStampTrait;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: ModelRepository::class)]
 class Model
@@ -14,6 +16,7 @@ class Model
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['vehicle:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -21,6 +24,7 @@ class Model
 
     #[ORM\ManyToOne(targetEntity: Brand::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['vehicle:read'])]
     private Brand $brand;
 
     public function getId(): ?int

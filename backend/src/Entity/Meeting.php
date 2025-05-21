@@ -7,6 +7,7 @@ use App\Trait\TimeStampTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: MeetingRepository::class)]
 class Meeting
@@ -16,32 +17,40 @@ class Meeting
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['meeting:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(['meeting:read'])]
     private ?\DateTime $meetingDate = null;
 
     #[ORM\ManyToOne(targetEntity: Vehicle::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['vehicle:read'])]
     private Vehicle $vehicle;
 
     #[ORM\ManyToOne(targetEntity: Quotation::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['quotation:read'])]
     private Quotation $quotation;
 
     #[ORM\ManyToOne(targetEntity: MeetingState::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['meeting:read'])]
     private MeetingState $meetingState;
 
     #[ORM\ManyToOne(targetEntity: Garage::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['garage:read'])]
     private Garage $garage;
 
     #[ORM\ManyToOne(targetEntity: Client::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['client:read'])]
     private Client $client;
 
     #[ORM\OneToMany(targetEntity: MeetingOperation::class, mappedBy: 'meeting', cascade: ['persist', 'remove'])]
+    #[Groups(['meeting:read'])]
     private Collection $meetingOperations;
 
     public function __construct()

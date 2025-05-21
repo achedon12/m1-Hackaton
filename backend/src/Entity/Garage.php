@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\GarageRepository;
 use App\Trait\TimeStampTrait;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: GarageRepository::class)]
 class Garage
@@ -14,40 +15,55 @@ class Garage
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['garage:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['garage:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['garage:read'])]
     private ?string $zipcode = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['garage:read'])]
     private ?string $city = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['garage:read'])]
     private ?string $address = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['garage:read'])]
     private ?string $phone = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['garage:read'])]
     private ?string $email = null;
 
     #[ORM\Column]
+    #[Groups(['garage:read'])]
     private ?int $availableWorkers = null;
 
     #[ORM\Column]
+    #[Groups(['garage:read'])]
     private ?int $totalWorkers = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['garage:read'])]
     private ?string $longitude = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['garage:read'])]
     private ?string $latitude = null;
 
+
+    #[Groups(['garage:read'])]
     public ?string $distance = null;
 
+
+    #[Groups(['garage:read'])]
     public ?string $workingTime = '00:00:00';
 
     public function getId(): ?int

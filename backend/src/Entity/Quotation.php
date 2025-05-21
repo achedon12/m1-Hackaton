@@ -19,7 +19,7 @@ class Quotation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['quotation:read'])]
+    #[Groups(['quotation:read', 'meeting:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
@@ -51,6 +51,7 @@ class Quotation
 
     #[ORM\OneToMany(targetEntity: QuotationOperation::class, mappedBy: 'quotation')]
     #[Groups(['quotation:read'])]
+    #[ORM\MaxDepth(1)]
     private Collection $quotationOperations;
 
     public function __construct()
