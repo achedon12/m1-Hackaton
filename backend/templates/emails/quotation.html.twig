@@ -4,7 +4,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Facture n°{{ invoice.number }}</title>
+    <title>Facture n°{{ quotation.id }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -49,42 +49,45 @@
     </style>
 </head>
 <body>
-<h1>Facture</h1>
+<h1>Facture n°{{ quotation.id }}</h1>
 
 <div class="company">
     <strong>{{ company.name }}</strong><br>
     {{ company.address }}<br>
-    {{ company.postal_code }} {{ company.city }}<br>
+    {{ company.zipcode }} {{ company.city }}<br>
     {{ company.country }}
 </div>
 
 <div class="client">
     <strong>Facturé à :</strong><br>
-    {{ client.name }}<br>
+    {{ client.firstname }} {{ client.lastname }}<br>
     {{ client.address }}<br>
-    {{ client.postal_code }} {{ client.city }}<br>
-    {{ client.country }}
+    {{ client.zipcode }} {{ client.city }}<br>
+    {{ client.country is defined ? client.country : 'France' }}
 </div>
 
-<p><strong>Date :</strong> {{ invoice.date|date('d/m/Y') }}</p>
-<p><strong>Numéro de facture :</strong> {{ invoice.number }}</p>
+<p><strong>Date :</strong> {{ request_date }}</p>
+<p><strong>Numéro de facture :</strong> {{ quotation.id }}</p>
 
 <table>
     <thead>
     <tr>
         <th>Description</th>
-        <th>Quantité</th>
-        <th>Prix unitaire HT</th>
-        <th>Total HT</th>
+        <th>Durée estimée</th>
+        <th>Intervenants</th>
+        <th>Prix</th>
     </tr>
     </thead>
     <tbody>
-    {% for item in invoice.items %}
+    {% set price = 0 %}
+    {% for operation in operations %}
+        {% set operation = operation.operation %}
         <tr>
-            <td>{{ item.description }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>{{ item.unit_price|number_format(2, ',', ' ') }} €</td>
-            <td>{{ (item.quantity * item.unit_price)|number_format(2, ',', ' ') }} €</td>
+            <td>{{ operation.libelle }}</td>
+            <td>{{ operation.estimatedDuration|date('H:i') }}</td>
+            <td>{{ operation.workerNeeded }}</td>
+            <td>{{ operation.price|number_format(2, ',', ' ') }} €</td>
+            {% set price = price + operation.price %}
         </tr>
     {% endfor %}
     </tbody>
@@ -93,15 +96,15 @@
 <table class="totals">
     <tr>
         <td>Sous-total HT :</td>
-        <td>{{ invoice.subtotal|number_format(2, ',', ' ') }} €</td>
+        <td>{{ price|number_format(2, ',', ' ') }} €</td>
     </tr>
     <tr>
-        <td>TVA ({{ invoice.vat_rate }}%) :</td>
-        <td>{{ invoice.vat_amount|number_format(2, ',', ' ') }} €</td>
+        <td>TVA ({{ quotation.tva * 100 }} %) :</td>
+        <td>{{ (price * quotation.tva)|number_format(2, ',', ' ') }} €</td>
     </tr>
     <tr>
         <td><strong>Total TTC :</strong></td>
-        <td><strong>{{ invoice.total|number_format(2, ',', ' ') }} €</strong></td>
+        <td><strong>{{ (price + price * quotation.tva)|number_format(2, ',', ' ') }} €</strong></td>
     </tr>
 </table>
 </body>

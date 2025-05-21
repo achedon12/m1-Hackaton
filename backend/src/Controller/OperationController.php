@@ -5,11 +5,13 @@ namespace App\Controller;
 use App\Entity\Operation;
 use App\Entity\OperationCategory;
 use App\Repository\OperationRepository;
+use App\Service\MistralAgent;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/api/operations', name: 'api_operation_')]
 class OperationController extends AbstractController
@@ -17,6 +19,7 @@ class OperationController extends AbstractController
     public function __construct(
         private EntityManagerInterface $entityManager,
         private OperationRepository $operationRepository,
+        private HttpClientInterface $httpClient,
     ) {}
 
     #[Route('/list', name: 'list', methods: ['GET'])]
@@ -25,6 +28,35 @@ class OperationController extends AbstractController
         $operations = $this->operationRepository->findAll();
 
         return $this->json(['operations' => $operations], Response::HTTP_OK);
+    }
+
+    #[Route('/analyze', name: 'analyze', methods: ['POST'])]
+    public function analyze(Request $request, MistralAgent $mistralAgent): Response
+    {
+        $mistralApiKey = $_ENV['MISTRAL_API_KEY'];
+
+        $data = json_decode($request->getContent(), true);
+        $clientMessage = $data['message'] ?? '';
+
+        if (empty($clientMessage)) {
+            return $this->json(['error' => 'Message client manquant'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (empty($mistralApiKey)){
+            return $this->json(['error' => 'Mistral API key is missing'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        try {
+            $filteredOps = $mistralAgent->analyzeMessage($clientMessage);
+
+            return $this->json([
+                'operations' => array_values($filteredOps)
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return $this->json([
+                'error' => "Erreur lors de l'appel à l'IA : " . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     #[Route('/popular', name: 'popular', methods: ['GET'])]

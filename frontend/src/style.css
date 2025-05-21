@@ -2,3 +2,18 @@
 @plugin "daisyui" {
     themes: light --default, dark --prefersdark, winter;
 }
+
+@keyframes fadeInLeft {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeInRight {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+.animate-fade-in-left {
+    animation: fadeInLeft 0.3s ease-out;
+}
+.animate-fade-in-right {
+    animation: fadeInRight 0.3s ease-out;
+}

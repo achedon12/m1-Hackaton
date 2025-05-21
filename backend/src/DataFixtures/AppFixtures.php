@@ -4,9 +4,11 @@ namespace App\DataFixtures;
 
 use App\Entity\Brand;
 use App\Entity\Garage;
+use App\Entity\MeetingState;
 use App\Entity\Model;
 use App\Entity\Operation;
 use App\Entity\OperationCategory;
+use App\Entity\QuotationState;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
@@ -27,6 +29,12 @@ class AppFixtures extends Fixture
 
         // load vehicle brand and models
         $this->loadVehicleBrandAndModels($manager, $faker);
+
+        // load meeting state
+        $this->loadMeetingState($manager);
+
+        // load quotation state
+        $this->loadQuotationState($manager);
     }
 
     private function loadGarage(ObjectManager $manager, $faker): void
@@ -115,6 +123,44 @@ class AppFixtures extends Fixture
                 $model->setCreationDate(new \DateTimeImmutable());
                 $manager->persist($model);
             }
+        }
+
+        $manager->flush();
+    }
+
+    private function loadMeetingState(ObjectManager $manager): void
+    {
+        $states = [
+            'created',
+            'confirmed',
+            'cancelled',
+            'completed',
+        ];
+
+        foreach ($states as $state) {
+            $meetingState = new MeetingState();
+            $meetingState->setName($state);
+            $meetingState->setCreationDate(new \DateTimeImmutable());
+            $manager->persist($meetingState);
+        }
+
+        $manager->flush();
+    }
+
+    private function loadQuotationState(ObjectManager $manager): void
+    {
+        $states = [
+            'created',
+            'sent',
+            'accepted',
+            'refused',
+        ];
+
+        foreach ($states as $state) {
+            $quotationState = new QuotationState();
+            $quotationState->setName($state);
+            $quotationState->setCreationDate(new \DateTimeImmutable());
+            $manager->persist($quotationState);
         }
 
         $manager->flush();

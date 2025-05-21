@@ -38,7 +38,7 @@ readonly class ClientCreatedListener
                 ->from('no-reply@rd-vroum.com')
                 ->to($client->getEmail())
                 ->subject('Welcome to RD-Vroum!')
-                ->html($this->twig->render('emails/registration.html.twig', ['user' => $client, 'signedUrl' => 'http://localhost:1081/client/verify/' . $client->getVerificationToken()]));
+                ->html($this->twig->render('emails/registration.html.twig', ['user' => $client, 'signedUrl' => 'http://localhost:8000/client/verify/' . $client->getVerificationToken()]));
 
             $this->mailer->send($email);
         } catch (TransportExceptionInterface) {
