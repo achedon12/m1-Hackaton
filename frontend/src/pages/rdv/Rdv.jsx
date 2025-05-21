@@ -3,10 +3,14 @@ import {Checkbox, FormControlLabel, FormGroup, Select, FormControl, InputLabel, 
 import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import frLocale from "date-fns/locale/fr"; // French displaying
+import config from "../../providers/apiConfig.js";
 
 
 const steps = ['Identifiez votre véhicule', 'Choix de l\'atelier', 'Votre panier', 'Votre rendez-vous', 'Récapitulatif']
 
+const client = JSON.parse(localStorage.getItem("client"));
+
+console.log(client);
 const Rdv = () => {
 
     // Value to acknowledge which step is the current one
@@ -30,7 +34,8 @@ const Rdv = () => {
         meetingTime: '',
     });
 
-    const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NDc3NDgzNTksImV4cCI6MTc0Nzc1MTk1OSwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoiamVhbi5kdXBvbnQ2QGV4YW1wbGUuY29tIn0.G6oIU9MgreUWUyD38YTZW7vhtis3xWC-ndgDATB4XKH4MmaktYhvDCVz9vfh6z3mBBlggLnilt86M1geXuYCJddLrpTmCenRNJ8VHYm7uPf827YNJxPOjQgSYMe0nYfyVqs8ySz-j3Lih8slHRonk4wXCEv6LTyqhxiCfkUno3cdeXmRfQHtycQpQL3NS2-Hnfb74DRgQ44q5l0VARNQkDcYCDVD2q6lrLxcUJ0C-OfIR-kQy1V4rLk1p0uN937RO057wXNPTSdK5ybA1_GD2bgDnkhztaaKq4ll9bLVFe0BKZhlJZse6KhKVIVSWqJezxpGP0vdU2aKNH6MDkThhQ"
+    const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NDc4MjExMzQsImV4cCI6MTc0NzkwNzUzNCwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoiamVhbi5kdXBvbnQ2QGV4YW1wbGUuY29tIn0.TV9yCAJcq1ZSjWxngC4jfJ8Yws5FtlNgm_vlG1zvE25DmaRFpY12Indcj3vkHCn6q6qg7x1Ph6dx_z6khrVE2z2s2yaxLiMp-hagMx8D2XC-kOPrahjgrahCA6ea58g3ZoRLMHIO-v-8XErUm1m5H0KYc-QNkhbDu_W-zNUXtuGuQ_w50QjejfZ-n_spgJtRPLj0YDqDV4IEwi6IWfLIl1a_8WhsJWJZzjo3ect5IaMTCZ3YFl6DMpu2ZE0Ge4R4CPHMz9m6kCcqnC9IEcSroXotDGhXBSpTPCptb0ws6yRl5-QV9kBfmsI6JGB1KT24SKX9LoAn-XiNbqXKL0MjEw"
+
     const [clientVehicles, setClientVehicles] = React.useState([]);
     const [vehicleLoadError, setVehicleLoadError] = React.useState(null);
 
@@ -47,7 +52,7 @@ const Rdv = () => {
         //  Fetching vehicle(s) based on clientId
         const fetchVehicles = async () => {
             try {
-                const response = await fetch("http://127.0.0.1:8000/api/vehicle/client/3", // TODO : CHANGE IP
+                const response = await fetch(`${config.apiBaseUrl}/vehicle/client/${client.id}`,
                     {
                         headers: {
                             "Authorization": `Bearer ${token}`,
@@ -68,9 +73,10 @@ const Rdv = () => {
             }
         };
 
+        // TODO : Update position based on true position
         const fetchGarages = async () => {
             try {
-                const response = await fetch("http://127.0.0.1:8000/api/garage/nearby", // TODO : CHANGE IP + USE DYNAMIC COORDS
+                const response = await fetch(`${config.apiBaseUrl}/garage/nearby`,
                     {
                         method: 'POST',
                         headers: {
@@ -103,7 +109,7 @@ const Rdv = () => {
 
         const fetchCategories = async () => {
             try {
-                const response = await fetch("http://127.0.0.1:8000/api/operations/category/list", // TODO : CHANGE IP
+                const response = await fetch(`${config.apiBaseUrl}/operations/category/list`,
                     {
                         method: 'GET',
                         headers: {
@@ -151,7 +157,16 @@ const Rdv = () => {
                             value={formData.vehiclePlate}
                             onChange={handleChange('vehiclePlate')}
                             error={!!errors.vehiclePlate}
+                            MenuProps={{
+                                PaperProps: {
+                                    style: {
+                                        maxHeight: 48 * 5,
+                                        overflowY: 'auto',
+                                    },
+                                },
+                            }}
                         >
+
                             {clientVehicles.map((vehicle) => (
                                 <MenuItem key={vehicle.id} value={vehicle.registrationNumber}>
                                     {vehicle.registrationNumber} – {vehicle.brand.name} {vehicle.model.name}
@@ -210,7 +225,7 @@ const Rdv = () => {
                                 setFormData({ ...formData, category: selectedCategoryId, cart: [] });
 
                                 try {
-                                    const response = await fetch(`http://127.0.0.1:8000/api/operations/category/${selectedCategoryId}`, {
+                                    const response = await fetch(`${config.apiBaseUrl}/operations/category/${selectedCategoryId}`, {
                                         headers: {
                                             "Authorization": `Bearer ${token}`,
                                             "Accept": "application/json"
@@ -222,7 +237,7 @@ const Rdv = () => {
                                     }
 
                                     const data = await response.json();
-                                    setOperations(data); // data doit être un tableau d'opérations
+                                    setOperations(data);
                                 } catch (error) {
                                     console.error("Erreur lors du chargement des opérations :", error);
                                     setOperations([]);
@@ -252,13 +267,16 @@ const Rdv = () => {
                                         key={op.id}
                                         control={
                                             <Checkbox
-                                                checked={formData.cart.includes(op.libelle)}
+                                                checked={formData.cart.some(item => item.libelle === op.libelle)}
                                                 onChange={(e) => {
                                                     const checked = e.target.checked;
                                                     setFormData((prev) => {
-                                                        const updatedCart = checked
-                                                            ? [...prev.cart, op.libelle]
-                                                            : prev.cart.filter((item) => item !== op.libelle);
+                                                        let updatedCart;
+                                                        if (checked) {
+                                                            updatedCart = [...prev.cart, { libelle: op.libelle, price: op.price }];
+                                                        } else {
+                                                            updatedCart = prev.cart.filter(item => item.libelle !== op.libelle);
+                                                        }
                                                         return { ...prev, cart: updatedCart };
                                                     });
 
@@ -269,6 +287,7 @@ const Rdv = () => {
                                                         }));
                                                     }
                                                 }}
+
                                                 name={op.libelle}
                                             />
                                         }
@@ -287,90 +306,142 @@ const Rdv = () => {
                     </FormControl>
                 );
             case 3:
+                { const generateTimeSlots = (startDate, endDate) => {
+                    const slots = [];
+                    if (startDate && endDate && startDate <= endDate) {
+                        const start = new Date(startDate);
+                        const end = new Date(endDate);
+                        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                            for (let h = 8; h < 18; h++) {
+                                const dateTime = new Date(d);
+                                dateTime.setHours(h, 0, 0, 0); // heures pleines uniquement
+                                slots.push(new Date(dateTime));
+                            }
+                        }
+                    }
+                    return slots;
+                };
+
+                    const generateDateTimeOptions = () => {
+                        const options = [];
+                        if (formData.startDate && formData.endDate && formData.startDate <= formData.endDate) {
+                            const timeSlots = generateTimeSlots(formData.startDate, formData.endDate);
+                            timeSlots.forEach((dateTime) => {
+                                options.push(dateTime);
+                            });
+                        }
+                        return options;
+                    };
+
+
                 return (
                     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={frLocale}>
-                        <Box display="flex" gap={2}>
-                            <DatePicker
-                                label="Chercher au plus tôt"
-                                value={formData.startDate || null}
-                                onChange={(newValue) => {
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        startDate: newValue,
-                                    }));
+                        <Box display="flex" flexDirection="column" gap={3}>
+                            <Box display="flex" gap={2}>
+                                <DatePicker
+                                    label="Chercher au plus tôt"
+                                    value={formData.startDate || null}
+                                    onChange={(newValue) => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            startDate: newValue,
+                                            meetingTime: null
+                                        }));
+                                    }}
+                                    slotProps={{ textField: { fullWidth: true } }}
+                                />
+                                <DatePicker
+                                    label="Chercher au plus tard"
+                                    value={formData.endDate || null}
+                                    onChange={(newValue) => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            endDate: newValue,
+                                            meetingTime: null
+                                        }));
+                                    }}
+                                    slotProps={{ textField: { fullWidth: true } }}
+                                />
+                            </Box>
 
-                                    // Reset error when startDate is valid
-                                    if (formData.endDate && newValue > formData.endDate) {
-                                        setErrors((prev) => ({
-                                            ...prev,
-                                            dateRange: "La date de début ne peut pas être après la date de fin.",
-                                        }));
-                                    } else {
-                                        setErrors((prev) => ({
-                                            ...prev,
-                                            dateRange: '',
-                                        }));
-                                    }
-                                }}
-                                slotProps={{
-                                    textField: {
-                                        fullWidth: true,
-                                    },
-                                }}
-                            />
+                            {errors.dateRange && (
+                                <Typography variant="caption" color="error">
+                                    {errors.dateRange}
+                                </Typography>
+                            )}
 
-                            <DatePicker
-                                label="Chercher au plus tard"
-                                value={formData.endDate || null}
-                                onChange={(newValue) => {
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        endDate: newValue,
-                                    }));
-
-                                    // Reset error when endDate is valid
-                                    if (formData.startDate && newValue < formData.startDate) {
-                                        setErrors((prev) => ({
-                                            ...prev,
-                                            dateRange: "La date de fin ne peut pas être avant la date de début.",
-                                        }));
-                                    } else {
-                                        setErrors((prev) => ({
-                                            ...prev,
-                                            dateRange: '',
-                                        }));
-                                    }
-                                }}
-                                slotProps={{
-                                    textField: {
-                                        fullWidth: true,
-                                    },
-                                }}
-                            />
+                            {formData.startDate && formData.endDate && formData.startDate <= formData.endDate && (
+                                <FormControl fullWidth>
+                                    <InputLabel id="time-slot-label">Choisissez un créneau</InputLabel>
+                                    <Select
+                                        labelId="time-slot-label"
+                                        value={formData.meetingTime ? formData.meetingTime.toISOString() : ''}
+                                        MenuProps={{
+                                            PaperProps: {
+                                                style: {
+                                                    maxHeight: 48 * 5,
+                                                    overflowY: 'auto',
+                                                },
+                                            },
+                                        }}
+                                        onChange={(e) => {
+                                            const selectedDate = new Date(e.target.value);
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                meetingTime: selectedDate,
+                                            }));
+                                        }}
+                                    >
+                                        {generateDateTimeOptions().map((dt, index) => (
+                                            <MenuItem key={index} value={dt.toISOString()}>
+                                                {dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à {dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            )}
                         </Box>
-
-                        {errors.dateRange && (
-                            <Typography variant="caption" color="error">
-                                {errors.dateRange}
-                            </Typography>
-                        )}
                     </LocalizationProvider>
-                );
+                ); }
 
             case 4:
                 return (
                     <Box>
                         <Typography variant="h6" gutterBottom>Récapitulatif de votre demande</Typography>
-                        <Typography><strong>Immatriculation :</strong> {formData.vehiclePlate}</Typography>
-                        <Typography><strong>Atelier choisi :</strong> {
+                        <Typography>
+                            <strong>Immatriculation :</strong> {formData.vehiclePlate}
+                        </Typography>
+                        <Typography>
+                            <strong>Atelier choisi :</strong> {
                             (() => {
-                                const selectedGarage = nearByGarages.find(g => g.id === formData.place);
-                                return selectedGarage ? `${selectedGarage.name} – ${selectedGarage.zipcode} ${selectedGarage.city}` : "Non sélectionné";
+                                const g = nearByGarages.find(garage => garage.id === formData.place);
+                                return g ? `${g.name} – ${g.zipcode} ${g.city}` : "Non sélectionné";
                             })()
-                        }</Typography>
-
-                        <Typography><strong>Opérations choisies :</strong> {formData.cart.length > 0 ? formData.cart.join(', ') : "Aucune"}</Typography>
-                        <Typography><strong>Rendez-vous :</strong> {formData.meetingTime ? formData.meetingTime.toLocaleString('fr-FR') : "Non sélectionné"}</Typography>
+                        }
+                        </Typography>
+                        <Typography>
+                            <strong>Opérations choisies :</strong> {
+                            formData.cart.length > 0
+                                ? formData.cart.map(op => `${op.libelle} (${op.price} €)`).join(', ')
+                                : "Aucune"
+                        }
+                        </Typography>
+                        <Typography>
+                            <strong>Rendez-vous :</strong> {formData.meetingTime ? formData.meetingTime.toLocaleString('fr-FR') : "Non sélectionné"}
+                        </Typography>
+                        <Typography>
+                            <strong>Total HT :</strong> {
+                            (() => formData.cart.reduce((sum, op) => sum + op.price, 0))()
+                        } €
+                        </Typography>
+                        <Typography>
+                            <strong>Montant TVA (20%) :</strong> {
+                            (() => {
+                                const totalHT = formData.cart.reduce((sum, op) => sum + op.price, 0);
+                                return (totalHT * 0.2).toFixed(2);
+                            })()
+                        } €
+                        </Typography>
                     </Box>
                 );
 
@@ -446,6 +517,13 @@ const Rdv = () => {
                         dateRange: '',
                     }));
                 }
+                if (!formData.meetingTime) {
+                    setErrors((prev) => ({
+                        ...prev,
+                        dateRange: "Veuillez sélectionner un créneau horaire.",
+                    }));
+                    valid = false;
+                }
                 break;
             default:
                 break;
@@ -456,11 +534,63 @@ const Rdv = () => {
 
 
     // Go to next step
-    const handleNext = () => {
-        if (checkStepComplete(activeStep)) {
-            setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    const handleNext = async () => {
+        if (activeStep === steps.length - 1) {
+            try {
+                const tvaRate = 0.2;
+
+                // Récupérer les libellés sélectionnés dans le cart
+                const selectedLibelles = formData.cart.map(item => item.libelle);
+
+                // Filtrer les opérations selon les libellés sélectionnés
+                const selectedOperations = operations.filter(op =>
+                    selectedLibelles.includes(op.libelle)
+                );
+
+                // Calculer le total des prix
+                const totalPrice = selectedOperations.reduce((total, op) => total + op.price, 0);
+
+                // Construire la chaîne d'ids des opérations (ex: "1;2;3")
+                const operationsString = selectedOperations.map(op => op.id).join(';');
+
+                const body = {
+                    price: Math.round(totalPrice),
+                    tva: tvaRate,
+                    operations: operationsString,
+                    date: formData.meetingTime
+                        ? `${formData.meetingTime.getFullYear()}-${String(formData.meetingTime.getMonth() + 1).padStart(2, '0')}-${String(formData.meetingTime.getDate()).padStart(2, '0')} ${String(formData.meetingTime.getHours()).padStart(2, '0')}:${String(formData.meetingTime.getMinutes()).padStart(2, '0')}:00`
+                        : null,
+                };
+
+                const response = await fetch(`${config.apiBaseUrl}/quotation/create`, {
+                    method: 'POST',
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erreur ${response.status}`);
+                }
+
+                setActiveStep((prevActiveStep) => prevActiveStep + 1);
+
+            } catch (error) {
+                console.error("Erreur lors de la création du devis :", error);
+            }
+
+        } else {
+            if (checkStepComplete(activeStep)){
+                setActiveStep((prevActiveStep) => prevActiveStep + 1);
+            }
         }
     };
+
+
+
 
     // Go back to previous step
     const handleBack = () => {
