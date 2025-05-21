@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Layout, Login, Profile, Register, Rdv, Home, OperationDetails } from "./pages";
+import { Layout, Login, Profile, Register, Rdv, Home } from "./pages";
 import { AuthProvider } from "./providers/AuthProvider.jsx";
 import { ProtectedRoute } from "./components/index.js";
 
@@ -12,8 +12,6 @@ const App = () => (
 
                 <Route path="/" element={<Layout />}>
                     <Route index element={<Home />} />
-                    <Route path="operation/:categoryName/:operationId" element={<OperationDetails />} />
-
                     <Route path="profile" element={
                         <ProtectedRoute>
                             <Profile />
