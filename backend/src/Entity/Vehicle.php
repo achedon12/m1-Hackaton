@@ -24,7 +24,7 @@ class Vehicle
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTime $circulationDate = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $vin = null;
 
     #[ORM\Column(type: Types::BIGINT)]
@@ -79,7 +79,7 @@ class Vehicle
         return $this->vin;
     }
 
-    public function setVin(string $vin): static
+    public function setVin(?string $vin = null): static
     {
         $this->vin = $vin;
 
