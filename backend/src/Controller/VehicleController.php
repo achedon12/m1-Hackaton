@@ -2,9 +2,12 @@
 
 namespace App\Controller;
 
+use App\Entity\Driver;
+use App\Entity\Meeting;
 use App\Entity\Vehicle;
 use App\Repository\BrandRepository;
 use App\Repository\ModelRepository;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -171,6 +174,14 @@ final class VehicleController extends AbstractController
 
         if (!$vehicles) {
             return $this->json(['error' => 'No vehicles found for this client'], Response::HTTP_NOT_FOUND);
+        }
+
+        foreach ($vehicles as $vehicle) {
+            $operations = $this->entityManager->getRepository(Meeting::class)->findBy(['vehicle' => $vehicle->getId()]);
+            $drivers = $this->entityManager->getRepository(Driver::class)->findBy(['vehicle' => $vehicle->getId()]);
+
+            $vehicle->setOperations(new ArrayCollection($operations));
+            $vehicle->setDrivers(new ArrayCollection($drivers));
         }
 
         return $this->json($vehicles, Response::HTTP_OK);

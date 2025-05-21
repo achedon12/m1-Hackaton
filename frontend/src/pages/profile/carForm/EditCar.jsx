@@ -39,9 +39,6 @@ const EditCar = forwardRef(({car, onSave}, ref) => {
                         Enregistrer
                     </button>
                 </div>
-                <form method="dialog" className="modal-backdrop">
-                    <button>Fermer</button>
-                </form>
             </div>
         </dialog>
     );

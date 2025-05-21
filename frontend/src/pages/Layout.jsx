@@ -2,10 +2,12 @@ import {useState, useEffect} from "react";
 import {Outlet, NavLink} from "react-router-dom";
 import {ShoppingCart, User, MapPin} from "lucide-react";
 import {useAuth} from "../providers/AuthProvider.jsx";
+import config from "../providers/apiConfig.js";
 
 const Layout = () => {
     const {isAuthenticated, logout} = useAuth();
     const [location, setLocation] = useState(null);
+    const [nearestGarage, setNearestGarage] = useState(null);
     const client = JSON.parse(localStorage.getItem("client"));
 
     const navItems = [
@@ -16,11 +18,28 @@ const Layout = () => {
     useEffect(() => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const {latitude, longitude} = position.coords;
                     setLocation({latitude, longitude});
 
-                    //TODO NEARBY
+                    try {
+                        const response = await fetch(`${config.apiBaseUrl}/garage/nearby`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                longitude: latitude,
+                                latitude: longitude
+                            }),
+                        });
+                        const nearestGarage = await response.json();
+                        if (nearestGarage.length > 0) {
+                            setNearestGarage(nearestGarage[0]);
+                        }
+                    } catch (error) {
+                        console.error("Erreur lors de la récupération du garage le plus proche :", error);
+                    }
                 },
                 (error) => {
                     console.error("Erreur lors de la récupération de la localisation :", error);
@@ -36,7 +55,7 @@ const Layout = () => {
             <header className="navbar shadow-sm md:px-20 lg:px-60 bg-secondary">
                 <div className={"flex-1"}>
                     <NavLink to="/" className="btn btn-ghost text-xl text-white">
-                        <img src={"logo-white.png"} alt={"logo"} className={"h-8 mr-2 fill-white"} />
+                        <img src={"logo-white.png"} alt={"logo"} className={"h-8 mr-2 fill-white"}/>
                         <h1 className={"text-xl md:text-2xl text-white"}>
                             RD-Vroum
                         </h1>
@@ -44,16 +63,14 @@ const Layout = () => {
                 </div>
                 <div className="flex-none">
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center text-white">
-                            <MapPin className="w-6 h-6 mr-1"/>
-                            {location ? (
-                                <span>
-                                    {location.latitude.toFixed(2)}, {location.longitude.toFixed(2)}
-                                </span>
-                            ) : (
-                                <span>Localisation...</span>
-                            )}
-                        </div>
+                        {location && (
+                            <div className="flex items-center text-white">
+                                <MapPin className="w-6 h-6 mr-1"/>
+                                <span className="text-sm font-bold">
+                                {nearestGarage ? nearestGarage.city : "Localisation en cours..."}
+                            </span>
+                            </div>
+                        )}
                         <div className="dropdown dropdown-end">
                             <div tabIndex="0" role="button" className="btn btn-ghost btn-circle">
                                 <div className="indicator">
@@ -74,7 +91,13 @@ const Layout = () => {
                                     )}
                                 </div>
                             </div>
-                            <ul tabIndex="0" className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+                            <ul tabIndex="0"
+                                className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+                                <li>
+                                    <p className={"text-sm font-bold"}>
+                                        {client.firstname} {client.lastname}
+                                    </p>
+                                </li>
                                 <li>
                                     <NavLink to="/profile">Modifier son profil</NavLink>
                                 </li>
@@ -90,7 +113,8 @@ const Layout = () => {
                 <ul className="flex space-x-8">
                     {navItems.map((item) => (
                         <li key={item.name} className="text-sm md:text-base hover:text-primary">
-                            <NavLink to={item.path} className={({isActive}) => (isActive ? 'text-primary' : 'text-quaternary')}>
+                            <NavLink to={item.path}
+                                     className={({isActive}) => (isActive ? 'text-primary' : 'text-quaternary')}>
                                 {item.name}
                             </NavLink>
                         </li>

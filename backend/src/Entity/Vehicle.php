@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\VehicleRepository;
 use App\Trait\TimeStampTrait;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -40,6 +41,9 @@ class Vehicle
     #[ORM\ManyToOne(targetEntity: Client::class)]
     #[ORM\JoinColumn(nullable: false)]
     private Client $client;
+
+    private ArrayCollection $operations;
+    private ArrayCollection $drivers;
 
     public function getId(): ?int
     {
@@ -130,5 +134,28 @@ class Vehicle
         return $this;
     }
 
+    public function getOperations(): ArrayCollection
+    {
+        return $this->operations;
+    }
+
+    public function setOperations(ArrayCollection $operations): static
+    {
+        $this->operations = $operations;
+
+        return $this;
+    }
+
+    public function getDrivers(): ArrayCollection
+    {
+        return $this->drivers;
+    }
+
+    public function setDrivers(ArrayCollection $drivers): static
+    {
+        $this->drivers = $drivers;
+
+        return $this;
+    }
 
 }
