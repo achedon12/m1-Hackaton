@@ -3,7 +3,8 @@ import config from "../providers/apiConfig.js";
 import {Bot, User} from "lucide-react";
 
 const ChatBot = () => {
-    const clientId = 8;
+    const client = JSON.parse(localStorage.getItem("client"));
+    const clientId = client.id;
 
     const bottomRef = useRef(null);
 
@@ -88,6 +89,7 @@ const ChatBot = () => {
 
                     if (res.ok) {
                         appendMessage("bot", "Véhicule créé avec succès !");
+                        appendMessage("bot", "Veuillez renseigner le problème de votre véhicule :");
                         setStep("step2");
                     } else {
                         const err = await res.json();
@@ -113,6 +115,7 @@ const ChatBot = () => {
 
                     if (res.ok) {
                         appendMessage("bot", "Kilométrage mis à jour avec succès !");
+                        appendMessage("bot", "Veuillez renseigner le problème de votre véhicule :");
                         setStep("step2");
                     } else {
                         const err = await res.json();
@@ -347,6 +350,7 @@ const ChatBot = () => {
                                     setConfirmKms(true);
                                     appendMessage("user", "Oui");
                                     appendMessage("bot", "Très bien, on continue.");
+                                    appendMessage("bot", "Veuillez renseigner le problème de votre véhicule :");
                                     setStep("step2");
                                 }}
                                 className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition focus:outline-none focus:ring-2 focus:ring-green-300"
