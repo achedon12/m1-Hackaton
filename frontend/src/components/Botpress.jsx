@@ -1,7 +1,7 @@
 import {Composer, Fab, Header, useWebchat, Configuration, MessageList} from '@botpress/webchat'
 import {useMemo, useState} from "react";
 
-function Botpress() {
+export function Botpress() {
     const [isWebchatOpen, setIsWebchatOpen] = useState(false)
 
     const {

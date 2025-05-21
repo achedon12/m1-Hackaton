@@ -3,6 +3,7 @@ import config from "../../providers/apiConfig.js";
 import {Loader} from "../../components/index.js";
 import {Car, Fan, LoaderPinwheel, NotebookPen, Wrench} from "lucide-react";
 import ChatBot from "../../components/ChatBot.jsx";
+import Botpress from "../../components/Botpress.jsx";
 import { HelpCircle, X } from "lucide-react";
 
 const Home = () => {
@@ -146,7 +147,11 @@ const Home = () => {
                         </button>
                     )}
                 </div>
+
             )}
+            <div className="fixed bottom-4 right-4 z-50">
+                <Botpress/>
+            </div>
         </div>
     );
 };
