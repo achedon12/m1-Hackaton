@@ -3,6 +3,7 @@
 namespace App\Event;
 
 use App\Entity\Client;
+use App\Entity\Quotation;
 use Symfony\Contracts\EventDispatcher\Event;
 
 
@@ -10,15 +11,15 @@ class QuotationCreatedEvent extends Event
 {
     public const string NAME = 'app.facture.created';
 
-    private Client $client;
+    private Quotation $quotation;
 
-    public function __construct(Client $client)
+    public function __construct(Quotation $quotation)
     {
-        $this->client = $client;
+        $this->quotation = $quotation;
     }
 
-    public function getUser(): Client
+    public function getQuotation(): Quotation
     {
-        return $this->client;
+        return $this->quotation;
     }
 }
