@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import config from "../../providers/apiConfig.js";
 import {Loader} from "../../components/index.js";
 import {Car, Fan, LoaderPinwheel, NotebookPen, Wrench} from "lucide-react";
-import ChatBot from "../../components/ChatBot.jsx";
 import Botpress from "../../components/Botpress.jsx";
 import { HelpCircle, X } from "lucide-react";
 
@@ -121,34 +120,6 @@ const Home = () => {
                 </div>
             </div>
 
-            {token && (
-                <div className="fixed bottom-4 right-4 z-50">
-                    {isChatOpen ? (
-                        <div className="relative">
-                            {/* Conteneur plus grand pour la modale */}
-                            <div className="absolute bottom-14 right-4 shadow-2xl">
-                                <ChatBot />
-                            </div>
-                            <button
-                                onClick={() => setIsChatOpen(false)}
-                                className="bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700 transition"
-                                title="Fermer le chat"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => setIsChatOpen(true)}
-                            className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition"
-                            title="Ouvrir l'assistant"
-                        >
-                            <HelpCircle size={24} />
-                        </button>
-                    )}
-                </div>
-
-            )}
             <div className="fixed bottom-4 right-4 z-50">
                 <Botpress/>
             </div>
