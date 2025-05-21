@@ -3,7 +3,8 @@ import config from "../providers/apiConfig.js";
 import {Bot, User} from "lucide-react";
 
 const ChatBot = () => {
-    const clientId = 8;
+    const client = JSON.parse(localStorage.getItem("client"));
+    const clientId = client.id;
 
     const bottomRef = useRef(null);
 
@@ -19,6 +20,9 @@ const ChatBot = () => {
     const [selectedBrand, setSelectedBrand] = useState("");
     const [selectedModel, setSelectedModel] = useState("");
     const [confirmKms, setConfirmKms] = useState(null);
+
+    const [operations, setOperations] = useState([]);
+    const [selectedOperations, setSelectedOperations] = useState([]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({behavior: "smooth"});
@@ -85,6 +89,7 @@ const ChatBot = () => {
 
                     if (res.ok) {
                         appendMessage("bot", "Véhicule créé avec succès !");
+                        appendMessage("bot", "Veuillez renseigner le problème de votre véhicule :");
                         setStep("step2");
                     } else {
                         const err = await res.json();
@@ -110,6 +115,7 @@ const ChatBot = () => {
 
                     if (res.ok) {
                         appendMessage("bot", "Kilométrage mis à jour avec succès !");
+                        appendMessage("bot", "Veuillez renseigner le problème de votre véhicule :");
                         setStep("step2");
                     } else {
                         const err = await res.json();
@@ -217,15 +223,54 @@ const ChatBot = () => {
         setUserInput("");
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
+        if (step === "step2") {
+            const message = userInput.trim();
+            appendMessage("user", message);
+
+            try {
+                const res = await fetch(`${config.apiBaseUrl}/operations/analyze`, {
+                    method: "POST",
+                    headers: config.headers,
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await res.json();
+
+                if (data.operations.length === 0) {
+                    appendMessage("bot", "Je n’ai pas compris l’opération à effectuer. Pouvez-vous reformuler ?");
+                } else {
+                    const grouped = groupByCategory(data.operations);
+                    setOperations(grouped);
+                    appendMessage("bot", "Voici les opérations détectées par catégories, veuillez les sélectionner :");
+                    setStep("choose_operations");
+                }
+            } catch (err) {
+                appendMessage("bot", "Une erreur est survenue lors de l'analyse des opérations.");
+            }
+
+            setUserInput("");
+            return;
+        }
+
+
         if (!userInput.trim()) return;
         if (step in stepsConfig) {
             handleFormSteps();
         }
     };
 
+    const groupByCategory = (operationsList) => {
+        return operationsList.reduce((acc, op) => {
+            const cat = op.category?.name || "Autres";
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(op);
+            return acc;
+        }, {});
+    };
+
     return (
-        <div className="w-[450px] h-[500px] max-h-[800px] p-4 bg-white shadow rounded flex flex-col">
+        <div className="w-[600px] h-[650px] max-h-[800px] p-4 bg-white shadow rounded flex flex-col">
             <div className="flex-1 overflow-y-auto border p-4 mb-2 space-y-3 bg-gray-50 rounded">
                 {messages.map((msg, index) => (
                     <div
@@ -305,6 +350,7 @@ const ChatBot = () => {
                                     setConfirmKms(true);
                                     appendMessage("user", "Oui");
                                     appendMessage("bot", "Très bien, on continue.");
+                                    appendMessage("bot", "Veuillez renseigner le problème de votre véhicule :");
                                     setStep("step2");
                                 }}
                                 className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition focus:outline-none focus:ring-2 focus:ring-green-300"
@@ -369,6 +415,66 @@ const ChatBot = () => {
                         ))}
                     </select>
                 )}
+
+                {step === "choose_operations" && (
+                    <div className="mt-2 space-y-4">
+                        {Object.entries(operations).map(([category, ops]) => (
+                            <div key={category}>
+                                <h4 className="font-semibold text-blue-700 mb-1">{category}</h4>
+                                <div className="space-y-1 pl-2">
+                                    {ops.map(op => (
+                                        <div key={op.id} className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                id={`op-${op.id}`}
+                                                checked={selectedOperations.includes(op.id)}
+                                                onChange={() => {
+                                                    setSelectedOperations(prev =>
+                                                        prev.includes(op.id)
+                                                            ? prev.filter(id => id !== op.id)
+                                                            : [...prev, op.id]
+                                                    );
+                                                }}
+                                            />
+                                            <label htmlFor={`op-${op.id}`}>{op.libelle}</label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+
+                        <button
+                            onClick={() => {
+                                appendMessage("user", "Je veux être rappelé");
+                                appendMessage("bot", "D'accord, nous allons vous recontacter pour définir les réparations.");
+                                setStep("rappel_request");
+                            }}
+                            className="mt-4 text-blue-600 underline hover:text-blue-800"
+                        >
+                            Je veux envoyer une demande de rappel
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                appendMessage("user", "Voici mes choix");
+                                const selected = Object.values(operations).flat().filter(op => selectedOperations.includes(op.id));
+                                const summary = selected.map(op => `- ${op.libelle}`).join("\n");
+                                appendMessage("bot", `✅ Vous avez sélectionné :\n${summary}`);
+                                setStep("summary");
+                            }}
+                            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                        >
+                            Confirmer les opérations sélectionnées
+                        </button>
+                    </div>
+                )}
+
+                {step === "rappel_request" && (
+                    <div className="mt-4">
+                        <p className="mb-2">Un conseiller vous recontactera bientôt. Souhaitez-vous renseigner vos coordonnées maintenant ?</p>
+                        {/* Tu peux ajouter ici un formulaire pour nom, email, téléphone */}
+                    </div>
+                )}
                 <div ref={bottomRef} />
             </div>
 
@@ -399,6 +505,8 @@ const ChatBot = () => {
                     </button>
                 </div>
             )}
+
+
 
             {["ask_brand", "ask_model"].includes(step) && (
                 <button
