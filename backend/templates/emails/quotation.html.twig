@@ -4,7 +4,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Facture n°{{ quotation.id }}</title>
+    <title>Devis n°{{ quotation.id }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -49,7 +49,7 @@
     </style>
 </head>
 <body>
-<h1>Facture n°{{ quotation.id }}</h1>
+<h1>Devis n°{{ quotation.id }}</h1>
 
 <div class="company">
     <strong>{{ company.name }}</strong><br>
@@ -66,8 +66,17 @@
     {{ client.country is defined ? client.country : 'France' }}
 </div>
 
+<div class="vehicle">
+    <strong>Véhicule :</strong><br>
+    Marque : {{ quotation.vehicle.brand.name }} <br>
+    Modèle : {{ quotation.vehicle.model.name }} <br>
+    Plaque : {{ quotation.vehicle.registrationNumber }} <br>
+    Numéro de série : {{ quotation.vehicle.vin }} <br>
+    Kilométrage {{ quotation.vehicle.kms }} Kms<br>
+</div>
+
 <p><strong>Date :</strong> {{ request_date }}</p>
-<p><strong>Numéro de facture :</strong> {{ quotation.id }}</p>
+<p><strong>Numéro de devis :</strong> {{ quotation.id }}</p>
 
 <table>
     <thead>

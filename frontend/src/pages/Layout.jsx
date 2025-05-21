@@ -13,6 +13,7 @@ const Layout = () => {
     const navItems = [
         {name: "Prendre rendez-vous", path: "/rdv"},
         {name: "Nos services", path: "/operations"},
+        {name: "Nos garages", path: "/garages"},
     ];
 
     useEffect(() => {
@@ -29,8 +30,8 @@ const Layout = () => {
                                 "Content-Type": "application/json",
                             },
                             body: JSON.stringify({
-                                longitude: latitude,
-                                latitude: longitude
+                                longitude: longitude,
+                                latitude: latitude
                             }),
                         });
                         const nearestGarage = await response.json();
