@@ -66,6 +66,8 @@ class Garage
     #[Groups(['garage:read'])]
     public ?string $workingTime = '00:00:00';
 
+    public ?bool $available = false;
+
     public function getId(): ?int
     {
         return $this->id;
