@@ -232,7 +232,7 @@ const ChatBot = () => {
                 const res = await fetch(`${config.apiBaseUrl}/operations/analyze`, {
                     method: "POST",
                     headers: config.headers,
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({message: message})
                 });
 
                 const data = await res.json();
@@ -270,7 +270,7 @@ const ChatBot = () => {
     };
 
     return (
-        <div className="w-[600px] h-[650px] max-h-[800px] p-4 bg-white shadow rounded-lg flex flex-col">
+        <div className="w-full min-w-[600px] max-w-[800px] h-[75vh] min-h-[400px] max-h-screen p-4 bg-white shadow rounded-lg flex flex-col">
             <div className="flex-1 overflow-y-auto border p-4 mb-2 space-y-3 bg-gray-50 rounded">
                 {messages.map((msg, index) => (
                     <div
@@ -294,7 +294,7 @@ const ChatBot = () => {
                             {msg.text.split("\n").map((line, i) => (
                                 <React.Fragment key={i}>
                                     {line}
-                                    <br />
+                                    <br/>
                                 </React.Fragment>
                             ))}
                         </div>
@@ -471,11 +471,12 @@ const ChatBot = () => {
 
                 {step === "rappel_request" && (
                     <div className="mt-4">
-                        <p className="mb-2">Un conseiller vous recontactera bientôt. Souhaitez-vous renseigner vos coordonnées maintenant ?</p>
+                        <p className="mb-2">Un conseiller vous recontactera bientôt. Souhaitez-vous renseigner vos
+                            coordonnées maintenant ?</p>
                         {/* Tu peux ajouter ici un formulaire pour nom, email, téléphone */}
                     </div>
                 )}
-                <div ref={bottomRef} />
+                <div ref={bottomRef}/>
             </div>
 
             {!["choose_vehicle", "start", "end", "ask_brand", "ask_model", "confirm_kms"].includes(step) && (
@@ -505,7 +506,6 @@ const ChatBot = () => {
                     </button>
                 </div>
             )}
-
 
 
             {["ask_brand", "ask_model"].includes(step) && (

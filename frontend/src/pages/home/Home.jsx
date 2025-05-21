@@ -125,7 +125,6 @@ const Home = () => {
                 <div className="fixed bottom-4 right-4 z-50">
                     {isChatOpen ? (
                         <div className="relative">
-                            {/* Conteneur plus grand pour la modale */}
                             <div className="absolute bottom-14 right-4 shadow-2xl">
                                 <ChatBot />
                             </div>
