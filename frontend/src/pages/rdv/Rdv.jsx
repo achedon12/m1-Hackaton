@@ -10,7 +10,6 @@ const steps = ['Identifiez votre véhicule', 'Choix de l\'atelier', 'Votre panie
 
 const client = JSON.parse(localStorage.getItem("client"));
 
-console.log(client);
 const Rdv = () => {
 
     // Value to acknowledge which step is the current one
@@ -34,8 +33,6 @@ const Rdv = () => {
         meetingTime: '',
     });
 
-    const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NDc4MjExMzQsImV4cCI6MTc0NzkwNzUzNCwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoiamVhbi5kdXBvbnQ2QGV4YW1wbGUuY29tIn0.TV9yCAJcq1ZSjWxngC4jfJ8Yws5FtlNgm_vlG1zvE25DmaRFpY12Indcj3vkHCn6q6qg7x1Ph6dx_z6khrVE2z2s2yaxLiMp-hagMx8D2XC-kOPrahjgrahCA6ea58g3ZoRLMHIO-v-8XErUm1m5H0KYc-QNkhbDu_W-zNUXtuGuQ_w50QjejfZ-n_spgJtRPLj0YDqDV4IEwi6IWfLIl1a_8WhsJWJZzjo3ect5IaMTCZ3YFl6DMpu2ZE0Ge4R4CPHMz9m6kCcqnC9IEcSroXotDGhXBSpTPCptb0ws6yRl5-QV9kBfmsI6JGB1KT24SKX9LoAn-XiNbqXKL0MjEw"
-
     const [clientVehicles, setClientVehicles] = React.useState([]);
     const [vehicleLoadError, setVehicleLoadError] = React.useState(null);
 
@@ -54,10 +51,7 @@ const Rdv = () => {
             try {
                 const response = await fetch(`${config.apiBaseUrl}/vehicle/client/${client.id}`,
                     {
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Accept": "application/json"
-                        }
+                        headers: config.headers,
                     });
 
                 if (!response.ok) {
@@ -79,11 +73,7 @@ const Rdv = () => {
                 const response = await fetch(`${config.apiBaseUrl}/garage/nearby`,
                     {
                         method: 'POST',
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Accept": "application/json",
-                            "Content-Type": "application/json"
-                        },
+                        headers: config.headers,
                         body: JSON.stringify(
                             {
                                 "longitude": 45.74,
@@ -112,10 +102,7 @@ const Rdv = () => {
                 const response = await fetch(`${config.apiBaseUrl}/operations/category/list`,
                     {
                         method: 'GET',
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Accept": "application/json",
-                        }
+                        headers: config.headers,
                     });
 
                 if (!response.ok) {
@@ -226,10 +213,7 @@ const Rdv = () => {
 
                                 try {
                                     const response = await fetch(`${config.apiBaseUrl}/operations/category/${selectedCategoryId}`, {
-                                        headers: {
-                                            "Authorization": `Bearer ${token}`,
-                                            "Accept": "application/json"
-                                        }
+                                        headers: config.headers,
                                     });
 
                                     if (!response.ok) {
@@ -564,11 +548,7 @@ const Rdv = () => {
 
                 const response = await fetch(`${config.apiBaseUrl}/quotation/create`, {
                     method: 'POST',
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Accept": "application/json",
-                        "Content-Type": "application/json"
-                    },
+                    headers: config.headers,
                     body: JSON.stringify(body)
                 });
 
