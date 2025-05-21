@@ -93,6 +93,12 @@ final class VehicleController extends AbstractController
             $vehicle->setRegistrationNumber($data['registrationNumber']);
         }
         if (isset($data['vin'])) {
+            $vehicleByVin = $this->entityManager->getRepository(Vehicle::class)->findOneBy(['vin' => $data['vin']]);
+
+            if ($vehicleByVin) {
+                return $this->json(['error' => 'Vehicle with this VIN already exists'], Response::HTTP_BAD_REQUEST);
+            }
+
             $vehicle->setVin($data['vin']);
         }
 
@@ -127,10 +133,6 @@ final class VehicleController extends AbstractController
             return $this->json(['error' => 'Registration number is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!isset($data['vin'])) {
-            return $this->json(['error' => 'VIN is required'], Response::HTTP_BAD_REQUEST);
-        }
-
         if (!$brand = $this->brandRepository->find($data['brand'])) {
             return $this->json(['error' => 'Brand not found'], Response::HTTP_BAD_REQUEST);
         }
@@ -144,12 +146,13 @@ final class VehicleController extends AbstractController
             return $this->json(['error' => 'This model does not belong to the specified brand'], Response::HTTP_BAD_REQUEST);
         }
 
-        $vehicle = $this->entityManager->getRepository(Vehicle::class)->findOneBy(['vin' => $data['vin']]);
+        if (isset($data['vin'])) {
+            $vehicle = $this->entityManager->getRepository(Vehicle::class)->findOneBy(['vin' => $data['vin']]);
 
-        if ($vehicle) {
-            return $this->json(['error' => 'Vehicle with this VIN already exists'], Response::HTTP_BAD_REQUEST);
+            if ($vehicle) {
+                return $this->json(['error' => 'Vehicle with this VIN already exists'], Response::HTTP_BAD_REQUEST);
+            }
         }
-
 
         $vehicle = new Vehicle();
         $vehicle->setModel($model);
@@ -157,7 +160,7 @@ final class VehicleController extends AbstractController
         $vehicle->setCirculationDate(new \DateTime($data['circulationDate']));
         $vehicle->setKms($data['kms']);
         $vehicle->setRegistrationNumber($data['registrationNumber']);
-        $vehicle->setVin($data['vin']);
+        $vehicle->setVin($data['vin'] ?? null);
         $vehicle->setCreationDate(new \DateTimeImmutable());
         $vehicle->setClient($this->security->getUser());
 
