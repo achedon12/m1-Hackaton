@@ -51,8 +51,8 @@ class AppFixtures extends Fixture
                 $garage->setCity($data[1]);
                 $garage->setAddress($data[2]);
                 $garage->setZipcode($data[3]);
-                $garage->setLongitude($data[4]);
-                $garage->setLatitude($data[5]);
+                $garage->setLatitude($data[4]);
+                $garage->setLongitude($data[5]);
                 $garage->setPhone($faker->phoneNumber());
                 $garage->setEmail($faker->email());
                 $garage->setTotalWorkers(1);
