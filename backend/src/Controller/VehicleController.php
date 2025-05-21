@@ -182,6 +182,11 @@ final class VehicleController extends AbstractController
 
             $vehicle->setOperations(new ArrayCollection($operations));
             $vehicle->setDrivers(new ArrayCollection($drivers));
+
+            $brandNameLowercase = strtolower($vehicle->getBrand()->getName());
+            $logoPath = 'uploads/brands/' . $brandNameLowercase . '.png';
+
+            $vehicle->getBrand()->setLogoUrl($logoPath);
         }
 
         return $this->json($vehicles, Response::HTTP_OK);

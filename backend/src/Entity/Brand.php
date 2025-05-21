@@ -19,6 +19,8 @@ class Brand
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
+    private ?string $logoUrl = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -32,6 +34,18 @@ class Brand
     public function setName(string $name): static
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getLogoUrl(): ?string
+    {
+        return $this->logoUrl;
+    }
+
+    public function setLogoUrl(string $logoUrl): static
+    {
+        $this->logoUrl = $logoUrl;
 
         return $this;
     }
