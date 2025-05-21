@@ -38,11 +38,11 @@ const Garages = () => {
             {loading ? (
                 <Loader/>
             ) : (
-                <div className="flex flex-col items-center justify-center overflow-auto h-full w-full">
+                <div className="flex flex-col items-center justify-center overflow-auto h-full w-full my-6">
                     <MapContainer
                         center={[46.603354, 1.888334]}
                         zoom={6}
-                        style={{height: "500px", width: "80%"}}
+                        style={{height: "600px", width: "80%"}}
                     >
                         <TileLayer
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
