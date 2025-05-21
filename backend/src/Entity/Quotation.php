@@ -10,6 +10,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: QuotationRepository::class)]
 class Quotation
@@ -48,10 +49,8 @@ class Quotation
     #[Groups(['quotation:read'])]
     private ?string $hash = null;
 
-
     #[ORM\OneToMany(targetEntity: QuotationOperation::class, mappedBy: 'quotation')]
     #[Groups(['quotation:read'])]
-    #[ORM\MaxDepth(1)]
     private Collection $quotationOperations;
 
     public function __construct()

@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\QuotationStateRepository;
 use App\Trait\TimeStampTrait;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: QuotationStateRepository::class)]
 class QuotationState
@@ -14,9 +15,11 @@ class QuotationState
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['quotationState:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['quotationState:read'])]
     private ?string $name = null;
 
     public function getId(): ?int
