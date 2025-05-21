@@ -7,6 +7,7 @@ use App\Repository\OperationRepository;
 use App\Trait\TimeStampTrait;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: OperationRepository::class)]
 class Operation
@@ -16,28 +17,36 @@ class Operation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['operation:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(['operation:read'])]
     private ?float $price = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['operation:read'])]
     private ?string $libelle = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE)]
+    #[Groups(['operation:read'])]
     private ?\DateTime $estimatedDuration = null;
 
     #[ORM\Column]
+    #[Groups(['operation:read'])]
     private ?int $workerNeeded = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['operation:read'])]
     private ?string $comment = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['operation:read'])]
     private ?string $help = null;
 
     #[ORM\ManyToOne(targetEntity: OperationCategory::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['category:read'])]
     private OperationCategory $category;
 
     public function getId(): ?int

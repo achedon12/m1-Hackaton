@@ -15,6 +15,7 @@ RUN apt-get update -yq && apt-get install -yq \
     libpng-dev \
     libwebp-dev \
     libfreetype6-dev \
+    libcurl4-openssl-dev \
     libjpeg-dev \
     libjpeg62-turbo-dev \
     libxpm-dev \
@@ -42,6 +43,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     opcache \
     sockets \
     bcmath
+
+RUN docker-php-ext-install curl
 
 # install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer

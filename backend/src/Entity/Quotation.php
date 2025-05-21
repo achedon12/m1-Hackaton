@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: QuotationRepository::class)]
 class Quotation
@@ -18,27 +19,44 @@ class Quotation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['quotation:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(['quotation:read'])]
     private ?float $price = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 4, scale: 2)]
+    #[Groups(['quotation:read'])]
     private ?string $tva = null;
 
     #[ORM\Column]
+    #[Groups(['quotation:read'])]
     private ?DateTime $requestDate = null;
 
     #[ORM\ManyToOne(targetEntity: QuotationState::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['quotationState:read'])]
     private QuotationState $quotationState;
 
     #[ORM\ManyToOne(targetEntity: Client::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['client:read'])]
     private Client $client;
 
     #[ORM\Column(type: Types::STRING)]
+    #[Groups(['quotation:read'])]
     private ?string $hash = null;
+
+
+    #[ORM\OneToMany(targetEntity: QuotationOperation::class, mappedBy: 'quotation')]
+    #[Groups(['quotation:read'])]
+    private Collection $quotationOperations;
+
+    public function __construct()
+    {
+        $this->quotationOperations = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -113,6 +131,36 @@ class Quotation
     public function setHash(?string $hash): void
     {
         $this->hash = $hash;
+    }
+
+    /**
+     * @return Collection<int, QuotationOperation>
+     */
+    public function getQuotationOperations(): Collection
+    {
+        return $this->quotationOperations;
+    }
+
+    public function addQuotationOperation(QuotationOperation $quotationOperation): static
+    {
+        if (!$this->quotationOperations->contains($quotationOperation)) {
+            $this->quotationOperations->add($quotationOperation);
+            $quotationOperation->setQuotation($this);
+        }
+
+        return $this;
+    }
+
+    public function removeQuotationOperation(QuotationOperation $quotationOperation): static
+    {
+        if ($this->quotationOperations->removeElement($quotationOperation)) {
+            // set the owning side to null (unless already changed)
+            if ($quotationOperation->getQuotation() === $this) {
+                $quotationOperation->setQuotation(null);
+            }
+        }
+
+        return $this;
     }
 
 }

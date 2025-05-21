@@ -16,6 +16,27 @@ class MeetingRepository extends ServiceEntityRepository
         parent::__construct($registry, Meeting::class);
     }
 
+    public function findAvailabilitiesTime(int $garage): string
+    {
+        $sql = "
+        SELECT SEC_TO_TIME(SUM(TIME_TO_SEC(o.estimated_duration))) AS totalDuration
+        FROM meeting m
+        JOIN meeting_operation mo ON mo.meeting_id = m.id
+        JOIN operation o ON o.id = mo.operation_id
+        WHERE m.garage_id = :garage and m.meeting_date > NOW()
+    ";
+
+        $result = $this->getEntityManager()
+            ->getConnection()
+            ->executeQuery($sql, ['garage' => $garage])
+            ->fetchAssociative();
+
+        return $result['totalDuration'] ?? '00:00:00';
+    }
+
+
+
+
     //    /**
     //     * @return Meeting[] Returns an array of Meeting objects
     //     */
