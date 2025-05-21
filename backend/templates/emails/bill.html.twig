@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Facture n°{{ bill.id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            margin: 40px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .company, .client {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f5f5f5;
+        }
+
+        .totals {
+            margin-top: 20px;
+            width: 300px;
+            float: right;
+        }
+
+        .totals td {
+            border: none;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+<h1>Facture n°{{ bill.id }}</h1>
+
+<div class="company">
+    <strong>{{ company.name }}</strong><br>
+    {{ company.address }}<br>
+    {{ company.zipcode }} {{ company.city }}<br>
+    {{ company.country }}
+</div>
+
+<div class="client">
+    <strong>Facturé à :</strong><br>
+    {{ client.firstname }} {{ client.lastname }}<br>
+    {{ client.address }}<br>
+    {{ client.zipcode }} {{ client.city }}<br>
+    {{ client.country is defined ? client.country : 'France' }}
+</div>
+
+<div class="vehicle">
+    <strong>Véhicule :</strong><br>
+    Marque : {{ bill.vehicle.brand.name }} <br>
+    Modèle : {{ bill.vehicle.model.name }} <br>
+    Plaque : {{ bill.vehicle.registrationNumber }} <br>
+    Numéro de série : {{ bill.vehicle.vin }} <br>
+    Kilométrage : {{ bill.vehicle.kms }} Kms<br>
+</div>
+
+<p><strong>Date :</strong> {{ request_date }}</p>
+<p><strong>Numéro de facture :</strong> {{ bill.id }}</p>
+
+<table>
+    <thead>
+    <tr>
+        <th>Description</th>
+        <th>Durée estimée</th>
+        <th>Intervenants</th>
+        <th>Prix</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% set price = 0 %}
+    {% for operation in operations %}
+        {% set op = operation.operation %}
+        <tr>
+            <td>{{ op.libelle }}</td>
+            <td>{{ op.estimatedDuration|date('H:i') }}</td>
+            <td>{{ op.workerNeeded }}</td>
+            <td>{{ op.price|number_format(2, ',', ' ') }} €</td>
+            {% set price = price + op.price %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<table class="totals">
+    <tr>
+        <td>Sous-total HT :</td>
+        <td>{{ price|number_format(2, ',', ' ') }} €</td>
+    </tr>
+    <tr>
+        <td>TVA ({{ bill.tva * 100 }} %) :</td>
+        <td>{{ (price * bill.tva)|number_format(2, ',', ' ') }} €</td>
+    </tr>
+    <tr>
+        <td><strong>Total TTC :</strong></td>
+        <td><strong>{{ (price + price * bill.tva)|number_format(2, ',', ' ') }} €</strong></td>
+    </tr>
+</table>
+</body>
+</html>

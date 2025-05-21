@@ -9,7 +9,7 @@ use Symfony\Contracts\EventDispatcher\Event;
 
 class QuotationCreatedEvent extends Event
 {
-    public const string NAME = 'app.facture.created';
+    public const string NAME = 'app.quotation.created';
 
     private Quotation $quotation;
 
