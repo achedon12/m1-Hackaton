@@ -1,5 +1,6 @@
 import {createContext, useState, useContext, useEffect} from "react";
 import config from "./apiConfig.js";
+import { jwtDecode } from "jwt-decode";
 
 export const AuthContext = createContext();
 
@@ -10,7 +11,26 @@ export const AuthProvider = ({children}) => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token && token !== 'undefined') {
-            setIsAuthenticated(true);
+            try {
+                const decodedToken = jwtDecode(token);
+                const currentTime = Date.now() / 1000;
+
+                console.log("Token décodé :", decodedToken, currentTime, decodedToken.exp, decodedToken.exp < currentTime);
+                if (decodedToken.exp < currentTime) {
+                    logout(); // Token expiré
+                } else {
+                    setIsAuthenticated(true);
+
+                    // Déconnexion automatique à l'expiration
+                    const timeout = (decodedToken.exp - currentTime) * 1000;
+                    setTimeout(() => {
+                        logout();
+                    }, timeout);
+                }
+            } catch (error) {
+                console.error("Token invalide :", error);
+                logout();
+            }
         }
         setLoading(false);
     }, []);
