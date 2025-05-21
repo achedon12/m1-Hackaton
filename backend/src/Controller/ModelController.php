@@ -23,6 +23,18 @@ final class ModelController extends AbstractController
         return $this->json($models, Response::HTTP_OK);
     }
 
+    #[Route('/brand/{id}', name: 'get_by_brand', methods: ['GET'])]
+    public function getModelsByBrand(int $id): Response
+    {
+        $models = $this->modelRepository->findBy(['brand' => $id]);
+
+        if (!$models) {
+            return $this->json(['error' => 'Models not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json($models, Response::HTTP_OK);
+    }
+
     #[Route('/{id}', name: 'get', methods: ['GET'])]
     public function getModel(int $id): Response
     {
@@ -34,5 +46,4 @@ final class ModelController extends AbstractController
 
         return $this->json($model, Response::HTTP_OK);
     }
-
 }
