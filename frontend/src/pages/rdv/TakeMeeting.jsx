@@ -43,10 +43,9 @@ const TakeMeeting = () => {
                 const data = await response.json();
 
                 if (!response.ok) {
-                    // Si erreur spécifique "No quotations found for this client"
                     if (data.error === "No quotations found for this client") {
                         setNoQuotations(true);
-                        setQuotations([]); // Pas de devis
+                        setQuotations([]);
                     } else {
                         throw new Error(data.error || `Erreur ${response.status}`);
                     }
@@ -68,6 +67,7 @@ const TakeMeeting = () => {
 
     }, []);
 
+    // TODO : FIX LOAD MEETINGS
     const handleCreateMeeting = async () => {
         try {
             if (!selectedQuotation) {
