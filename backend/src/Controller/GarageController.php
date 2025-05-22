@@ -2,10 +2,10 @@
 
 namespace App\Controller;
 
-use App\Entity\Garage;
 use App\Repository\GarageRepository;
 use App\Repository\MeetingRepository;
 use App\Repository\OperationRepository;
+use App\Repository\VehicleRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,7 +24,8 @@ final class GarageController extends AbstractController
                                 private MailerInterface              $mailer,
                                 private Environment                  $twig,
                                 private readonly MeetingRepository   $meetingRepository,
-                                private readonly OperationRepository $operationRepository)
+                                private readonly OperationRepository $operationRepository,
+                                private readonly VehicleRepository   $vehicleRepository)
     {
     }
 
@@ -43,51 +44,132 @@ final class GarageController extends AbstractController
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
         $client = $this->security->getUser();
 
-        $zipcode = $data['zipcode'] ?? $client->getZipcode();
-        $city = $data['city'] ?? $client->getCity();
-        $operations = $data['operations'];
+        $zipcode = $data['zipcode'] ?? $client?->getZipcode();
+        $city = $data['city'] ?? $client?->getCity();
+        $operationIds = array_filter(explode(';', $data['operations'] ?? ''));
 
+        if (!$zipcode || !$city || empty($operationIds)) {
+            return $this->json(['error' => 'Données manquantes.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Calcul du temps nécessaire total en secondes
         $neededTime = 0;
-        foreach (explode(";", $data['operations'] ?? []) as $id) {
+        foreach ($operationIds as $id) {
             $operation = $this->operationRepository->find($id);
             if ($operation) {
-                $time = $operation->getEstimatedDuration()->format("H:i:s");
-                $time = explode(":", $time);
-                $neededTime += ((int)$time[0] * 3600) + ((int)$time[1] * 60) + (int)$time[2];
+                $duration = $operation->getEstimatedDuration(); // DateTimeInterface
+                $neededTime += (int)$duration->format('H') * 3600
+                    + (int)$duration->format('i') * 60
+                    + (int)$duration->format('s');
             }
         }
-        $neededTimeFormated = gmdate("H:i:s", $neededTime);
 
+        // Géolocalisation
         $coordinates = ClientController::getCoordinatesFromZipcode($zipcode, $city);
-        $longitude = $coordinates['longitude'];
         $latitude = $coordinates['latitude'];
+        $longitude = $coordinates['longitude'];
 
-
+        // Recherche des garages proches (limité à 7)
         $garages = $this->garageRepository->findNearby($latitude, $longitude, -1);
-
         $garages = array_map(function ($garage) {
             $garage[0]->distance = round($garage['distance'], 2);
-
-            $garagesMeeting = $this->meetingRepository->findAvailabilitiesTime($garage[0]->getId());
-            $garage[0]->workingTime = $garagesMeeting;
             return $garage[0];
         }, $garages);
-
         $garages = array_slice($garages, 0, 7);
 
-        /** @var Garage $garage */
+        $garagesArray = [];
         foreach ($garages as $garage) {
-            if ($garage->getWorkingTime()) {
-                $workingTime = explode(":", $garage->getWorkingTime());
-                $workingTime = ((int)$workingTime[0] * 3600) + ((int)$workingTime[1] * 60) + (int)$workingTime[2];
-                $garage->available = $workingTime <= 3 * 8 * 3600;
-                $workingTime = $workingTime / 8 / 3600;
-                $garage->setWorkingTime($workingTime);
+            // Récupération des meetings déjà planifiés pour ce garage
+            $existingMeetings = $this->meetingRepository->findExistingMeetings($garage->getId());
+
+            // Calcul de la prochaine date dispo en tenant compte des meetings et de la durée nécessaire
+            $nextAvailableDate = $this->findNextAvailableDate($existingMeetings, $neededTime);
+
+            $garagesArray[] = [
+                'id' => $garage->getId(),
+                'name' => $garage->getName(),
+                'zipcode' => $garage->getZipcode(),
+                'city' => $garage->getCity(),
+                'address' => $garage->getAddress(),
+                'phone' => $garage->getPhone(),
+                'email' => $garage->getEmail(),
+                'availableWorkers' => $garage->getAvailableWorkers(),
+                'totalWorkers' => $garage->getTotalWorkers(),
+                'longitude' => $garage->getLongitude(),
+                'latitude' => $garage->getLatitude(),
+                'distance' => $garage->getDistance(),
+                'workingTime' => gmdate('H:i:s', $neededTime),
+                'workingTimeInDays' => round($neededTime / 28800, 2),
+                'nextAvailableDate' => $nextAvailableDate,
+                'available' => $nextAvailableDate !== null && $nextAvailableDate >= (new \DateTime())->format('Y-m-d'),
+            ];
+        }
+
+        return $this->json($garagesArray, Response::HTTP_OK);
+    }
+
+    private function findNextAvailableDate(array $existingMeetings, int $neededTime): ?string
+    {
+        // On initialise à demain (au lieu d'aujourd'hui)
+        $startDate = (new \DateTime())->modify('+1 day');
+        $workingSecondsPerDay = 28800; // 8h
+        $daysToCheck = 3;
+
+        // Cumuler la charge déjà prise par jour
+        $dailyWorkload = [];
+
+        foreach ($existingMeetings as $meeting) {
+            $date = (new \DateTime($meeting['meeting_date']))->format('Y-m-d');
+            $duration = isset($meeting['duration']) ? $this->convertTimeToSeconds($meeting['duration']) : 0;
+            $dailyWorkload[$date] = ($dailyWorkload[$date] ?? 0) + $duration;
+        }
+
+        for ($i = 0; $i < $daysToCheck; $i++) {
+            $candidateDate = (clone $startDate)->modify("+$i days")->format('Y-m-d');
+
+            if (($dailyWorkload[$candidateDate] ?? 0) >= $workingSecondsPerDay) {
+                continue;
+            }
+
+            $remainingTime = $neededTime;
+            $canSchedule = true;
+
+            for ($j = 0; $j < $daysToCheck - $i; $j++) {
+                $dateToCheck = (clone $startDate)->modify("+" . ($i + $j) . " days")->format('Y-m-d');
+                $used = $dailyWorkload[$dateToCheck] ?? 0;
+                $available = $workingSecondsPerDay - $used;
+
+                if ($available <= 0) {
+                    $canSchedule = false;
+                    break;
+                }
+
+                if ($available >= $remainingTime) {
+                    $remainingTime = 0;
+                    break;
+                } else {
+                    $remainingTime -= $available;
+                }
+            }
+
+            if ($canSchedule && $remainingTime <= 0) {
+                return $candidateDate;
             }
         }
 
-        return $this->json($garages, Response::HTTP_OK);
+        return null;
     }
+
+
+    /**
+     * Convertit un temps "HH:mm:ss" en secondes
+     */
+    private function convertTimeToSeconds(string $time): int
+    {
+        [$hours, $minutes, $seconds] = array_map('intval', explode(':', $time));
+        return $hours * 3600 + $minutes * 60 + $seconds;
+    }
+
 
     #[Route('/{id}', name: 'get', methods: ['GET'])]
     public function getGarage(int $id): Response
@@ -185,6 +267,15 @@ final class GarageController extends AbstractController
         }
 
         $client = $this->security->getUser();
+
+        $vehicle = $data['vehicle'] ?? null;
+        if ($vehicle) {
+            $vehicle = $this->vehicleRepository->find($vehicle);
+            if (!$vehicle) {
+                return $this->json(['error' => 'Vehicle not found'], Response::HTTP_NOT_FOUND);
+            }
+        }
+
         $message = $data['message'] ?? 'Je souhaite être rappelé par le garage';
 
         try {
@@ -192,7 +283,7 @@ final class GarageController extends AbstractController
                 ->from('no-reply@rd-vroum.com')
                 ->to($garage->getEmail())
                 ->subject('New reminder request')
-                ->html($this->twig->render('emails/reminder.html.twig', ['client' => $client, 'message' => $message]));
+                ->html($this->twig->render('emails/reminder.html.twig', ['client' => $client, 'message' => $message, 'vehicle' => $vehicle,]));
 
             $this->mailer->send($reminderEmail);
 
@@ -200,7 +291,7 @@ final class GarageController extends AbstractController
                 ->from('no-reply@rd-vroum.com')
                 ->to($client->getEmail())
                 ->subject('Reminder request confirmation')
-                ->html($this->twig->render('emails/reminderConfirm.html.twig', ['garage' => $garage]));
+                ->html($this->twig->render('emails/reminderConfirm.html.twig', ['garage' => $garage, 'vehicle' => $vehicle, 'message' => $message]));
 
             $this->mailer->send($reminderConfirmEmail);
         } catch (TransportExceptionInterface) {

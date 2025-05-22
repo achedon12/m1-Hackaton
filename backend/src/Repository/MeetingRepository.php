@@ -35,7 +35,23 @@ class MeetingRepository extends ServiceEntityRepository
     }
 
 
+    public function findExistingMeetings(int $garage): array
+    {
+        $sql = "
+        SELECT m.meeting_date, SEC_TO_TIME(SUM(TIME_TO_SEC(o.estimated_duration))) AS duration
+        FROM meeting m
+        JOIN meeting_operation mo ON mo.meeting_id = m.id
+        JOIN operation o ON o.id = mo.operation_id
+        WHERE m.garage_id = :garage AND m.meeting_date > NOW()
+        GROUP BY m.id
+        ORDER BY m.meeting_date ASC
+    ";
 
+        return $this->getEntityManager()
+            ->getConnection()
+            ->executeQuery($sql, ['garage' => $garage])
+            ->fetchAllAssociative();
+    }
 
     //    /**
     //     * @return Meeting[] Returns an array of Meeting objects

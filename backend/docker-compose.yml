@@ -51,7 +51,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./data:/var/lib/mysql
+      - data:/var/lib/mysql
     networks:
       - rdvroum_network
 
@@ -68,3 +68,5 @@ networks:
   rdvroum_network:
     external:
       name: rdvroum_network
+volumes:
+  data:

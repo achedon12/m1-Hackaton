@@ -59,9 +59,10 @@ const UserForm = () => {
 
     const handleUpdate = async (params) => {
         try {
+            const headers = config.headers
             const response = await fetch(`${config.apiBaseUrl}/client/update`, {
                 method: "PUT",
-                headers: config.headers,
+                headers: headers,
                 body: JSON.stringify(params),
             });
 

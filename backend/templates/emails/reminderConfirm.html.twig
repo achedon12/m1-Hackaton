@@ -10,21 +10,28 @@
             padding: 20px;
             color: #333;
         }
+
         .confirmation-container {
             background-color: #ffffff;
             padding: 30px;
             border-radius: 5px;
             max-width: 600px;
             margin: auto;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
+
         h1 {
             color: #2c3e50;
         }
+
         p {
             margin-top: 20px;
             font-size: 1.1em;
+        }
+
+        li {
+            text-align: left;
         }
     </style>
 </head>
@@ -32,6 +39,23 @@
 <div class="confirmation-container">
     <h1>Demande de rappel envoyée avec succès</h1>
     <p>Votre demande a été transmise au garage <strong>{{ garage.name }}</strong>.</p>
+    <p>Garage concerné :</p>
+    <ul>
+        <li><strong>Nom :</strong> {{ garage.name }}</li>
+        <li><strong>Adresse :</strong> {{ garage.address }}, {{ garage.zipcode }} {{ garage.city }}</li>
+        <li><strong>Téléphone :</strong> {{ garage.phone }}</li>
+        <li><strong>Email :</strong> {{ garage.email }}</li>
+    </ul>
+
+    {% if vehicle %}
+        <p>Véhicule concerné :</p>
+        <ul>
+            <li><strong>Marque :</strong> {{ vehicle.brand.name }}</li>
+            <li><strong>Modèle :</strong> {{ vehicle.model.name }}</li>
+            <li><strong>Immatriculation :</strong> {{ vehicle.registrationNumber }}</li>
+            <li><strong>Kilométrage :</strong> {{ vehicle.kms }} km</li>
+        </ul>
+    {% endif %}
     <p>Un conseiller vous contactera dans les plus brefs délais.</p>
 </div>
 </body>

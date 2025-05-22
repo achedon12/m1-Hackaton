@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import {Layout, Login, Profile, Register, Rdv, Home, Meeting, Operations, Garages} from "./pages";
+import {Layout, Login, Profile, Register, Rdv, Home, Meeting, Operations, TakeMeeting, Garages} from "./pages";
 import { AuthProvider } from "./providers/AuthProvider.jsx";
 import { ProtectedRoute } from "./components/index.js";
 
@@ -23,6 +23,11 @@ const App = () => (
                     <Route path="rdv" element={
                         <ProtectedRoute>
                             <Rdv />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="takeMeeting" element={
+                        <ProtectedRoute>
+                            <TakeMeeting />
                         </ProtectedRoute>
                     } />
 

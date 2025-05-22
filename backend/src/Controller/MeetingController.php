@@ -93,19 +93,6 @@ final class MeetingController extends AbstractController
         return $this->json($meeting, Response::HTTP_CREATED, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
     }
 
-    #[Route('/client/{clientId}', name: 'get', methods: ['GET'])]
-    public function getClientOperations(int $clientId): Response
-    {
-        $client = $this->security->getUser();
-
-        if ($client->getId() !== $clientId) {
-            return $this->json(['error' => 'You are not the owner of this vehicle'], Response::HTTP_FORBIDDEN);
-        }
-
-        $meetings = $this->meetingRepository->findBy(['client' => $client]);
-
-        return $this->json($meetings, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
-    }
 
     #[Route('/{id}', name: 'get', methods: ['GET'])]
     public function get(int $id): Response
@@ -115,6 +102,46 @@ final class MeetingController extends AbstractController
         if (!$meeting) {
             return $this->json(['error' => 'Meeting not found'], Response::HTTP_NOT_FOUND);
         }
+
+        return $this->json($meeting, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
+    }
+
+    #[Route('/client/{clientId}', name: 'get', methods: ['GET'])]
+    public function getClientOperations(int $clientId): Response
+    {
+        $client = $this->security->getUser();
+
+        if ($client->getId() !== $clientId) {
+            return $this->json(['error' => 'You are not the owner of this meeting'], Response::HTTP_FORBIDDEN);
+        }
+
+        $meetings = $this->meetingRepository->findBy(['client' => $client]);
+
+        return $this->json($meetings, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read', 'quotation:read']]);
+    }
+
+    #[Route('/update/{id}', name: 'update', methods: ['PUT'])]
+    public function update(Request $request, int $id): Response
+    {
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
+
+        $meeting = $this->meetingRepository->find($id);
+
+        if (!$meeting) {
+            return $this->json(['error' => 'Meeting not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if (!isset($data['state'])) {
+            return $this->json(['error' => 'Meeting State is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $meetingState = $this->meetingStateRepository->findOneBy(['name' => $data['state']]);
+        if (!$meetingState) {
+            return $this->json(['error' => 'Meeting State not found'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $meeting->setMeetingState($meetingState);
+        $this->entityManager->flush();
 
         return $this->json($meeting, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
     }

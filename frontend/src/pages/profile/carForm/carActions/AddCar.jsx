@@ -70,9 +70,10 @@ const AddCar = forwardRef((props, ref) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const headers = config.headers;
             const response = await fetch(`${config.apiBaseUrl}/vehicle/create`, {
                 method: 'POST',
-                headers: config.headers,
+                headers: headers,
                 body: JSON.stringify({
                     brand: vehiculeForm.brand,
                     model: vehiculeForm.model,
