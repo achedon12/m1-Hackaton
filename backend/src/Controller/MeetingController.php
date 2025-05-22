@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Meeting;
+use App\Entity\MeetingOperation;
 use App\Repository\GarageRepository;
 use App\Repository\MeetingRepository;
 use App\Repository\MeetingStateRepository;
@@ -85,6 +86,17 @@ final class MeetingController extends AbstractController
         $meeting->setCreationDate(new \DateTimeImmutable());
 
         $this->entityManager->persist($meeting);
+
+        $operations = $quotation->getQuotationOperations();
+        foreach ($operations as $operation) {
+            $meetingOperation = new MeetingOperation();
+            $meetingOperation->setMeeting($meeting);
+            $meetingOperation->setOperation($operation->getOperation());
+            $meetingOperation->setCreationDate(new \DateTimeImmutable());
+            $this->entityManager->persist($meetingOperation);
+            $meeting->addMeetingOperation($meetingOperation);
+            $this->entityManager->persist($operation);
+        }
         $this->entityManager->flush();
 
         return $this->json($meeting, Response::HTTP_CREATED, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read']]);
