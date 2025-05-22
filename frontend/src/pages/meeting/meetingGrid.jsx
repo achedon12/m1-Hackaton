@@ -55,7 +55,7 @@ const MeetingGrid = () => {
                 );
 
                 setMeetingData(enrichedMeetings);
-
+                console.log(meetings)
             } catch (error) {
                 console.error('Error fetching meeting data:', error);
             } finally {
@@ -80,7 +80,6 @@ const MeetingGrid = () => {
                     <Loader />
                 </div>
             ) : (
-
                 <div className="overflow-x-auto rounded-box border border-base-content/5 p-4">
                     <table className={"table bg-white mt-6"}>
                         <thead>
@@ -91,16 +90,35 @@ const MeetingGrid = () => {
                             <th>État</th>
                             <th>Garage</th>
                             <th>Opérations</th>
+                            <th>Devis</th>
+                            <th>Modifier le statut</th> 
                         </tr>
                         </thead>
                         <tbody>
                         {meetingData.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="text-center">Aucune opération effectuée</td>
+                                <td colSpan="8" className="text-center">Aucune opération effectuée</td>
                             </tr>
                         ) : (
-                            meetingData.map(meeting => {
+                            meetingData.map((meeting, idx) => {
                                 const status = MeetingStatusConfig[meeting.meetingState.name];
+
+                                const handleStatusChange = (e) => {
+                                    const newStatus = e.target.value;
+                                    setMeetingData(prevData =>
+                                        prevData.map((m, i) =>
+                                            i === idx
+                                                ? {
+                                                    ...m,
+                                                    meetingState: {
+                                                        ...m.meetingState,
+                                                        name: newStatus
+                                                    }
+                                                }
+                                                : m
+                                        )
+                                    );
+                                };
 
                                 return (
                                     <tr key={meeting.id}>
@@ -114,13 +132,12 @@ const MeetingGrid = () => {
                                         <td>
                                             {status ? (
                                                 <span className={`${status.bgColor} text-white rounded px-3 py-1 inline-block`}>
-                                                  {status.label}
+                                                    {status.label}
                                                 </span>
                                             ) : (
                                                 meeting.meetingState.name
                                             )}
                                         </td>
-
                                         <td>{meeting.garage.name}</td>
                                         <td>
                                             {meeting.quotation &&
@@ -137,8 +154,35 @@ const MeetingGrid = () => {
                                                 <span className="text-sm text-gray-400 italic">Aucune opération</span>
                                             )}
                                         </td>
+                                        <td>
+                                            {meeting.quotation && meeting.quotation.hash ? (
+                                                <a
+                                                    href={config.baseUrl + '/uploads/quotations/' + meeting.quotation.hash + '.pdf'}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 hover:underline"
+                                                >
+                                                    Télécharger
+                                                </a>
+                                            ) : (
+                                                <span className="text-sm text-gray-400 italic">Non disponible</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <select
+                                                value={meeting.meetingState.name}
+                                                onChange={handleStatusChange}
+                                                className="border border-gray-300 rounded px-2 py-1 text-sm"
+                                            >
+                                                {Object.keys(MeetingStatusConfig).map((key) => (
+                                                    <option key={key} value={key}>
+                                                        {MeetingStatusConfig[key].label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </td>
                                     </tr>
-                                )
+                                );
                             })
                         )}
                         </tbody>
@@ -147,6 +191,7 @@ const MeetingGrid = () => {
             )}
         </div>
     );
+
 }
 
 export default MeetingGrid;
