@@ -666,85 +666,94 @@ const Rdv = () => {
         setActiveStep((prevActiveStep) => prevActiveStep - 1);
     };
 
-
+    
     return (
         <Box className="m-20 bg-white p-10">
-            <Stepper activeStep={activeStep}>
-                {steps.map((label) => {
-                    const stepProps = {};
-                    const labelProps = {};
-                    return (
-                        <Step key={label} {...stepProps}>
-                            <StepLabel {...labelProps}>{label}</StepLabel>
-                        </Step>
-                    );
-                })}
-            </Stepper>
-            {activeStep === steps.length ? (
-                <React.Fragment>
-                    <Typography className="text-green-800 pt-10">
-                        Votre demande a bien été prise en compte.
-                    </Typography>
 
-                    {quotationHash ? (
-                        <Box className="mt-6 space-y-4">
-                            <iframe
-                                src={`${config.baseUrl}/uploads/quotations/${quotationHash}.pdf`}
-                                width="100%"
-                                height="600px"
-                                title="Aperçu du devis"
-                            />
-                            <Box display="flex" justifyContent="center" gap={2.5}>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    component="a"
-                                    href={`${config.baseUrl}/uploads/quotations/${quotationHash}.pdf`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    Télécharger le devis
+            {noVehicles ? (
+                <Box textAlign="center" p={5}>
+                    <Typography variant="h6" mb={3}>
+                        Vous n'avez aucun véhicule. Commencez par créer un véhicule pour obtenir votre devis.
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => window.location.href = '/profile'}
+                    >
+                        Créer un véhicule
+                    </Button>
+                </Box>
+            ) : (
+                <>
+                    <Stepper activeStep={activeStep}>
+                        {steps.map((label) => (
+                            <Step key={label}>
+                                <StepLabel>{label}</StepLabel>
+                            </Step>
+                        ))}
+                    </Stepper>
+                    {activeStep === steps.length ? (
+                        <React.Fragment>
+                            <Typography className="text-green-800 pt-10">
+                                Votre demande a bien été prise en compte.
+                            </Typography>
+                            {quotationHash ? (
+                                <Box className="mt-6 space-y-4">
+                                    <iframe
+                                        src={`${config.baseUrl}/uploads/quotations/${quotationHash}.pdf`}
+                                        width="100%"
+                                        height="600px"
+                                        title="Aperçu du devis"
+                                    />
+                                    <Box display="flex" justifyContent="center" gap={2.5}>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            component="a"
+                                            href={`${config.baseUrl}/uploads/quotations/${quotationHash}.pdf`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            Télécharger le devis
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            onClick={handleCreateMeeting}
+                                        >
+                                            Prendre rendez-vous
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            ) : (
+                                <Typography color="error">Une erreur est survenue lors du chargement du devis PDF.</Typography>
+                            )}
+                        </React.Fragment>
+                    ) : (
+                        <React.Fragment>
+                            <Box className="my-10">{getStepContent(activeStep)}</Box>
+                            <Box className="flex justify-center">
+                                <Button disabled={activeStep === 0} onClick={handleBack}>
+                                    Précédent
                                 </Button>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={handleCreateMeeting}
-                                >
-                                    Prendre rendez-vous
+                                <Box />
+                                <Button onClick={handleNext}>
+                                    {activeStep === steps.length - 1 ? 'Valider' : 'Suivant'}
                                 </Button>
                             </Box>
-
-                        </Box>
-                    ) : (
-                        <Typography color="error">Une erreur est survenue lors du chargement du devis PDF.</Typography>
+                        </React.Fragment>
                     )}
-                </React.Fragment>
-            ) : (
-
-                <React.Fragment>
-                    <Box className="my-10">{getStepContent(activeStep)}</Box>
-                    <Box className="flex justify-center">
-                        <Button
-                            disabled={activeStep === 0}
-                            onClick={handleBack}
-                        >
-                            Précédent
-                        </Button>
-                        <Box/>
-                        <Button onClick={handleNext}>
-                            {activeStep === steps.length - 1 ? 'Valider' : 'Suivant'}
-                        </Button>
-                    </Box>
-                </React.Fragment>
+                    <Snackbar
+                        open={Boolean(snackbar)}
+                        autoHideDuration={3000}
+                        onClose={() => setSnackbar("")}
+                        message={snackbar}
+                    />
+                </>
             )}
-            <Snackbar
-                open={Boolean(snackbar)}
-                autoHideDuration={3000}
-                onClose={() => setSnackbar("")}
-                message={snackbar}
-            />
         </Box>
     );
+
 };
 
 export default Rdv;
