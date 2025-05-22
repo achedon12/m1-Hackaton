@@ -71,7 +71,7 @@ const MeetingGrid = () => {
     return (
         <div className="w-full">
             <PageHeader
-                title={"Mes opérations effectuées"}
+                title={"Mes rendez-vous"}
                 description={"Consultez l'historique de vos opérations"}
                 backgroundImage={"/garage1.jpg"}
             />
