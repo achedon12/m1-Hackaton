@@ -81,7 +81,7 @@ const Rdv = () => {
         const fetchMeetingStates = async () => {
             try {
                 const res = await fetch(`${config.apiBaseUrl}/meetingstate/list`, {
-                    headers: config.headers,
+                    headers: config.getHeaders(),
                 });
                 if (!res.ok) throw new Error("Erreur chargement des statuts");
                 const data = await res.json();

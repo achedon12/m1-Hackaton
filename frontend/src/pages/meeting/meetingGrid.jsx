@@ -59,7 +59,7 @@ const MeetingGrid = () => {
                             if (meeting.meetingState.name === "completed") {
                                 // Récupération de la facture associée
                                 const billRes = await fetch(`${config.apiBaseUrl}/bill/meeting/${meeting.id}`, {
-                                    headers: config.headers,
+                                    headers: config.getHeaders(),
                                 });
                                 if (billRes.ok) {
                                     const billJson = await billRes.json();
@@ -161,7 +161,7 @@ const MeetingGrid = () => {
                                                 const billResponse = await fetch(`${config.apiBaseUrl}/bill/create`, {
                                                     method: "POST",
                                                     headers: {
-                                                        ...config.headers,
+                                                        ...config.getHeaders(),
                                                         'Content-Type': 'application/json'
                                                     },
                                                     body: JSON.stringify({ meeting: meetingId })
