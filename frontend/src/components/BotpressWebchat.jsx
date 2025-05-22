@@ -23,6 +23,7 @@ const BotpressChat = () => {
                 setClientVehicles(data);
 
                 const clientVehiclesSimplified = data.map(vehicleObject => ({
+                    v_id: vehicleObject.id,
                     brand: vehicleObject.brand.name,
                     model: vehicleObject.model.name,
                     circulationDate: vehicleObject.circulationDate,
