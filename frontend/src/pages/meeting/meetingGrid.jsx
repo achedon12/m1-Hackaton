@@ -20,7 +20,7 @@ const MeetingGrid = () => {
                 }
 
                 const meetings = await response.json();
-                console.log(meetings)
+
                 const enrichedMeetings = await Promise.all(
                     meetings.map(async (meeting) => {
                         try {
@@ -28,23 +28,28 @@ const MeetingGrid = () => {
                                 `${config.apiBaseUrl}/quotation/${meeting.quotation.id}`,
                                 { headers: config.headers }
                             );
+
                             if (!quotationRes.ok) {
                                 throw new Error('Erreur lors de la récupération du devis');
                             }
                             const quotation = await quotationRes.json();
-
+                            console.log(quotation)
                             return {
                                 ...meeting,
-                                operations: quotation.operations || [], // fusion des opérations depuis le devis
+                                quotation,
                             };
                         } catch (quotationError) {
                             console.error(`Erreur pour le devis du meeting ${meeting.id}:`, quotationError);
-                            return { ...meeting, operations: [] }; // fallback
+                            return {
+                                ...meeting,
+                                quotation: null,
+                            };
                         }
                     })
                 );
 
                 setMeetingData(enrichedMeetings);
+
             } catch (error) {
                 console.error('Error fetching meeting data:', error);
             } finally {
@@ -54,6 +59,7 @@ const MeetingGrid = () => {
 
         fetchMeetingData();
     }, []);
+
 
 
     return (
@@ -102,10 +108,23 @@ const MeetingGrid = () => {
                                     <td>{meeting.meetingState.name}</td>
                                     <td>{meeting.garage.name}</td>
                                     <td>
-                                        {meeting.operations.map(operation => (
-                                            <div key={operation.id}>{operation.libelle}</div>
-                                        ))}
+                                        {meeting.quotation &&
+                                        Array.isArray(meeting.quotation.quotationOperations) &&
+                                        meeting.quotation.quotationOperations.length > 0 ? (
+                                            meeting.quotation.quotationOperations.map((qo) => (
+                                                <div key={qo.id}>
+                                                    {qo.operation?.libelle || (
+                                                        <span className="text-gray-400 italic">Libellé manquant</span>
+                                                    )}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <span className="text-sm text-gray-400 italic">Aucune opération</span>
+                                        )}
                                     </td>
+
+
+
                                 </tr>
                             )))}
                         </tbody>
