@@ -146,4 +146,22 @@ final class MeetingController extends AbstractController
         return $this->json($meeting, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
     }
 
+    #[Route('/vehicle/{vehiculeId}', name: 'get', methods: ['GET'])]
+    public function getVehicleMeetings(int $vehiculeId): Response
+    {
+        $client = $this->security->getUser();
+
+        $vehicle = $this->vehicleRepository->find($vehiculeId);
+        if (!$vehicle) {
+            return $this->json(['error' => 'Vehicle not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($vehicle->getClient()->getId() !== $client->getId()) {
+            return $this->json(['error' => 'You are not the owner of this vehicle'], Response::HTTP_FORBIDDEN);
+        }
+
+        $meetings = $this->meetingRepository->findBy(['vehicle' => $vehicle]);
+
+        return $this->json($meetings, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
+    }
 }

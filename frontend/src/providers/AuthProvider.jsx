@@ -37,7 +37,7 @@ export const AuthProvider = ({children}) => {
     const register = async (registerForm) => {
         const response = await fetch(`${config.apiBaseUrl}/client/register`, {
             method: 'POST',
-            headers: config.headers,
+            headers: config.getHeaders(),
             body: JSON.stringify(registerForm)
         });
 

@@ -19,7 +19,7 @@ const Login = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center h-screen">
+        <div className="flex flex-col items-center justify-center h-screen bg-secondary">
             <form onSubmit={handleSubmit} className="md:w-1/3 p-4 bg-white shadow-md rounded-3xl border border-gray-300">
                 <h1 className="text-2xl mb-4">Se connecter</h1>
                 <input

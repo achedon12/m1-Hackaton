@@ -95,7 +95,7 @@ const Rdv = () => {
         const fetchVehicles = async () => {
             try {
                 const response = await fetch(`${config.apiBaseUrl}/vehicle/client/${client.id}`, {
-                    headers: config.headers,
+                    headers: config.getHeaders(),
                 });
 
                 // No vehicles
@@ -124,7 +124,7 @@ const Rdv = () => {
                 const response = await fetch(`${config.apiBaseUrl}/garage/nearby`,
                     {
                         method: 'POST',
-                        headers: config.headers,
+                        headers: config.getHeaders(),
                         body: JSON.stringify(
                             {
                                 "longitude": location.longitude,
@@ -153,7 +153,7 @@ const Rdv = () => {
                 const response = await fetch(`${config.apiBaseUrl}/operations/category/list`,
                     {
                         method: 'GET',
-                        headers: config.headers,
+                        headers: config.getHeaders(),
                     });
 
                 if (!response.ok) {
@@ -271,7 +271,7 @@ const Rdv = () => {
 
                                 try {
                                     const response = await fetch(`${config.apiBaseUrl}/operations/category/${selectedCategoryId}`, {
-                                        headers: config.headers,
+                                        headers: config.getHeaders(),
                                     });
 
                                     if (!response.ok) {
@@ -614,7 +614,7 @@ const Rdv = () => {
                 console.log(body);
                 const response = await fetch(`${config.apiBaseUrl}/quotation/create`, {
                     method: 'POST',
-                    headers: config.headers,
+                    headers: config.getHeaders(),
                     body: JSON.stringify(body)
                 });
 
@@ -676,8 +676,8 @@ const Rdv = () => {
             };
 
             const response = await fetch(`${config.apiBaseUrl}/meeting/create`, {
-                method: "POST",
-                headers: config.headers,
+                method: 'POST',
+                headers: config.getHeaders(),
                 body: JSON.stringify(body),
             });
 

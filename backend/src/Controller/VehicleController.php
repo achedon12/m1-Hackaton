@@ -35,7 +35,7 @@ final class VehicleController extends AbstractController
             return $this->json(['error' => 'Vehicle not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if (!$vehicle->getClient()->getId() !== $this->security->getUser()->getId()) {
+        if ($vehicle->getClient()->getId() !== $this->security->getUser()->getId()) {
             return $this->json(['error' => 'You are not authorized to update this vehicle'], Response::HTTP_FORBIDDEN);
         }
 
@@ -105,7 +105,7 @@ final class VehicleController extends AbstractController
         $vehicle->setUpdateDate(new \DateTimeImmutable());
         $this->entityManager->flush();
 
-        return $this->json(['message' => 'Vehicle updated successfully'], Response::HTTP_OK);
+        return $this->json(['message' => 'Vehicle updated successfully', 'vehicle' => $vehicle], Response::HTTP_OK);
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
@@ -185,7 +185,7 @@ final class VehicleController extends AbstractController
         $this->entityManager->persist($vehicle);
         $this->entityManager->flush();
 
-        return $this->json(['message' => 'Vehicle created successfully'], Response::HTTP_CREATED);
+        return $this->json(['message' => 'Vehicle created successfully', 'vehicle' => $vehicle], Response::HTTP_CREATED);
     }
 
     #[Route('/client/{id}', name: 'get_by_client', methods: ['GET'])]

@@ -89,7 +89,7 @@ const ChatBot = () => {
                 try {
                     const res = await fetch(`${config.apiBaseUrl}/vehicle/create`, {
                         method: "POST",
-                        headers: config.headers,
+                        headers: config.getHeaders(),
                         body: JSON.stringify(data_vehicule)
                     });
 
@@ -115,7 +115,7 @@ const ChatBot = () => {
                 try {
                     const res = await fetch(`${config.apiBaseUrl}/vehicle/update/${vehicleId}`, {
                         method: "PUT",
-                        headers: config.headers,
+                        headers: config.getHeaders(),
                         body: JSON.stringify({kms: parseInt(val)})
                     });
 
@@ -159,7 +159,7 @@ const ChatBot = () => {
     const fetchBrands = async () => {
         const res = await fetch(`${config.apiBaseUrl}/brand/list`, {
             method: "GET",
-            headers: config.headers
+            headers: config.getHeaders()
         });
         const data = await res.json();
         setBrands(data);
@@ -168,7 +168,7 @@ const ChatBot = () => {
     const fetchModels = async (brandId) => {
         const res = await fetch(`${config.apiBaseUrl}/model/brand/${brandId}`, {
             method: "GET",
-            headers: config.headers
+            headers: config.getHeaders()
         });
         const data = await res.json();
         setModels(data);
@@ -180,7 +180,7 @@ const ChatBot = () => {
             try {
                 const res = await fetch(`${config.apiBaseUrl}/vehicle/client/${clientId}`, {
                     method: "GET",
-                    headers: config.headers
+                    headers: config.getHeaders()
                 });
                 const data = await res.json();
                 setVehicles(data);
@@ -237,7 +237,7 @@ const ChatBot = () => {
 
             const response = await fetch(url_garages, {
                 method: "POST",
-                headers: config.headers,
+                headers: config.getHeaders(),
                 body: JSON.stringify(params),
             });
             const data = await response.json();
@@ -252,7 +252,7 @@ const ChatBot = () => {
         try {
             const res = await fetch(`${config.apiBaseUrl}/garage/reminder`, {
                 method: "POST",
-                headers: config.headers,
+                headers: config.getHeaders(),
                 body: JSON.stringify({ garage: garageId }),
             });
 
@@ -300,7 +300,7 @@ const ChatBot = () => {
             try {
                 const res = await fetch(`${config.apiBaseUrl}/operations/analyze`, {
                     method: "POST",
-                    headers: config.headers,
+                    headers: config.getHeaders(),
                     body: JSON.stringify({message: message})
                 });
 

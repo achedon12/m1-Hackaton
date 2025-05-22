@@ -59,7 +59,7 @@ const UserForm = () => {
 
     const handleUpdate = async (params) => {
         try {
-            const headers = config.headers
+            const headers = config.getHeaders()
             const response = await fetch(`${config.apiBaseUrl}/client/update`, {
                 method: "PUT",
                 headers: headers,
@@ -85,7 +85,7 @@ const UserForm = () => {
         try {
             const response = await fetch(`${config.apiBaseUrl}/client/delete`, {
                 method: "DELETE",
-                headers: config.headers,
+                headers: config.getHeaders(),
             });
 
             if (response.ok) {

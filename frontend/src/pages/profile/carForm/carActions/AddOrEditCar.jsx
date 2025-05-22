@@ -1,13 +1,14 @@
 import {useState, forwardRef, useEffect} from "react";
 import config from "../../../../providers/apiConfig.js";
 
-const AddCar = forwardRef((props, ref) => {
+const AddOrEditCar = forwardRef(({car, onSave}, ref) => {
     const [brandsAndModelsList, setBrandsAndModelsList] = useState([]);
     const [isFormValid, setIsFormValid] = useState(false);
     const [errors, setErrors] = useState({});
     const [isCustomBrand, setIsCustomBrand] = useState(false);
     const [isCustomModel, setIsCustomModel] = useState(false);
     const [vehiculeForm, setVehiculeForm] = useState({
+        id: "",
         brand: "",
         model: "",
         kms: "",
@@ -31,8 +32,19 @@ const AddCar = forwardRef((props, ref) => {
             }
         }
 
+        if (car) {
+            setVehiculeForm({
+                id: car.id,
+                brand: car.brand.id,
+                model: car.model.id,
+                kms: car.kms,
+                circulationDate: car.circulationDate,
+                registrationNumber: car.registrationNumber,
+            });
+        }
+
         fetchBrandsAndModels();
-    }, []);
+    }, [car]);
 
     const validateField = (name, value) => {
         let error = "";
@@ -67,79 +79,78 @@ const AddCar = forwardRef((props, ref) => {
         setIsFormValid(!hasErrors);
     }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const headers = config.headers;
-            const response = await fetch(`${config.apiBaseUrl}/vehicle/create`, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({
-                    brand: vehiculeForm.brand,
-                    model: vehiculeForm.model,
-                    kms: vehiculeForm.kms,
-                    circulationDate: vehiculeForm.circulationDate,
-                    registrationNumber: vehiculeForm.registrationNumber,
-                })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                alert(`Erreur: ${errorData.message}`);
-            }
-
-            const data = await response.json();
-            console.log('Vehicle added successfully:', data);
+    const handleSave = async () => {
+        if (onSave && isFormValid) {
+            onSave(vehiculeForm);
+        }
+        if (ref.current) {
             ref.current.close();
-        } catch (error) {
-            console.error('Error adding vehicle:', error);
         }
     }
 
     return (
         <dialog ref={ref} id="add_car_modal" className="modal">
             <div className="modal-box">
-                <h3 className="text-lg font-bold">Ajouter un véhicule</h3>
+                {car ? (
+                    <>
+                        <h3 className="text-lg font-bold">Modifier le véhicule</h3>
+                        <fieldset className="fieldset bg-slate-100 border-base-300 rounded-box w-full border p-4 mt-4">
+                            <label className="label w-1/3">Kilométrage</label>
+                            <input
+                                type="number"
+                                name="kms"
+                                className="input input-bordered w-full"
+                                placeholder="Ex: 12000"
+                                value={vehiculeForm.kms}
+                                onChange={handleChange}
+                            />
+                            {errors.kms && <p className="text-red-500">{errors.kms}</p>}
+                        </fieldset>
+                    </>
+                ) : (
+                    <>
+                        <h3 className="text-lg font-bold">Ajouter un véhicule</h3>
+                        <fieldset className="fieldset bg-slate-100 border-base-300 rounded-box w-full border p-4 mt-4">
+                            <label className="label w-1/3">Marque</label>
+                            {isCustomBrand ? (
+                                <input
+                                    type="text"
+                                    name="brand"
+                                    className="input input-bordered w-full"
+                                    placeholder="Entrez une marque"
+                                    value={vehiculeForm.brand}
+                                    onChange={handleChange}
+                                />
+                            ) : (
+                                <select
+                                    className="select select-bordered w-full"
+                                    name="brand"
+                                    value={vehiculeForm.brand}
+                                    onChange={handleChange}
+                                >
+                                    <option value="">Sélectionnez une marque</option>
+                                    {[...new Map(brandsAndModelsList.map((car) => [car.brand.id, car.brand])).values()]
+                                        .map((brand) => (
+                                            <option key={brand.id} value={brand.id}>
+                                                {brand.name}
+                                            </option>
+                                        ))}
+                                </select>
+                            )}
+                            {!isCustomBrand ? (
+                                <p className="link text-xs mt-2 cursor-pointer" onClick={() => setIsCustomBrand(true)}>
+                                    Ma marque n'est pas dans la liste
+                                </p>
+                            ) : (
+                                <p className="link text-xs mt-2 cursor-pointer" onClick={() => setIsCustomBrand(false)}>
+                                    Sélectionner une marque
+                                </p>
+                            )}
+                        </fieldset>
+                    </>
+                )}
 
-                <fieldset className="fieldset bg-slate-100 border-base-300 rounded-box w-full border p-4 mt-4">
-                    <label className="label w-1/3">Marque</label>
-                    {isCustomBrand ? (
-                        <input
-                            type="text"
-                            name="brand"
-                            className="input input-bordered w-full"
-                            placeholder="Entrez une marque"
-                            value={vehiculeForm.brand}
-                            onChange={handleChange}
-                        />
-                    ) : (
-                        <select
-                            className="select select-bordered w-full"
-                            name="brand"
-                            value={vehiculeForm.brand}
-                            onChange={handleChange}
-                        >
-                            <option value="">Sélectionnez une marque</option>
-                            {[...new Map(brandsAndModelsList.map((car) => [car.brand.id, car.brand])).values()]
-                                .map((brand) => (
-                                    <option key={brand.id} value={brand.id}>
-                                        {brand.name}
-                                    </option>
-                                ))}
-                        </select>
-                    )}
-                    {!isCustomBrand ? (
-                        <p className="link text-xs mt-2 cursor-pointer" onClick={() => setIsCustomBrand(true)}>
-                            Ma marque n'est pas dans la liste
-                        </p>
-                    ) : (
-                        <p className="link text-xs mt-2 cursor-pointer" onClick={() => setIsCustomBrand(false)}>
-                            Sélectionner une marque
-                        </p>
-                    )}
-                </fieldset>
-
-                {vehiculeForm.brand && (
+                {(vehiculeForm.brand && !car) && (
                     <fieldset className="fieldset bg-slate-100 border-base-300 rounded-box w-full border p-4 mt-4">
                         <label className="label w-1/3">Modèle</label>
                         {isCustomModel ? (
@@ -180,7 +191,7 @@ const AddCar = forwardRef((props, ref) => {
                     </fieldset>
                 )}
 
-                {vehiculeForm.model && (
+                {(vehiculeForm.model && !car) && (
                     <fieldset className="fieldset bg-slate-100 border-base-300 rounded-box w-full border p-4 mt-4">
                         <label className="label w-1/3 mt-4">Kilométrage</label>
                         <input
@@ -217,8 +228,8 @@ const AddCar = forwardRef((props, ref) => {
                     </fieldset>
                 )}
 
-                <button className={`btn btn-primary w-full mt-4`} onClick={handleSubmit} disabled={!isFormValid}>
-                    Ajouter
+                <button className={`btn btn-primary w-full mt-4`} onClick={handleSave} disabled={!isFormValid}>
+                    {car ? "Modifier le véhicule" : "Ajouter le véhicule"}
                 </button>
 
             </div>
@@ -229,4 +240,4 @@ const AddCar = forwardRef((props, ref) => {
     );
 });
 
-export default AddCar;
+export default AddOrEditCar;

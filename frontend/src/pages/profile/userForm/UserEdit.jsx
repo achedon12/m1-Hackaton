@@ -53,7 +53,7 @@ const UserEdit = forwardRef((props, ref) => {
         try {
             const response = await fetch(`${config.apiBaseUrl}/client/update`, {
                 method: 'PUT',
-                headers: config.headers,
+                headers: config.getHeaders(),
                 body: JSON.stringify(formData)
             });
             if (!response.ok) {
