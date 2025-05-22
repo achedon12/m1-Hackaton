@@ -134,13 +134,15 @@ const TakeMeeting = () => {
 
     if (noQuotations) {
         return (
-            <Box p={4} textAlign="center">
-                <Typography variant="body1" mb={2}>
-                    Vous n'avez pas de devis. Commencez par créer un devis pour votre problème.
-                </Typography>
-                <Button variant="contained" color="primary" href="/rdv">
-                    Créer un devis
-                </Button>
+            <Box className="m-20 bg-white p-10">
+                <Box textAlign="center" p={5}>
+                    <Typography variant="h6" mb={3}>
+                        Vous n'avez pas de devis. Commencez par créer un devis pour votre problème.
+                    </Typography>
+                    <Button variant="contained" color="primary" href="/rdv">
+                        Créer un devis
+                    </Button>
+                </Box>
             </Box>
         );
     }
