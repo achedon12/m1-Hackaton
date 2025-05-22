@@ -8,10 +8,10 @@ const MeetingGrid = () => {
     const [loading, setLoading] = useState(true);
 
     const MeetingStatusConfig = {
-        created: { label: "Créé", color: "text-blue-500" },
-        confirmed: { label: "Confirmé", color: "text-green-600" },
-        cancelled: { label: "Annulé", color: "text-red-500" },
-        completed: { label: "Terminé", color: "text-gray-700" },
+        created: { label: "Créé", bgColor: "bg-blue-500" },
+        confirmed: { label: "Confirmé", bgColor: "bg-green-600" },
+        cancelled: { label: "Annulé", bgColor: "bg-red-500" },
+        completed: { label: "Terminé", bgColor: "bg-gray-700" },
     };
 
     useEffect(() => {
@@ -76,8 +76,11 @@ const MeetingGrid = () => {
                 backgroundImage={"/garage1.jpg"}
             />
             {loading ? (
-                <Loader/>
+                <div className="flex justify-center items-center h-[60vh]">
+                    <Loader />
+                </div>
             ) : (
+
                 <div className="overflow-x-auto rounded-box border border-base-content/5 p-4">
                     <table className={"table bg-white mt-6"}>
                         <thead>
@@ -108,9 +111,16 @@ const MeetingGrid = () => {
                                             <p className="text-sm">{meeting.vehicle.model.name}</p>
                                             <p className="text-sm">({meeting.vehicle.registrationNumber})</p>
                                         </td>
-                                        <td className={status?.color}>
-                                            {status?.label || meeting.meetingState.name}
+                                        <td>
+                                            {status ? (
+                                                <span className={`${status.bgColor} text-white rounded px-3 py-1 inline-block`}>
+                                                  {status.label}
+                                                </span>
+                                            ) : (
+                                                meeting.meetingState.name
+                                            )}
                                         </td>
+
                                         <td>{meeting.garage.name}</td>
                                         <td>
                                             {meeting.quotation &&
