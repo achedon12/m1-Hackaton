@@ -51,7 +51,7 @@ const BotpressChat = () => {
             window.botpress.init({
                 "botId": "552aee85-182b-4a41-a55f-3fe1e1eb51d1",
                 "configuration": {
-                    "composerPlaceholder": "Écrivez votre message ici",
+                    "composerPlaceholder": "Ã‰crivez votre message ici",
                     "botName": "RD-Vroom IA",
                     "botAvatar": "https://files.bpcontent.cloud/2025/05/20/13/20250520135832-QND608RS.png",
                     "botDescription": "Posez-moi vos demandes !",
@@ -62,7 +62,7 @@ const BotpressChat = () => {
                     "privacyPolicy": {},
                     "color": "#cbdeec",
                     "variant": "solid",
-                    "themeMode": "dark",
+                    "themeMode": "light",
                     "fontFamily": "ibm",
                     "radius": 4,
                     "storageLocation": "sessionStorage"
