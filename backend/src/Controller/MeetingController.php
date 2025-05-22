@@ -117,7 +117,7 @@ final class MeetingController extends AbstractController
 
         $meetings = $this->meetingRepository->findBy(['client' => $client]);
 
-        return $this->json($meetings, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
+        return $this->json($meetings, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read', 'quotation:read']]);
     }
 
     #[Route('/update/{id}', name: 'update', methods: ['PUT'])]
