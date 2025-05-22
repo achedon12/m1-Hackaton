@@ -53,11 +53,17 @@ class Quotation
     #[Groups(['quotation:read'])]
     private Collection $quotationOperations;
 
-    #[ORM\ManyToOne(targetEntity: Vehicle::class, inversedBy: 'quotations')]
+    #[ORM\ManyToOne(targetEntity: Vehicle::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[MaxDepth(1)]
     #[Groups(['vehicle:read'])]
     private Vehicle $vehicle;
+
+    #[ORM\ManyToOne(targetEntity: Garage::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    #[MaxDepth(1)]
+    #[Groups(['garage:read'])]
+    private Garage $garage;
 
     public function __construct()
     {
@@ -177,6 +183,18 @@ class Quotation
     public function setVehicle(Vehicle $vehicle): static
     {
         $this->vehicle = $vehicle;
+
+        return $this;
+    }
+
+    public function getGarage(): ?Garage
+    {
+        return $this->garage;
+    }
+
+    public function setGarage(Garage $garage): static
+    {
+        $this->garage = $garage;
 
         return $this;
     }

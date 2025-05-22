@@ -5,6 +5,8 @@ const AddCar = forwardRef((props, ref) => {
     const [brandsAndModelsList, setBrandsAndModelsList] = useState([]);
     const [isFormValid, setIsFormValid] = useState(false);
     const [errors, setErrors] = useState({});
+    const [isCustomBrand, setIsCustomBrand] = useState(false);
+    const [isCustomModel, setIsCustomModel] = useState(false);
     const [vehiculeForm, setVehiculeForm] = useState({
         brand: "",
         model: "",
@@ -55,13 +57,13 @@ const AddCar = forwardRef((props, ref) => {
     }
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setVehiculeForm({ ...vehiculeForm, [name]: value });
+        const {name, value} = e.target;
+        setVehiculeForm({...vehiculeForm, [name]: value});
 
         const error = validateField(name, value);
-        setErrors({ ...errors, [name]: error });
+        setErrors({...errors, [name]: error});
 
-        const hasErrors = Object.values({ ...errors, [name]: error }).some((err) => err);
+        const hasErrors = Object.values({...errors, [name]: error}).some((err) => err);
         setIsFormValid(!hasErrors);
     }
 
@@ -100,40 +102,80 @@ const AddCar = forwardRef((props, ref) => {
 
                 <fieldset className="fieldset bg-slate-100 border-base-300 rounded-box w-full border p-4 mt-4">
                     <label className="label w-1/3">Marque</label>
-                    <select
-                        className="select select-bordered w-full"
-                        name="brand"
-                        value={vehiculeForm.brand}
-                        onChange={handleChange}
-                    >
-                        <option value="">Sélectionnez une marque</option>
-                        {[...new Map(brandsAndModelsList.map((car) => [car.brand.id, car.brand])).values()]
-                            .map((brand) => (
-                                <option key={brand.id} value={brand.id}>
-                                    {brand.name}
-                                </option>
-                            ))}
-                    </select>
+                    {isCustomBrand ? (
+                        <input
+                            type="text"
+                            name="brand"
+                            className="input input-bordered w-full"
+                            placeholder="Entrez une marque"
+                            value={vehiculeForm.brand}
+                            onChange={handleChange}
+                        />
+                    ) : (
+                        <select
+                            className="select select-bordered w-full"
+                            name="brand"
+                            value={vehiculeForm.brand}
+                            onChange={handleChange}
+                        >
+                            <option value="">Sélectionnez une marque</option>
+                            {[...new Map(brandsAndModelsList.map((car) => [car.brand.id, car.brand])).values()]
+                                .map((brand) => (
+                                    <option key={brand.id} value={brand.id}>
+                                        {brand.name}
+                                    </option>
+                                ))}
+                        </select>
+                    )}
+                    {!isCustomBrand ? (
+                        <p className="link text-xs mt-2 cursor-pointer" onClick={() => setIsCustomBrand(true)}>
+                            Ma marque n'est pas dans la liste
+                        </p>
+                    ) : (
+                        <p className="link text-xs mt-2 cursor-pointer" onClick={() => setIsCustomBrand(false)}>
+                            Sélectionner une marque
+                        </p>
+                    )}
                 </fieldset>
 
                 {vehiculeForm.brand && (
                     <fieldset className="fieldset bg-slate-100 border-base-300 rounded-box w-full border p-4 mt-4">
                         <label className="label w-1/3">Modèle</label>
-                        <select
-                            className="select select-bordered w-full"
-                            name="model"
-                            value={vehiculeForm.model}
-                            onChange={handleChange}
-                        >
-                            <option value="">Sélectionnez un modèle</option>
-                            {brandsAndModelsList
-                                .filter((model) => model.brand.id === parseInt(vehiculeForm.brand))
-                                .map((model) => (
-                                    <option key={model.id} value={model.id}>
-                                        {model.name}
-                                    </option>
-                                ))}
-                        </select>
+                        {isCustomModel ? (
+                            <input
+                                type="text"
+                                name="model"
+                                className="input input-bordered w-full"
+                                placeholder="Entrez un modèle"
+                                value={vehiculeForm.model}
+                                onChange={handleChange}
+                            />
+                        ) : (
+                            <select
+                                className="select select-bordered w-full"
+                                name="model"
+                                value={vehiculeForm.model}
+                                onChange={handleChange}
+                            >
+                                <option value="">Sélectionnez un modèle</option>
+                                {brandsAndModelsList
+                                    .filter((model) => model.brand.id === parseInt(vehiculeForm.brand))
+                                    .map((model) => (
+                                        <option key={model.id} value={model.id}>
+                                            {model.name}
+                                        </option>
+                                    ))}
+                            </select>
+                        )}
+                        {!isCustomModel ? (
+                            <p className="link text-xs mt-2 cursor-pointer" onClick={() => setIsCustomModel(true)}>
+                                Mon modèle n'est pas dans la liste
+                            </p>
+                        ) : (
+                            <p className="link text-xs mt-2 cursor-pointer" onClick={() => setIsCustomModel(false)}>
+                                Sélectionner un modèle
+                            </p>
+                        )}
                     </fieldset>
                 )}
 

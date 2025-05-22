@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Meeting;
+use App\Entity\MeetingOperation;
 use App\Repository\GarageRepository;
 use App\Repository\MeetingRepository;
 use App\Repository\MeetingStateRepository;
@@ -40,10 +41,6 @@ final class MeetingController extends AbstractController
             return $this->json(['error' => 'Vehicle is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!isset($data['garage'])) {
-            return $this->json(['error' => 'Garage is required'], Response::HTTP_BAD_REQUEST);
-        }
-
         if (!isset($data['date'])) {
             return $this->json(['error' => 'Date is required'], Response::HTTP_BAD_REQUEST);
         }
@@ -63,11 +60,6 @@ final class MeetingController extends AbstractController
             return $this->json(['error' => 'You are not the owner of this vehicle'], Response::HTTP_FORBIDDEN);
         }
 
-        $garage = $this->garageRepository->find($data['garage']);
-        if (!$garage) {
-            return $this->json(['error' => 'Garage not found'], Response::HTTP_BAD_REQUEST);
-        }
-
         $quotation = $this->quotationRepository->find($data['quotation']);
         if (!$quotation) {
             return $this->json(['error' => 'Quotation not found'], Response::HTTP_BAD_REQUEST);
@@ -76,7 +68,7 @@ final class MeetingController extends AbstractController
 
         $meeting = new Meeting();
         $meeting->setVehicle($vehicle);
-        $meeting->setGarage($garage);
+        $meeting->setGarage($quotation->getGarage());
         $meeting->setQuotation($quotation);
         $meeting->setMeetingDate($quotation->getRequestDate());
         $meeting->setClient($quotation->getClient());
@@ -85,13 +77,24 @@ final class MeetingController extends AbstractController
         $meeting->setCreationDate(new \DateTimeImmutable());
 
         $this->entityManager->persist($meeting);
+
+        $operations = $quotation->getQuotationOperations();
+        foreach ($operations as $operation) {
+            $meetingOperation = new MeetingOperation();
+            $meetingOperation->setMeeting($meeting);
+            $meetingOperation->setOperation($operation->getOperation());
+            $meetingOperation->setCreationDate(new \DateTimeImmutable());
+            $this->entityManager->persist($meetingOperation);
+            $meeting->addMeetingOperation($meetingOperation);
+            $this->entityManager->persist($operation);
+        }
         $this->entityManager->flush();
 
-        return $this->json($meeting, Response::HTTP_CREATED, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read']]);
+        return $this->json($meeting, Response::HTTP_CREATED, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
     }
 
-    #[Route('/{clientId}', name: 'get', methods: ['GET'])]
-    public function get(int $clientId): Response
+    #[Route('/client/{clientId}', name: 'get', methods: ['GET'])]
+    public function getClientOperations(int $clientId): Response
     {
         $client = $this->security->getUser();
 
@@ -101,7 +104,19 @@ final class MeetingController extends AbstractController
 
         $meetings = $this->meetingRepository->findBy(['client' => $client]);
 
-        return $this->json($meetings, Response::HTTP_OK);
+        return $this->json($meetings, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
+    }
+
+    #[Route('/{id}', name: 'get', methods: ['GET'])]
+    public function get(int $id): Response
+    {
+        $meeting = $this->meetingRepository->find($id);
+
+        if (!$meeting) {
+            return $this->json(['error' => 'Meeting not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json($meeting, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
     }
 
 }

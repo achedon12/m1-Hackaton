@@ -54,6 +54,7 @@ final class BillController extends AbstractController
         $bill->setHash(bin2hex(random_bytes(16)));
         $bill->setMeeting($meeting);
         $bill->setCreationDate(new \DateTimeImmutable());
+        $bill->setDueDate(new \DateTime('+ 30 days'));
 
         $this->entityManager->persist($bill);
         $this->entityManager->flush();
