@@ -20,13 +20,12 @@ const MeetingGrid = () => {
                 }
 
                 const meetings = await response.json();
-
-                // Fetch quotations pour chaque meeting
+                console.log(meetings)
                 const enrichedMeetings = await Promise.all(
                     meetings.map(async (meeting) => {
                         try {
                             const quotationRes = await fetch(
-                                `${config.apiBaseUrl}/quotation/${meeting.quotationId}`,
+                                `${config.apiBaseUrl}/quotation/${meeting.quotation.id}`,
                                 { headers: config.headers }
                             );
                             if (!quotationRes.ok) {
