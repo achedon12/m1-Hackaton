@@ -18,7 +18,6 @@ const MeetingGrid = () => {
     };
 
     useEffect(() => {
-
         const fetchMeetingStates = async () => {
             try {
                 const response = await fetch(`${config.apiBaseUrl}/meetingstate/list`, {
@@ -34,7 +33,6 @@ const MeetingGrid = () => {
 
         fetchMeetingStates();
 
-
         const fetchMeetingData = async () => {
             try {
                 const clientId = JSON.parse(localStorage.getItem('client')).id;
@@ -42,9 +40,7 @@ const MeetingGrid = () => {
                     `${config.apiBaseUrl}/meeting/client/${clientId}`,
                     { headers: config.headers }
                 );
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
+                if (!response.ok) throw new Error('Network response was not ok');
 
                 const meetings = await response.json();
 
@@ -55,27 +51,40 @@ const MeetingGrid = () => {
                                 `${config.apiBaseUrl}/quotation/${meeting.quotation.id}`,
                                 { headers: config.headers }
                             );
-
-                            if (!quotationRes.ok) {
-                                throw new Error('Erreur lors de la récupération du devis');
-                            }
+                            if (!quotationRes.ok) throw new Error('Erreur lors de la récupération du devis');
                             const quotation = await quotationRes.json();
+
+                            let invoice = null;
+
+                            if (meeting.meetingState.name === "completed") {
+                                // Récupération de la facture associée
+                                const billRes = await fetch(`${config.apiBaseUrl}/bill/meeting/${meeting.id}`, {
+                                    headers: config.headers,
+                                });
+                                if (billRes.ok) {
+                                    const billJson = await billRes.json();
+                                    invoice = (Array.isArray(billJson) && billJson.length > 0) ? billJson[0] : null;
+                                }
+                            }
+
                             return {
                                 ...meeting,
                                 quotation,
+                                invoice,
                             };
-                        } catch (quotationError) {
-                            console.error(`Erreur pour le devis du meeting ${meeting.id}:`, quotationError);
+                        } catch (error) {
+                            console.error(`Erreur pour le meeting ${meeting.id}:`, error);
                             return {
                                 ...meeting,
                                 quotation: null,
+                                invoice: null,
                             };
                         }
                     })
                 );
 
                 setMeetingData(enrichedMeetings);
-                console.log(meetings)
+
             } catch (error) {
                 console.error('Error fetching meeting data:', error);
             } finally {
@@ -84,9 +93,8 @@ const MeetingGrid = () => {
         };
 
         fetchMeetingData();
+
     }, []);
-
-
 
     return (
         <Box className="w-full">
@@ -145,21 +153,30 @@ const MeetingGrid = () => {
                                         }
 
                                         let newInvoice = null;
+                                        const meeting = meetingData[idx];
 
                                         if (newStatusName === "completed") {
-                                            const billResponse = await fetch(`${config.apiBaseUrl}/bill/create`, {
-                                                method: "POST",
-                                                headers: config.headers,
-                                                body: JSON.stringify({
-                                                    "meeting": meetingId
-                                                })
-                                            });
+                                            // Si facture déjà existante on ne crée rien
+                                            if (!meeting.invoice) {
+                                                const billResponse = await fetch(`${config.apiBaseUrl}/bill/create`, {
+                                                    method: "POST",
+                                                    headers: {
+                                                        ...config.headers,
+                                                        'Content-Type': 'application/json'
+                                                    },
+                                                    body: JSON.stringify({ meeting: meetingId })
+                                                });
 
-                                            if (!billResponse.ok) {
-                                                throw new Error("Erreur lors de la création de la facture");
+                                                if (!billResponse.ok) {
+                                                    throw new Error("Erreur lors de la création de la facture");
+                                                }
+
+                                                const json = await billResponse.json();
+                                                newInvoice = json.bill;
+                                            } else {
+                                                // facture déjà existante
+                                                newInvoice = meeting.invoice;
                                             }
-
-                                            newInvoice = await billResponse.json();
                                         }
 
                                         setSnackbar("Statut de rendez-vous mis à jour.");
@@ -181,10 +198,6 @@ const MeetingGrid = () => {
                                         alert('Erreur lors de la mise à jour du statut.');
                                     }
                                 };
-
-
-
-
 
                                 return (
                                     <tr key={meeting.id}>
@@ -250,7 +263,7 @@ const MeetingGrid = () => {
                                         <td>
                                             {meeting.meetingState.name === "completed" && meeting.invoice && meeting.invoice.hash ? (
                                                 <a
-                                                    href={`${config.baseUrl}/uploads/invoices/${meeting.invoice.hash}.pdf`}
+                                                    href={`${config.baseUrl}/uploads/bills/${meeting.invoice.hash}.pdf`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="text-blue-600 hover:underline"
