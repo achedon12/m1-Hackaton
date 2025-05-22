@@ -113,23 +113,31 @@ final class VehicleController extends AbstractController
     {
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
 
-        if (!isset($data['model'])) {
+        $model = $data['model'] ?? null;
+        $brand = $data['brand'] ?? null;
+        $circulationDate = $data['circulationDate'] ?? null;
+        $kms = $data['kms'] ?? null;
+        $registrationNumber = $data['registrationNumber'] ?? null;
+        $vin = $data['vin'] ?? null;
+        $client = $this->security->getUser();
+
+        if (!$model) {
             return $this->json(['error' => 'Model is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!isset($data['brand'])) {
+        if (!$brand) {
             return $this->json(['error' => 'Brand is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!isset($data['circulationDate'])) {
+        if (!$circulationDate) {
             return $this->json(['error' => 'Circulation date is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!isset($data['kms'])) {
+        if (!$kms) {
             return $this->json(['error' => 'Kms is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!isset($data['registrationNumber'])) {
+        if (!$registrationNumber) {
             return $this->json(['error' => 'Registration number is required'], Response::HTTP_BAD_REQUEST);
         }
 
@@ -146,13 +154,23 @@ final class VehicleController extends AbstractController
             return $this->json(['error' => 'This model does not belong to the specified brand'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (isset($data['vin'])) {
+        if ($vin) {
             $vehicle = $this->entityManager->getRepository(Vehicle::class)->findOneBy(['vin' => $data['vin']]);
 
             if ($vehicle) {
                 return $this->json(['error' => 'Vehicle with this VIN already exists'], Response::HTTP_BAD_REQUEST);
             }
         }
+
+        $vehicle = $this->entityManager->getRepository(Vehicle::class)->findOneBy(['registrationNumber' => $data['registrationNumber']]);
+        if ($vehicle) {
+            return $this->json(['error' => 'Vehicle with this registration number already exists'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (preg_match('/^[A-Z]{2}-[0-9]{3}-[A-Z]{2}$/', $data['registrationNumber']) === 0) {
+            return $this->json(['error' => 'Invalid registration number format'], Response::HTTP_BAD_REQUEST);
+        }
+
 
         $vehicle = new Vehicle();
         $vehicle->setModel($model);
