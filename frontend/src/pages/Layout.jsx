@@ -11,7 +11,8 @@ const Layout = () => {
     const client = JSON.parse(localStorage.getItem("client"));
 
     const navItems = [
-        {name: "Prendre rendez-vous", path: "/rdv"},
+        {name: "Effectuer un devis", path: "/rdv"},
+        {name: "Prendre un rendez-vous", path: "/takeMeeting"},
         {name: "Nos services", path: "/operations"},
         {name: "Nos garages", path: "/garages"},
     ];
