@@ -156,6 +156,6 @@ final class QuotationController extends AbstractController
             return $this->json(['error' => 'Quotation not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json($quotation, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read', 'client:read']]);
+        return $this->json($quotation, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read', 'client:read', 'vehicle:read']]);
     }
 }
