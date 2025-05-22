@@ -32,18 +32,29 @@ const TakeMeeting = () => {
 
     const client = JSON.parse(localStorage.getItem("client"));
 
+    const [noQuotations, setNoQuotations] = useState(false);
+
     useEffect(() => {
         const fetchQuotations = async () => {
             try {
                 const response = await fetch(`${config.apiBaseUrl}/quotation/client`, {
                     headers: config.headers,
                 });
-                if (!response.ok) {
-                    throw new Error(`Erreur ${response.status}`);
-                }
                 const data = await response.json();
-                setQuotations(data);
-                if (data.length > 0) setSelectedQuotationId(data[0].id);
+
+                if (!response.ok) {
+                    // Si erreur spécifique "No quotations found for this client"
+                    if (data.error === "No quotations found for this client") {
+                        setNoQuotations(true);
+                        setQuotations([]); // Pas de devis
+                    } else {
+                        throw new Error(data.error || `Erreur ${response.status}`);
+                    }
+                } else {
+                    setQuotations(data);
+                    if (data.length > 0) setSelectedQuotationId(data[0].id);
+                    setNoQuotations(false);
+                }
             } catch (error) {
                 setError(error.message);
                 console.error("Erreur lors de la récupération des devis :", error);
@@ -51,6 +62,7 @@ const TakeMeeting = () => {
                 setLoading(false);
             }
         };
+
 
         fetchQuotations();
 
@@ -112,18 +124,26 @@ const TakeMeeting = () => {
 
     if (loading) {
         return (
-            <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                minHeight="100vh"
-            >
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
                 <CircularProgress />
             </Box>
         );
     }
 
     if (error) return <Typography color="error">{error}</Typography>;
+
+    if (noQuotations) {
+        return (
+            <Box p={4} textAlign="center">
+                <Typography variant="body1" mb={2}>
+                    Vous n'avez pas de devis. Commencez par créer un devis pour votre problème.
+                </Typography>
+                <Button variant="contained" color="primary" href="/rdv">
+                    Créer un devis
+                </Button>
+            </Box>
+        );
+    }
 
     const selectedQuotation = quotations.find(
         (q) => q.id === selectedQuotationId
@@ -135,72 +155,89 @@ const TakeMeeting = () => {
                 Créer un rendez-vous à partir d’un devis
             </Typography>
 
-            <FormControl fullWidth sx={{ mb: 4 }}>
-                <InputLabel id="select-quotation-label">Choisir un devis</InputLabel>
-                <Select
-                    labelId="select-quotation-label"
-                    value={selectedQuotationId}
-                    label="Choisir un devis"
-                    onChange={(e) => setSelectedQuotationId(e.target.value)}
-                    MenuProps={MenuProps}
-                >
-                    {quotations.map((quotation) => (
-                        <MenuItem key={quotation.id} value={quotation.id}>
-                            Devis #{quotation.id} - {Math.round(quotation.price * (1 + parseFloat(quotation.tva)))} €
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
+            {quotations.length === 0 ? (
+                <Box textAlign="center" mt={4}>
+                    <Typography variant="body1" mb={2}>
+                        Vous n'avez pas de devis. Commencez par créer un devis pour votre problème.
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        href="/rdv"
+                    >
+                        Créer un devis
+                    </Button>
+                </Box>
+            ) : (
+                <>
+                    <FormControl fullWidth sx={{ mb: 4 }}>
+                        <InputLabel id="select-quotation-label">Choisir un devis</InputLabel>
+                        <Select
+                            labelId="select-quotation-label"
+                            value={selectedQuotationId}
+                            label="Choisir un devis"
+                            onChange={(e) => setSelectedQuotationId(e.target.value)}
+                            MenuProps={MenuProps}
+                        >
+                            {quotations.map((quotation) => (
+                                <MenuItem key={quotation.id} value={quotation.id}>
+                                    Devis #{quotation.id} - {Math.round(quotation.price * (1 + parseFloat(quotation.tva)))} €
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
-            {selectedQuotation && (
-                <Card>
-                    <CardContent>
-                        <Typography variant="h6">Devis #{selectedQuotation.id}</Typography>
+                    {selectedQuotation && (
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6">Devis #{selectedQuotation.id}</Typography>
 
-                        <Typography variant="body2" color="text.secondary">
-                            <strong>Prix :</strong>{" "}
-                            {Math.round(
-                                selectedQuotation.price *
-                                (1 + parseFloat(selectedQuotation.tva))
-                            )}{" "}
-                            €
-                        </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    <strong>Prix :</strong>{" "}
+                                    {Math.round(
+                                        selectedQuotation.price *
+                                        (1 + parseFloat(selectedQuotation.tva))
+                                    )}{" "}
+                                    €
+                                </Typography>
 
-                        <Typography variant="body2" color="text.secondary">
-                            <strong>Date de rendez-vous souhaitée :</strong>{" "}
-                            {selectedQuotation.requestDate
-                                ? new Date(selectedQuotation.requestDate).toLocaleDateString(
-                                    "fr-FR",
-                                    {
-                                        day: "2-digit",
-                                        month: "2-digit",
-                                        year: "numeric",
-                                    }
-                                )
-                                : "Non définie"}
-                        </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    <strong>Date de rendez-vous souhaitée :</strong>{" "}
+                                    {selectedQuotation.requestDate
+                                        ? new Date(selectedQuotation.requestDate).toLocaleDateString(
+                                            "fr-FR",
+                                            {
+                                                day: "2-digit",
+                                                month: "2-digit",
+                                                year: "numeric",
+                                            }
+                                        )
+                                        : "Non définie"}
+                                </Typography>
 
-                        <Box display="flex" justifyContent="center" gap={2} mt={2}>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                component="a"
-                                href={`${config.baseUrl}/uploads/quotations/${selectedQuotation.hash}.pdf`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Télécharger le devis
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={handleCreateMeeting}
-                            >
-                                Prendre le rendez-vous
-                            </Button>
-                        </Box>
-                    </CardContent>
-                </Card>
+                                <Box display="flex" justifyContent="center" gap={2} mt={2}>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        component="a"
+                                        href={`${config.baseUrl}/uploads/quotations/${selectedQuotation.hash}.pdf`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Télécharger le devis
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={handleCreateMeeting}
+                                    >
+                                        Prendre le rendez-vous
+                                    </Button>
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    )}
+                </>
             )}
 
             <Snackbar
@@ -211,6 +248,7 @@ const TakeMeeting = () => {
             />
         </Box>
     );
+
 };
 
 export default TakeMeeting;
