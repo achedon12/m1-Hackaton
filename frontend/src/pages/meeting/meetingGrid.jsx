@@ -7,6 +7,13 @@ const MeetingGrid = () => {
     const [meetingData, setMeetingData] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const MeetingStatusLabels = {
+        created: "Créé",
+        confirmed: "Confirmé",
+        cancelled: "Annulé",
+        completed: "Terminé",
+    };
+
     useEffect(() => {
         const fetchMeetingData = async () => {
             try {
@@ -105,7 +112,7 @@ const MeetingGrid = () => {
                                             ({meeting.vehicle.registrationNumber})
                                         </p>
                                     </td>
-                                    <td>{meeting.meetingState.name}</td>
+                                    <td>{MeetingStatusLabels[meeting.meetingState.name] || meeting.meetingState.name}</td>
                                     <td>{meeting.garage.name}</td>
                                     <td>
                                         {meeting.quotation &&
