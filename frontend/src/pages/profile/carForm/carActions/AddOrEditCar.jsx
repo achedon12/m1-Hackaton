@@ -41,6 +41,15 @@ const AddOrEditCar = forwardRef(({car, onSave}, ref) => {
                 circulationDate: car.circulationDate,
                 registrationNumber: car.registrationNumber,
             });
+        } else {
+            setVehiculeForm({
+                id: "",
+                brand: "",
+                model: "",
+                kms: "",
+                circulationDate: "",
+                registrationNumber: "",
+            });
         }
 
         fetchBrandsAndModels();
@@ -51,7 +60,7 @@ const AddOrEditCar = forwardRef(({car, onSave}, ref) => {
 
         switch (name) {
             case "registrationNumber":
-                const registrationNumberRegex = /^[A-Z]{2}\d{3}[A-Z]{2}$/;
+                const registrationNumberRegex = /^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
                 if (!registrationNumberRegex.test(value)) error = "La plaque d'immatriculation est invalide.";
                 break;
             case "kms":
@@ -220,7 +229,7 @@ const AddOrEditCar = forwardRef(({car, onSave}, ref) => {
                             type="text"
                             name="registrationNumber"
                             className="input input-bordered w-full"
-                            placeholder="Ex: ABC123"
+                            placeholder="Ex: AB-123-CD"
                             value={vehiculeForm.registrationNumber}
                             onChange={handleChange}
                         />

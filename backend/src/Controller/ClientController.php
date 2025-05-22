@@ -164,6 +164,8 @@ final class ClientController extends AbstractController
             } catch (FileException $e) {
                 return new JsonResponse(['error' => 'Échec de l\'upload de l\'avatar'], 500);
             }
+        } else {
+            $client->setAvatar('default.png');
         }
 
         $client->setCreationDate(new \DateTimeImmutable());

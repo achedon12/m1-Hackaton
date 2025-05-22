@@ -197,14 +197,6 @@ final class VehicleController extends AbstractController
             return $this->json(['error' => 'No vehicles found for this client'], Response::HTTP_NOT_FOUND);
         }
 
-        foreach ($vehicles as $vehicle) {
-            $brandNameLowercase = strtolower($vehicle->getBrand()->getName());
-            $brandNameLowercase = str_replace(' ', '', $brandNameLowercase);
-            $logoPath = 'uploads/brands/' . $brandNameLowercase . '.png';
-
-            $vehicle->getBrand()->setLogoUrl($logoPath);
-        }
-
         return $this->json($vehicles, Response::HTTP_OK);
     }
 

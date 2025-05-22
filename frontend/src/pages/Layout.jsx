@@ -3,6 +3,7 @@ import { ShoppingCart, User, MapPin } from "lucide-react";
 import { useAuth } from "../providers/AuthProvider.jsx";
 import { LocationProvider, LocationContext } from "../components/LocationContext.jsx";
 import { useContext } from "react";
+import config from "../providers/apiConfig.js";
 
 const LayoutContent = () => {
     const { isAuthenticated, logout } = useAuth();
@@ -51,10 +52,8 @@ const LayoutContent = () => {
                         <div className={`dropdown dropdown-end ${isAuthenticated ? "" : "hidden"}`}>
                             <div tabIndex="0" role="button">
                                 <div tabIndex="0" role="button" className="btn btn-ghost btn-circle avatar">
-                                    {client?.avatar ? (
-                                        <img src={client.avatar} alt="Avatar" className="w-10 rounded-full" />
-                                    ) : (
-                                        <User className={`text-white`} />
+                                    {client && (
+                                        <img src={config.baseUrl + "/uploads/avatars/" + client.avatar} alt="Avatar" className="w-10 rounded-full" />
                                     )}
                                 </div>
                             </div>
