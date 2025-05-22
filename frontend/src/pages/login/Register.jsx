@@ -80,7 +80,7 @@ const Register = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center h-screen bg-secondary">
             <div className="flex justify-center p-2 mb-4 gap-4">
                 <button
                     className={`btn btn-ghost ${activeTab === "person" ? "bg-secondary" : "text-secondary"}`}

@@ -66,7 +66,7 @@ const LayoutContent = () => {
                                     <NavLink to="/profile">Modifier son profil</NavLink>
                                 </li>
                                 <li>
-                                    <NavLink to="/meeting">Mes opérations</NavLink>
+                                    <NavLink to="/meeting">Mes rendez-vous</NavLink>
                                 </li>
                                 <li>
                                     <button onClick={logout}>Se déconnecter</button>
