@@ -1,7 +1,36 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
+import config from "../providers/apiConfig.js";
 
 const BotpressChat = () => {
+
+    const client = JSON.parse(localStorage.getItem("client"));
+
+    const [clientVehicles, setClientVehicles] = React.useState([]);
+
+    const fetchVehicles = async () => {
+        try {
+            const response = await fetch(`${config.apiBaseUrl}/vehicle/client/${client.id}`,
+                {
+                    headers: config.headers,
+                });
+
+            if (!response.ok) {
+                throw new Error(`Erreur ${response.status}`);
+            }
+
+            const data = await response.json();
+            setClientVehicles(data);
+
+        } catch (error) {
+            console.error("Erreur lors de la récupération des véhicules :", error);
+        }
+    };
+
     useEffect(() => {
+        if (client) {
+            fetchVehicles();
+        }
+        console.log(clientVehicles);
         const script = document.createElement("script");
         script.src = "https://cdn.botpress.cloud/webchat/v2.5/inject.js";
         script.async = true;
@@ -26,7 +55,17 @@ const BotpressChat = () => {
                     "radius": 4,
                     "storageLocation": "sessionStorage"
                 },
-                "clientId": "d7b487e3-8fff-4fda-9a7e-17a2b6e48bc1"
+                "clientId": "d7b487e3-8fff-4fda-9a7e-17a2b6e48bc1",
+                "user": {
+                    "data": {
+                        //"firstName": client.firstName,
+                        "vehicles" : [
+                            {
+
+                            }
+                        ]
+                    }
+                }
             });
 
             window.botpress.on("webchat:ready", () => {
