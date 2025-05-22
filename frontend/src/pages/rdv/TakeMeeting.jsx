@@ -132,7 +132,7 @@ const TakeMeeting = () => {
     return (
         <Box p={4}>
             <Typography variant="h4" gutterBottom>
-                Créer une réunion à partir d’un devis
+                Créer un rendez-vous à partir d’un devis
             </Typography>
 
             <FormControl fullWidth sx={{ mb: 4 }}>
