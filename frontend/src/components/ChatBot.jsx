@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from "react";
 import config from "../providers/apiConfig.js";
-import {Bot, User} from "lucide-react";
+import {Bot, User, FileText} from "lucide-react";
 
 const ChatBot = () => {
     const client = JSON.parse(localStorage.getItem("client"));
@@ -13,8 +13,10 @@ const ChatBot = () => {
     ]);
     const [step, setStep] = useState("start");
     const [userInput, setUserInput] = useState("");
+    const [requestClient, setRequestClient] = useState("");
     const [formData, setFormData] = useState({client_id: clientId});
     const [vehicles, setVehicles] = useState([]);
+    const [vehicleId, setVehicleId] = useState(null);
     const [brands, setBrands] = useState([]);
     const [models, setModels] = useState([]);
     const [selectedBrand, setSelectedBrand] = useState("");
@@ -27,6 +29,10 @@ const ChatBot = () => {
     const [inputZip, setInputZip] = useState("");
     const [operations, setOperations] = useState([]);
     const [selectedOperations, setSelectedOperations] = useState([]);
+
+    const [quotation, setQuotation] = React.useState(null);
+    const [showPdfButton, setShowPdfButton] = React.useState(false);
+    const [pendingGarage, setPendingGarage] = React.useState(null);
 
     const [meetingWithOperations, setMeetingWithOperations] = useState(false);
 
@@ -94,6 +100,9 @@ const ChatBot = () => {
                     });
 
                     if (res.ok) {
+                        const data = await res.json();
+                        setVehicleId(data['vehicule'].id);
+
                         appendMessage("bot", "Véhicule créé avec succès !");
                         appendMessage("bot", "Veuillez renseigner le problème de votre véhicule :");
                         setStep("step2");
@@ -111,7 +120,8 @@ const ChatBot = () => {
             validate: val => /^\d+$/.test(val),
             error: "Kilométrage invalide. Entrez un nombre.",
             onValid: async (val) => {
-                const vehicleId = formData.vehicle_id;
+                setVehicleId(formData.vehicle_id);
+
                 try {
                     const res = await fetch(`${config.apiBaseUrl}/vehicle/update/${vehicleId}`, {
                         method: "PUT",
@@ -143,7 +153,7 @@ const ChatBot = () => {
             }
         },
         rappel_request: {
-            question: () => `Votre code postal est "${zipcode}". Souhaitez-vous l'utiliser ?`,
+            question: () => `Votre code postal est "${zipcode ?? ''}". Souhaitez-vous l'utiliser ?`,
             onValid: async (val) => {
                 if (val.toLowerCase() === "oui") {
                     await handleConfirmZip(zipcode);
@@ -151,6 +161,62 @@ const ChatBot = () => {
                 } else {
                     appendMessage("bot", "Veuillez entrer un nouveau code postal :");
                     setStep("ask_zipcode");
+                }
+            }
+        },
+        garage_unavailable: {
+            question: `Souhaitez-vous que le garage ${(pendingGarage?.name ?? "")} vous rappelle dès qu’il est disponible ?`,
+            validate: val => ["oui", "non"].includes(val.toLowerCase()),
+            error: "Veuillez répondre par oui ou non.",
+            onValid: async (val) => {
+                if (val.toLowerCase() === "oui") {
+                    await handleSelectGarage(pendingGarage.id, pendingGarage.name);
+                    setStep("end");
+                } else {
+                    appendMessage("bot", "Très bien, vous pouvez consulter d'autres garages.");
+                    setPendingGarage(null);
+                    setStep("garage_list");
+                }
+            }
+        },
+        confirm_create_quotation: {
+            question: `Voulez-vous créer un devis avec ce garage : ${pendingGarage?.name ?? ''} ?`,
+            validate: val => ["oui", "non"].includes(val.toLowerCase()),
+            error: "Veuillez répondre par oui ou non.",
+            onValid: async (val) => {
+                if (val.toLowerCase() === "oui") {
+                    if (!pendingGarage) {
+                        appendMessage("bot", "Erreur : garage non défini.");
+                        setStep("garage_list");
+                        return;
+                    }
+                    await handleCreateQuotation(pendingGarage, selectedOperations);
+                    setPendingGarage(null);
+                } else {
+                    appendMessage("bot", "D'accord, pas de devis créé.");
+                    setPendingGarage(null);
+                    setStep("garage_list");
+                }
+            }
+        },
+        quotation_ready: {
+            question: `✅ Devis créé avec succès pour ${(pendingGarage?.name ?? "")}. Voici votre devis :`,
+            onValid: () => {
+                setStep("ask_meeting");
+            }
+        },
+        ask_meeting: {
+            question: `Souhaitez-vous planifier un rendez-vous avec ce garage : ${pendingGarage?.name ?? ''} ?`,
+            validate: val => ["oui", "non"].includes(val.toLowerCase()),
+            error: "Veuillez répondre par oui ou non.",
+            onValid: async (val) => {
+                if (val.toLowerCase() === "oui") {
+                    appendMessage("bot", "Très bien, procédons à la création du rendez-vous.");
+                    await handleMeeting();
+                    setStep("end");
+                } else {
+                    appendMessage("bot", "D'accord, vous pouvez revenir pour le faire plus tard.");
+                    setStep("end");
                 }
             }
         }
@@ -189,7 +255,7 @@ const ChatBot = () => {
                     appendMessage("bot", "Voici vos véhicules. Veuillez en choisir un :");
                     setStep("choose_vehicle");
                 } else {
-                    appendMessage("bot", stepsConfig.ask_registration.question);
+                    // appendMessage("bot", stepsConfig.ask_registration.question);
                     setStep("ask_registration");
                 }
             } catch {
@@ -201,8 +267,9 @@ const ChatBot = () => {
         }
     };
 
-    const handleVehicleSelect = (vehicleId) => {
-        const selected = vehicles.find(v => v.id === vehicleId);
+    const handleVehicleSelect = (vehicle_id) => {
+        const selected = vehicles.find(v => v.id === vehicle_id);
+        setVehicleId(vehicle_id)
         appendMessage("user", `${selected.brand.name} ${selected.model.name} (${selected.registrationNumber})`);
         appendMessage("bot", "Véhicule sélectionné.");
 
@@ -232,7 +299,8 @@ const ChatBot = () => {
         try {
             const url_garages = meetingWithOperations ? `${config.apiBaseUrl}/garage/availabilities` : `${config.apiBaseUrl}/garage/nearbyByZipcode`;
 
-            const operationsIds = selectedOperations.map(op => op.id).join(";");
+            const operationsIds = selectedOperations.join(";");
+            // const operationsIds = selectedOperations.map(op => op.id).join(";");
             const params = meetingWithOperations ? {zipcode: zip, city: city, operations: operationsIds} : {zipcode: zip, city: city};
 
             const response = await fetch(url_garages, {
@@ -252,20 +320,77 @@ const ChatBot = () => {
         try {
             const res = await fetch(`${config.apiBaseUrl}/garage/reminder`, {
                 method: "POST",
-                headers: config.getHeaders(),
-                body: JSON.stringify({ garage: garageId }),
+                headers: config.headers,
+                body: JSON.stringify({ garage: garageId, vehicle: vehicleId, message: requestClient }),
             });
 
             if (res.ok) {
                 appendMessage("user", `Je choisis ${garageName}`);
                 appendMessage("bot", `${garageName} a bien été sélectionné. Un conseiller vous rappellera.`);
-                setStep("end");
             } else {
                 const err = await res.json();
                 appendMessage("bot", `Erreur lors de la sélection du garage : ${err.error || "Erreur inconnue"}`);
             }
         } catch (error) {
             appendMessage("bot", "Erreur technique lors de la sélection du garage.");
+        }
+    };
+
+    const handleCreateQuotation = async (garage, selectedOperations) => {
+        try {
+            const operationsStr = selectedOperations.join(";");
+
+            const body = {
+                operations: operationsStr,
+                date: garage.nextAvailableDate || new Date().toISOString().split("T")[0], // sécurité
+                vehicle: vehicleId,
+                garage: garage.id
+            };
+
+            const res = await fetch(`${config.apiBaseUrl}/quotation/create`, {
+                method: "POST",
+                headers: config.headers,
+                body: JSON.stringify(body),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setQuotation(data)
+                setShowPdfButton(true);
+                setStep("quotation_ready");
+            } else {
+                const err = await res.json();
+                appendMessage("bot", `❌ Erreur lors de la création du devis : ${err.error || "Erreur inconnue"}`);
+                setStep("garage_list");
+            }
+        } catch (error) {
+            console.error(error);
+            appendMessage("bot", "⚠️ Erreur technique lors de la création du devis.");
+            setStep("garage_list");
+        }
+    };
+
+    const handleMeeting = async () => {
+        try {
+            const res = await fetch(`${config.apiBaseUrl}/meeting/create`, {
+                method: "POST",
+                headers: config.headers,
+                body: JSON.stringify({
+                    quotation: quotation.id,
+                    vehicle: vehicleId,
+                    date: quotation.requestDate
+                })
+            });
+
+            if (res.ok) {
+                setStep("end");
+            } else {
+                const err = await res.json();
+                appendMessage("bot", `Erreur : ${err.error || "Échec de la création du rendez-vous."}`);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la création du rendez-vous :", error);
+            appendMessage("bot", "Erreur technique lors de la création du rendez-vous.");
         }
     };
 
@@ -281,8 +406,6 @@ const ChatBot = () => {
             await current.onValid(value);
 
             if (current.next && stepsConfig[current.next]) {
-                appendMessage("bot", stepsConfig[current.next].question);
-
                 if (current.next === "ask_brand") fetchBrands();
 
                 setStep(current.next);
@@ -295,6 +418,7 @@ const ChatBot = () => {
     const handleSubmit = async () => {
         if (step === "step2") {
             const message = userInput.trim();
+            setRequestClient(message);
             appendMessage("user", message);
 
             try {
@@ -412,7 +536,6 @@ const ChatBot = () => {
                         <div
                             className="text-blue-600 cursor-pointer underline hover:text-blue-800 transition"
                             onClick={() => {
-                                appendMessage("bot", stepsConfig.ask_registration.question);
                                 setStep("ask_registration");
                             }}
                         >
@@ -576,20 +699,174 @@ const ChatBot = () => {
 
                 {step === "garage_list" && garages.length > 0 && (
                     <div className="mt-4 space-y-2">
-                        {garages.map((garage) => (
-                            <div key={garage.id} className="border p-3 rounded shadow">
-                                <p className="font-semibold">{garage.name}</p>
-                                <p>{garage.address}, {garage.zipcode} {garage.city}</p>
-                                <p>Téléphone : {garage.phone}</p>
-                                <p>Email : {garage.email}</p>
-                                <button
-                                    className="mt-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                                    onClick={() => handleSelectGarage(garage.id, garage.name)}
+                        {garages.map((garage) => {
+                            const isAvailable = garage.available !== false;
+
+                            return (
+                                <div
+                                    key={garage.id}
+                                    className={`border p-3 rounded shadow transition ${
+                                        isAvailable ? "border-green-500" : "border-gray-400 bg-gray-100"
+                                    }`}
                                 >
-                                    Sélectionner ce garage
-                                </button>
-                            </div>
-                        ))}
+                                    <div className="flex justify-between items-center">
+                                        <p className="font-semibold">{garage.name}</p>
+                                        <span
+                                            className={`text-sm font-medium px-2 py-1 rounded ${
+                                                isAvailable ? "bg-green-200 text-green-800" : "bg-gray-300 text-gray-700"
+                                            }`}
+                                        >
+                            {isAvailable ? "Disponible" : "Indisponible"}
+                        </span>
+                                    </div>
+                                    <p>{garage.address}, {garage.zipcode} {garage.city}</p>
+                                    <p>Téléphone : {garage.phone}</p>
+                                    <p>Email : {garage.email}</p>
+                                    <button
+                                        className={`mt-2 px-3 py-1 rounded text-white transition ${
+                                            isAvailable
+                                                ? "bg-blue-600 hover:bg-blue-700"
+                                                : "bg-orange-500 hover:bg-orange-600"
+                                        }`}
+                                        onClick={() => {
+                                            setPendingGarage(garage);
+                                            if (isAvailable) {
+                                                setStep("confirm_create_quotation");
+                                            } else {
+                                                setStep("garage_unavailable");
+                                                // handleSelectGarage(garage.id, garage.name);
+                                            }
+                                        }}
+                                    >
+                                        {isAvailable ? "Sélectionner ce garage" : "Demander à être recontacté"}
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {step === "garage_unavailable" && (
+                    <div className="flex gap-4 mt-2">
+                        <button
+                            onClick={async () => {
+                                appendMessage("user", "Oui");
+                                await stepsConfig.garage_unavailable.onValid("oui");
+                            }}
+                            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+                        >
+                            Oui
+                        </button>
+                        <button
+                            onClick={async () => {
+                                appendMessage("user", "Non");
+                                await stepsConfig.garage_unavailable.onValid("non");
+                            }}
+                            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+                        >
+                            Non
+                        </button>
+                    </div>
+                )}
+
+                {step === "confirm_create_quotation" && (
+                    <div className="flex gap-4 mt-2">
+                        <button
+                            onClick={async () => {
+                                if (!pendingGarage) return;
+
+                                appendMessage("user", "Oui");
+                                // Appelle la création de devis
+                                await handleCreateQuotation(pendingGarage, selectedOperations);
+                            }}
+                            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+                        >
+                            Oui
+                        </button>
+                        <button
+                            onClick={() => {
+                                appendMessage("user", "Non");
+                                appendMessage("bot", "D'accord, pas de devis créé.");
+                                setPendingGarage(null);
+                                setStep("garage_list");
+                            }}
+                            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+                        >
+                            Non
+                        </button>
+                    </div>
+                )}
+
+                {/*{step === "quotation_ready" && showPdfButton && quotation.hash && (*/}
+                {/*    <div className="flex flex-col items-start mt-4 space-y-2">*/}
+                {/*        <button*/}
+                {/*            onClick={() => {*/}
+                {/*                const url = `${config.baseUrl}/uploads/quotations/${quotation.hash}.pdf`;*/}
+                {/*                window.open(url, "_blank");*/}
+                {/*            }}*/}
+                {/*            className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-xl shadow hover:bg-green-700 transition"*/}
+                {/*        >*/}
+                {/*            <FileText className="w-5 h-5" />*/}
+                {/*            <span>Ouvrir le devis PDF</span>*/}
+                {/*        </button>*/}
+                {/*    </div>*/}
+                {/*)}*/}
+                {step === "quotation_ready" && quotation?.hash && (
+                    <div className="mt-4 space-y-4">
+                        <button
+                            onClick={() => {
+                                const url = `${config.baseUrl}/uploads/quotations/${quotation.hash}.pdf`;
+                                window.open(url, "_blank");
+                            }}
+                            className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-xl shadow hover:bg-green-700 transition"
+                        >
+                            <FileText className="w-5 h-5" />
+                            <span>Ouvrir le devis PDF</span>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                appendMessage("user", "OK");
+                                setStep("ask_meeting");
+                            }}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                        >
+                            Continuer
+                        </button>
+                    </div>
+                )}
+
+                {step === "ask_meeting" && showPdfButton && quotation.hash && (
+                    <div className="mt-6">
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => {
+                                    appendMessage("user", "Oui");
+                                    appendMessage("bot", "Très bien, nous allons planifier un rendez-vous.");
+                                    setStep("create_meeting");
+                                    handleMeeting();
+                                }}
+                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                            >
+                                Oui
+                            </button>
+                            <button
+                                onClick={() => {
+                                    appendMessage("user", "Non");
+                                    appendMessage("bot", "D'accord, n'hésitez pas à revenir si vous changez d'avis.");
+                                    setStep("end");
+                                }}
+                                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
+                            >
+                                Non
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {step === "end" && (
+                    <div className="mt-4 text-green-700 font-semibold">
+                        Merci pour votre demande. À bientôt !
                     </div>
                 )}
 
