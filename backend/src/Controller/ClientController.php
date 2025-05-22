@@ -89,17 +89,9 @@ final class ClientController extends AbstractController
             return new JsonResponse(['error' => 'Email invalide'], 400);
         }
 
-        if (strlen($data['password']) < 8) {
-            return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins 8 caractères'], 400);
-        }
-        if (!preg_match('/[A-Z]/', $data['password'])) {
-            return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins une majuscule'], 400);
-        }
-        if (!preg_match('/[0-9]/', $data['password'])) {
-            return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins un chiffre'], 400);
-        }
-        if (!preg_match('/[\W_]/', $data['password'])) {
-            return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins un caractère spéciale'], 400);
+        $result = $this->checkPassword($data['password']);
+        if ($result) {
+            return $result;
         }
 
         $existingClient = $this->clientRepository->findOneBy(['email' => $data['email']]);
@@ -144,29 +136,7 @@ final class ClientController extends AbstractController
             }
         }
 
-        $files = $request->files->all();
-        $avatar = $files['avatar'] ?? null;
-        if ($avatar) {
-            $originalFilename = pathinfo($avatar->getClientOriginalName(), PATHINFO_FILENAME);
-            $safeFilename = $this->slugger->slug($originalFilename);
-            $newFilename = $safeFilename . '-' . uniqid() . '.' . $avatar->guessExtension();
-
-            try {
-                if (!is_dir($avatarDirectory = $this->getParameter('avatars_directory'))) {
-                    mkdir($avatarDirectory, 0777, true);
-                }
-                $avatar->move(
-                    $avatarDirectory,
-                    $newFilename
-                );
-                $client->setAvatar($newFilename);
-
-            } catch (FileException $e) {
-                return new JsonResponse(['error' => 'Échec de l\'upload de l\'avatar'], 500);
-            }
-        } else {
-            $client->setAvatar('default.png');
-        }
+        $this->uploadAvatar($request, $client);
 
         $client->setCreationDate(new \DateTimeImmutable());
 
@@ -201,7 +171,7 @@ final class ClientController extends AbstractController
         ];
     }
 
-    #[Route('/update', name: 'update', methods: ['PUT'])]
+    #[Route('/update', name: 'update', methods: ['POST'])]
     public function update(Request $request): Response
     {
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
@@ -238,17 +208,9 @@ final class ClientController extends AbstractController
             }
         }
         if (isset($data['password'])) {
-            if (strlen($data['password']) < 8) {
-                return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins 8 caractères'], 400);
-            }
-            if (!preg_match('/[A-Z]/', $data['password'])) {
-                return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins une majuscule'], 400);
-            }
-            if (!preg_match('/[0-9]/', $data['password'])) {
-                return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins un chiffre'], 400);
-            }
-            if (!preg_match('/[\W_]/', $data['password'])) {
-                return new JsonResponse(['error' => 'Le mot de passe doit contenir au moins un caractère spéciale'], 400);
+            $result = $this->checkPassword($data['password']);
+            if ($result) {
+                return $result;
             }
             $client->setPassword(
                 $this->userPasswordHasher->hashPassword($client, $data['password'])
@@ -265,6 +227,9 @@ final class ClientController extends AbstractController
             $client->setEmail($data['email']);
         }
 
+        $this->uploadAvatar($request, $client);
+        $client->setUpdateDate(new \DateTimeImmutable());
+
         $this->entityManager->flush();
 
         return $this->json(
@@ -273,6 +238,64 @@ final class ClientController extends AbstractController
                 'client' => $client
             ]
         );
+    }
+
+    private function checkPassword(string $password): ?JsonResponse
+    {
+        if (strlen($password) < 8) {
+            return $this->json(['error' => 'Le mot de passe doit contenir au moins 8 caractères'], 400);
+        }
+        if (!preg_match('/[A-Z]/', $password)) {
+            return $this->json(['error' => 'Le mot de passe doit contenir au moins une majuscule'], 400);
+
+        }
+        if (!preg_match('/[0-9]/', $password)) {
+            return $this->json(['error' => 'Le mot de passe doit contenir au moins un chiffre'], 400);
+        }
+        if (!preg_match('/[\W_]/', $password)) {
+            return $this->json(['error' => 'Le mot de passe doit contenir au moins un caractère spéciale'], 400);
+        }
+        return null;
+    }
+
+    private function uploadAvatar(Request $request, Client $client, bool $deleteOldAvatar = false): ?JsonResponse
+    {
+        $files = $request->files->all();
+        $avatar = $files['avatar'] ?? null;
+        if ($avatar) {
+            if ($client->getAvatar() && $deleteOldAvatar) {
+                $oldAvatarPath = $this->getParameter('avatars_directory') . '/' . $client->getAvatar();
+                if (file_exists($oldAvatarPath)) {
+                    unlink($oldAvatarPath);
+                }
+            }
+
+            $originalFilename = pathinfo($avatar->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $this->slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $avatar->guessExtension();
+
+            try {
+                if ($client->getAvatar()) {
+                    $oldAvatarPath = $this->getParameter('avatars_directory') . '/' . $client->getAvatar();
+                    if (file_exists($oldAvatarPath)) {
+                        unlink($oldAvatarPath);
+                    }
+                }
+
+                if (!is_dir($avatarDirectory = $this->getParameter('avatars_directory'))) {
+                    mkdir($avatarDirectory, 0777, true);
+                }
+                $avatar->move(
+                    $avatarDirectory,
+                    $newFilename
+                );
+                $client->setAvatar($newFilename);
+
+            } catch (FileException $e) {
+                return new JsonResponse(['error' => 'Échec de l\'upload de l\'avatar'], 500);
+            }
+        }
+        return null;
     }
 
     #[Route('/delete', name: 'delete', methods: ['DELETE'])]
