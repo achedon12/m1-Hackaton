@@ -93,20 +93,7 @@ final class MeetingController extends AbstractController
         return $this->json($meeting, Response::HTTP_CREATED, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
     }
 
-
-    #[Route('/{id}', name: 'get', methods: ['GET'])]
-    public function get(int $id): Response
-    {
-        $meeting = $this->meetingRepository->find($id);
-
-        if (!$meeting) {
-            return $this->json(['error' => 'Meeting not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        return $this->json($meeting, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
-    }
-
-    #[Route('/client/{clientId}', name: 'get', methods: ['GET'])]
+    #[Route('/client/{clientId}', name: 'get_by_client', methods: ['GET'])]
     public function getClientOperations(int $clientId): Response
     {
         $client = $this->security->getUser();
@@ -118,6 +105,18 @@ final class MeetingController extends AbstractController
         $meetings = $this->meetingRepository->findBy(['client' => $client]);
 
         return $this->json($meetings, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read', 'quotation:read']]);
+    }
+
+    #[Route('/{id}', name: 'get', methods: ['GET'])]
+    public function get(int $id): Response
+    {
+        $meeting = $this->meetingRepository->find($id);
+
+        if (!$meeting) {
+            return $this->json(['error' => 'Meeting not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json($meeting, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
     }
 
     #[Route('/update/{id}', name: 'update', methods: ['PUT'])]

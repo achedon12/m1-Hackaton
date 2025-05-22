@@ -320,7 +320,7 @@ const ChatBot = () => {
         try {
             const res = await fetch(`${config.apiBaseUrl}/garage/reminder`, {
                 method: "POST",
-                headers: config.headers,
+                headers: config.getHeaders(),
                 body: JSON.stringify({ garage: garageId, vehicle: vehicleId, message: requestClient }),
             });
 
@@ -349,7 +349,7 @@ const ChatBot = () => {
 
             const res = await fetch(`${config.apiBaseUrl}/quotation/create`, {
                 method: "POST",
-                headers: config.headers,
+                headers: config.getHeaders(),
                 body: JSON.stringify(body),
             });
 
@@ -374,7 +374,7 @@ const ChatBot = () => {
         try {
             const res = await fetch(`${config.apiBaseUrl}/meeting/create`, {
                 method: "POST",
-                headers: config.headers,
+                headers: config.getHeaders(),
                 body: JSON.stringify({
                     quotation: quotation.id,
                     vehicle: vehicleId,
@@ -797,20 +797,6 @@ const ChatBot = () => {
                     </div>
                 )}
 
-                {/*{step === "quotation_ready" && showPdfButton && quotation.hash && (*/}
-                {/*    <div className="flex flex-col items-start mt-4 space-y-2">*/}
-                {/*        <button*/}
-                {/*            onClick={() => {*/}
-                {/*                const url = `${config.baseUrl}/uploads/quotations/${quotation.hash}.pdf`;*/}
-                {/*                window.open(url, "_blank");*/}
-                {/*            }}*/}
-                {/*            className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-xl shadow hover:bg-green-700 transition"*/}
-                {/*        >*/}
-                {/*            <FileText className="w-5 h-5" />*/}
-                {/*            <span>Ouvrir le devis PDF</span>*/}
-                {/*        </button>*/}
-                {/*    </div>*/}
-                {/*)}*/}
                 {step === "quotation_ready" && quotation?.hash && (
                     <div className="mt-4 space-y-4">
                         <button
