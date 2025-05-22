@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Bill;
 use App\Event\BillCreatedEvent;
+use App\Repository\BillRepository;
 use App\Repository\MeetingOperationRepository;
 use App\Repository\MeetingRepository;
 use App\Repository\MeetingStateRepository;
@@ -23,7 +24,8 @@ final class BillController extends AbstractController
                                 private readonly MeetingOperationRepository $meetingOperationRepository,
                                 private readonly MeetingStateRepository     $meetingStateRepository,
                                 private readonly Security                   $security,
-                                private readonly EventDispatcherInterface   $eventDispatcher)
+                                private readonly EventDispatcherInterface   $eventDispatcher,
+                                private readonly BillRepository             $billRepository)
     {
     }
 
@@ -66,5 +68,36 @@ final class BillController extends AbstractController
             ['success' => 'Bill created', 'bill' => $bill],
             Response::HTTP_CREATED, [], [
             'groups' => ['bill:read', 'meeting:read']]);
+    }
+
+    #[Route('/meeting/{id}', name: 'meeting_bill', methods: ['GET'])]
+    public function getMeetingBills(int $id): Response
+    {
+        $meeting = $this->meetingRepository->find($id);
+
+        if (!$meeting) {
+            return $this->json(['error' => 'Meeting not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $bill = $this->billRepository->findBy(['meeting' => $meeting]);
+        if (!$bill) {
+            return $this->json(['error' => 'No bills found for this meeting'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json($bill, Response::HTTP_OK, [], [
+            'groups' => ['bill:read', 'meeting:read', 'category:read', 'quotation:read']]);
+    }
+
+    #[Route('/{id}', name: 'meeting', methods: ['GET'])]
+    public function get(int $id): Response
+    {
+        $bill = $this->entityManager->getRepository(Bill::class)->find($id);
+
+        if (!$bill) {
+            return $this->json(['error' => 'Bill not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json($bill, Response::HTTP_OK, [], [
+            'groups' => ['bill:read', 'meeting:read', 'category:read', 'quotation:read']]);
     }
 }
