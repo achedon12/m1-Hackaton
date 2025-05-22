@@ -7,11 +7,11 @@ const MeetingGrid = () => {
     const [meetingData, setMeetingData] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const MeetingStatusLabels = {
-        created: "Créé",
-        confirmed: "Confirmé",
-        cancelled: "Annulé",
-        completed: "Terminé",
+    const MeetingStatusConfig = {
+        created: { label: "Créé", color: "text-blue-500" },
+        confirmed: { label: "Confirmé", color: "text-green-600" },
+        cancelled: { label: "Annulé", color: "text-red-500" },
+        completed: { label: "Terminé", color: "text-gray-700" },
     };
 
     useEffect(() => {
@@ -40,7 +40,6 @@ const MeetingGrid = () => {
                                 throw new Error('Erreur lors de la récupération du devis');
                             }
                             const quotation = await quotationRes.json();
-                            console.log(quotation)
                             return {
                                 ...meeting,
                                 quotation,
@@ -97,43 +96,41 @@ const MeetingGrid = () => {
                                 <td colSpan="6" className="text-center">Aucune opération effectuée</td>
                             </tr>
                         ) : (
-                            meetingData.map(meeting => (
-                                <tr key={meeting.id}>
-                                    <td>{meeting.id}</td>
-                                    <td>{new Date(meeting.meetingDate).toLocaleDateString()}</td>
-                                    <td>
-                                        <p className={"font-bold"}>
-                                            {meeting.vehicle.brand.name}
-                                        </p>
-                                        <p className={"text-sm"}>
-                                            {meeting.vehicle.model.name}
-                                        </p>
-                                        <p className={"text-sm"}>
-                                            ({meeting.vehicle.registrationNumber})
-                                        </p>
-                                    </td>
-                                    <td>{MeetingStatusLabels[meeting.meetingState.name] || meeting.meetingState.name}</td>
-                                    <td>{meeting.garage.name}</td>
-                                    <td>
-                                        {meeting.quotation &&
-                                        Array.isArray(meeting.quotation.quotationOperations) &&
-                                        meeting.quotation.quotationOperations.length > 0 ? (
-                                            meeting.quotation.quotationOperations.map((qo) => (
-                                                <div key={qo.id}>
-                                                    {qo.operation?.libelle || (
-                                                        <span className="text-gray-400 italic">Libellé manquant</span>
-                                                    )}
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <span className="text-sm text-gray-400 italic">Aucune opération</span>
-                                        )}
-                                    </td>
+                            meetingData.map(meeting => {
+                                const status = MeetingStatusConfig[meeting.meetingState.name];
 
-
-
-                                </tr>
-                            )))}
+                                return (
+                                    <tr key={meeting.id}>
+                                        <td>{meeting.id}</td>
+                                        <td>{new Date(meeting.meetingDate).toLocaleDateString()}</td>
+                                        <td>
+                                            <p className="font-bold">{meeting.vehicle.brand.name}</p>
+                                            <p className="text-sm">{meeting.vehicle.model.name}</p>
+                                            <p className="text-sm">({meeting.vehicle.registrationNumber})</p>
+                                        </td>
+                                        <td className={status?.color}>
+                                            {status?.label || meeting.meetingState.name}
+                                        </td>
+                                        <td>{meeting.garage.name}</td>
+                                        <td>
+                                            {meeting.quotation &&
+                                            Array.isArray(meeting.quotation.quotationOperations) &&
+                                            meeting.quotation.quotationOperations.length > 0 ? (
+                                                meeting.quotation.quotationOperations.map((qo) => (
+                                                    <div key={qo.id}>
+                                                        {qo.operation?.libelle || (
+                                                            <span className="text-gray-400 italic">Libellé manquant</span>
+                                                        )}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <span className="text-sm text-gray-400 italic">Aucune opération</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                )
+                            })
+                        )}
                         </tbody>
                     </table>
                 </div>
