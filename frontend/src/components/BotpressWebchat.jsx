@@ -51,7 +51,7 @@ const BotpressChat = () => {
             window.botpress.init({
                 "botId": "552aee85-182b-4a41-a55f-3fe1e1eb51d1",
                 "configuration": {
-                    "composerPlaceholder": "Ã‰crivez votre message ici",
+                    "composerPlaceholder": "Écrivez votre message ici",
                     "botName": "RD-Vroom IA",
                     "botAvatar": "https://files.bpcontent.cloud/2025/05/20/13/20250520135832-QND608RS.png",
                     "botDescription": "Posez-moi vos demandes !",
@@ -70,25 +70,22 @@ const BotpressChat = () => {
                 "clientId": "d7b487e3-8fff-4fda-9a7e-17a2b6e48bc1",
                 "user": {
                     "data": {
-                        "firstName": client.firstName,
-                        "lastName": client.lastName,
-                        "gender": client.gender,
-                        "email": client.email,
-                        "phone": client.phone,
-                        "address": client.address,
-                        "city": client.city,
-                        "zipcode": client.zipcode,
-                        "locationLatitude": client.latitude,
-                        "locationLongitude": client.longitude,
-                        "societyName": client.societyName,
-                        "vehicles" : clientVehiclesSimplified
+                        "firstName": "" + client.firstName,
+                        "lastName": "" + client.lastName,
+                        "gender": "" + client.gender,
+                        "email": "" + client.email,
+                        "phone": "" + client.phone,
+                        "address": "" + client.address,
+                        "city": "" + client.city,
+                        "zipcode": "" + client.zipcode,
+                        "locationLatitude": "" + client.latitude,
+                        "locationLongitude": "" + client.longitude,
+                        "societyName": "" + client.societyName,
+                        "vehiclesJSON" : JSON.stringify(clientVehiclesSimplified)
                     }
                 }
             });
 
-            // window.botpress.on("webchat:ready", () => {
-            //     window.botpress.open();
-            // });
         };
 
         document.body.appendChild(script);
