@@ -20,9 +20,15 @@ const ChatBot = () => {
     const [selectedBrand, setSelectedBrand] = useState("");
     const [selectedModel, setSelectedModel] = useState("");
     const [confirmKms, setConfirmKms] = useState(null);
-
+    const [zipcode, setZipcode] = useState(client.zipcode);
+    const [city, setCity] = useState(client.city);
+    const [confirmedZipcode, setConfirmedZipcode] = useState(null);
+    const [garages, setGarages] = useState([]);
+    const [inputZip, setInputZip] = useState("");
     const [operations, setOperations] = useState([]);
     const [selectedOperations, setSelectedOperations] = useState([]);
+
+    const [meetingWithOperations, setMeetingWithOperations] = useState(false);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({behavior: "smooth"});
@@ -125,6 +131,28 @@ const ChatBot = () => {
                     appendMessage("bot", "Erreur technique lors de la mise à jour.");
                 }
             }
+        },
+        ask_zipcode: {
+            question: "Entrez un code postal valide (5 chiffres) :",
+            validate: val => /^\d{5}$/.test(val),
+            error: "Code postal invalide. Entrez 5 chiffres.",
+            onValid: async (val) => {
+                setZipcode(val);
+                await handleConfirmZip(val);
+                setStep("garage_list");
+            }
+        },
+        rappel_request: {
+            question: () => `Votre code postal est "${zipcode}". Souhaitez-vous l'utiliser ?`,
+            onValid: async (val) => {
+                if (val.toLowerCase() === "oui") {
+                    await handleConfirmZip(zipcode);
+                    setStep("garage_list");
+                } else {
+                    appendMessage("bot", "Veuillez entrer un nouveau code postal :");
+                    setStep("ask_zipcode");
+                }
+            }
         }
     };
 
@@ -199,6 +227,47 @@ const ChatBot = () => {
         setStep("confirm_kms"); // 🔑 Assure-toi de cette ligne !
     };
 
+    const handleConfirmZip = async (zip) => {
+        setConfirmedZipcode(zip);
+        try {
+            const url_garages = meetingWithOperations ? `${config.apiBaseUrl}/garage/availabilities` : `${config.apiBaseUrl}/garage/nearbyByZipcode`;
+
+            const operationsIds = selectedOperations.map(op => op.id).join(";");
+            const params = meetingWithOperations ? {zipcode: zip, city: city, operations: operationsIds} : {zipcode: zip, city: city};
+
+            const response = await fetch(url_garages, {
+                method: "POST",
+                headers: config.headers,
+                body: JSON.stringify(params),
+            });
+            const data = await response.json();
+            setGarages(data);
+            setStep("garage_list");
+        } catch (error) {
+            console.error("Erreur lors de la récupération des garages :", error);
+        }
+    };
+
+    const handleSelectGarage = async (garageId, garageName) => {
+        try {
+            const res = await fetch(`${config.apiBaseUrl}/garage/reminder`, {
+                method: "POST",
+                headers: config.headers,
+                body: JSON.stringify({ garage: garageId }),
+            });
+
+            if (res.ok) {
+                appendMessage("user", `Je choisis ${garageName}`);
+                appendMessage("bot", `${garageName} a bien été sélectionné. Un conseiller vous rappellera.`);
+                setStep("end");
+            } else {
+                const err = await res.json();
+                appendMessage("bot", `Erreur lors de la sélection du garage : ${err.error || "Erreur inconnue"}`);
+            }
+        } catch (error) {
+            appendMessage("bot", "Erreur technique lors de la sélection du garage.");
+        }
+    };
 
     const handleFormSteps = async () => {
         const value = userInput.trim();
@@ -269,8 +338,19 @@ const ChatBot = () => {
         }, {});
     };
 
+    useEffect(() => {
+        if (!step || !stepsConfig[step]) return;
+
+        const stepData = stepsConfig[step];
+        const question = typeof stepData.question === "function" ? stepData.question() : stepData.question;
+
+        if (question) {
+            appendMessage("bot", question);
+        }
+    }, [step]);
+
     return (
-        <div className="w-full min-w-[600px] max-w-[800px] h-[75vh] min-h-[400px] max-h-screen p-4 bg-white shadow rounded-lg flex flex-col">
+        <div className="w-full min-w-[600px] max-w-[800px] h-[72vh] min-h-[400px] max-h-screen p-4 bg-white shadow rounded-lg flex flex-col">
             <div className="flex-1 overflow-y-auto border p-4 mb-2 space-y-3 bg-gray-50 rounded">
                 {messages.map((msg, index) => (
                     <div
@@ -447,6 +527,7 @@ const ChatBot = () => {
                             onClick={() => {
                                 appendMessage("user", "Je veux être rappelé");
                                 appendMessage("bot", "D'accord, nous allons vous recontacter pour définir les réparations.");
+                                setMeetingWithOperations(false);
                                 setStep("rappel_request");
                             }}
                             className="mt-4 text-blue-600 underline hover:text-blue-800"
@@ -459,8 +540,9 @@ const ChatBot = () => {
                                 appendMessage("user", "Voici mes choix");
                                 const selected = Object.values(operations).flat().filter(op => selectedOperations.includes(op.id));
                                 const summary = selected.map(op => `- ${op.libelle}`).join("\n");
+                                setMeetingWithOperations(true);
                                 appendMessage("bot", `✅ Vous avez sélectionné :\n${summary}`);
-                                setStep("summary");
+                                setStep("rappel_request");
                             }}
                             className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                         >
@@ -470,12 +552,47 @@ const ChatBot = () => {
                 )}
 
                 {step === "rappel_request" && (
-                    <div className="mt-4">
-                        <p className="mb-2">Un conseiller vous recontactera bientôt. Souhaitez-vous renseigner vos
-                            coordonnées maintenant ?</p>
-                        {/* Tu peux ajouter ici un formulaire pour nom, email, téléphone */}
+                    <div className="flex space-x-2 mt-4">
+                        <button
+                            className="px-4 py-2 bg-green-600 text-white rounded"
+                            onClick={async () => {
+                                appendMessage("user", "oui");
+                                await stepsConfig.rappel_request.onValid("oui");
+                            }}
+                        >
+                            Oui
+                        </button>
+                        <button
+                            className="px-4 py-2 bg-red-600 text-white rounded"
+                            onClick={async () => {
+                                appendMessage("user", "non");
+                                await stepsConfig.rappel_request.onValid("non");
+                            }}
+                        >
+                            Non
+                        </button>
                     </div>
                 )}
+
+                {step === "garage_list" && garages.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                        {garages.map((garage) => (
+                            <div key={garage.id} className="border p-3 rounded shadow">
+                                <p className="font-semibold">{garage.name}</p>
+                                <p>{garage.address}, {garage.zipcode} {garage.city}</p>
+                                <p>Téléphone : {garage.phone}</p>
+                                <p>Email : {garage.email}</p>
+                                <button
+                                    className="mt-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                    onClick={() => handleSelectGarage(garage.id, garage.name)}
+                                >
+                                    Sélectionner ce garage
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
                 <div ref={bottomRef}/>
             </div>
 
