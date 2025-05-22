@@ -9,5 +9,6 @@ import Profile from "./profile/Profile.jsx";
 import Meeting from "./meeting/meetingGrid.jsx";
 import Operations from "./operations/operations.jsx";
 import Garages from "./garages/garages.jsx";
+import TakeMeeting from "./rdv/TakeMeeting.jsx";
 
-export { Layout, Login, Profile, Rdv, Register, Home, Meeting, Operations, Garages };
+export { Layout, Login, Profile, Rdv, Register, Home, Meeting, Operations, Garages, TakeMeeting };

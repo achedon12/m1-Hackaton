@@ -1,5 +1,21 @@
-import React from 'react';
-import {Checkbox, FormControlLabel, FormGroup, Select, FormControl, InputLabel, MenuItem, Typography, Button, StepLabel, Box, Stepper, Step} from "@mui/material";
+import React, {useState} from 'react';
+import {useNavigate} from "react-router-dom";
+import {
+    Checkbox,
+    FormControlLabel,
+    FormGroup,
+    Select,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Typography,
+    Button,
+    StepLabel,
+    Box,
+    Stepper,
+    Step,
+    Snackbar
+} from "@mui/material";
 import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import frLocale from "date-fns/locale/fr"; // French displaying
@@ -11,6 +27,8 @@ const steps = ['Identifiez votre véhicule', 'Choix de l\'atelier', 'Votre panie
 const client = JSON.parse(localStorage.getItem("client"));
 
 const Rdv = () => {
+
+    const navigate = useNavigate();
 
     // Value to acknowledge which step is the current one
     const [activeStep, setActiveStep] = React.useState(0);
@@ -45,6 +63,10 @@ const Rdv = () => {
     const [operations, setOperations] = React.useState([]);
 
     const [quotationHash, setQuotationHash] = React.useState(null);
+    const [quotationId, setQuotationId] = React.useState(null);
+
+    const [snackbar, setSnackbar] = useState("");
+
 
     React.useEffect(() => {
 
@@ -536,6 +558,15 @@ const Rdv = () => {
 
                 const operationsString = selectedOperations.map(op => op.id).join(';');
 
+                // Fetch vehicle id
+                const selectedVehicle = clientVehicles.find(
+                    v => v.registrationNumber === formData.vehiclePlate
+                );
+
+                if (!selectedVehicle) {
+                    throw new Error("Véhicule non trouvé");
+                }
+
                 const body = {
                     price: Math.round(totalPrice),
                     tva: tvaRate,
@@ -543,7 +574,8 @@ const Rdv = () => {
                     date: formData.meetingTime
                         ? `${formData.meetingTime.getFullYear()}-${String(formData.meetingTime.getMonth() + 1).padStart(2, '0')}-${String(formData.meetingTime.getDate()).padStart(2, '0')} ${String(formData.meetingTime.getHours()).padStart(2, '0')}:${String(formData.meetingTime.getMinutes()).padStart(2, '0')}:00`
                         : null,
-                    vehicle: formData.vehiclePlate,
+                    vehicle: selectedVehicle.id,
+                    garage: formData.place
                 };
 
                 const response = await fetch(`${config.apiBaseUrl}/quotation/create`, {
@@ -557,18 +589,64 @@ const Rdv = () => {
                 }
 
                 const quotationData = await response.json();
+                console.log(quotationData)
                 setQuotationHash(quotationData.hash);
+                setQuotationId(quotationData.id);
 
                 setActiveStep((prevActiveStep) => prevActiveStep + 1);
 
             } catch (error) {
+
                 console.error("Erreur lors de la création du devis :", error);
             }
 
         } else {
-            if (checkStepComplete(activeStep)){
+            if (checkStepComplete(activeStep)) {
                 setActiveStep((prevActiveStep) => prevActiveStep + 1);
             }
+        }
+    };
+
+    const handleCreateMeeting = async () => {
+        try {
+            // Tu dois retrouver les bonnes valeurs ici
+            const selectedVehicle = clientVehicles.find(
+                v => v.registrationNumber === formData.vehiclePlate
+            );
+
+            if (!selectedVehicle) {
+                throw new Error("Véhicule non trouvé.");
+            }
+
+            const meetingDate = formData.meetingTime
+                ? `${formData.meetingTime.getFullYear()}-${String(formData.meetingTime.getMonth() + 1).padStart(2, '0')}-${String(formData.meetingTime.getDate()).padStart(2, '0')} ${String(formData.meetingTime.getHours()).padStart(2, '0')}:${String(formData.meetingTime.getMinutes()).padStart(2, '0')}:00`
+                : null;
+
+            const body = {
+                vehicle: selectedVehicle.id,
+                quotation: quotationId,
+                garage: formData.place,
+                meeting_state_id: 5, // TODO : Get id from "Created" status
+                date: meetingDate,
+            };
+
+            const response = await fetch(`${config.apiBaseUrl}/meeting/create`, {
+                method: 'POST',
+                headers: config.headers,
+                body: JSON.stringify(body),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erreur lors de la création du rendez-vous : ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            console.log("Rendez-vous créé :", data);
+            navigate("../meeting")
+
+        } catch (error) {
+            console.error("Erreur création rendez-vous :", error);
         }
     };
 
@@ -608,7 +686,7 @@ const Rdv = () => {
                                 height="600px"
                                 title="Aperçu du devis"
                             />
-                            <Box display="flex" justifyContent="center">
+                            <Box display="flex" justifyContent="center" gap={2.5}>
                                 <Button
                                     variant="contained"
                                     color="primary"
@@ -619,7 +697,15 @@ const Rdv = () => {
                                 >
                                     Télécharger le devis
                                 </Button>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={handleCreateMeeting}
+                                >
+                                    Prendre rendez-vous
+                                </Button>
                             </Box>
+
                         </Box>
                     ) : (
                         <Typography color="error">Une erreur est survenue lors du chargement du devis PDF.</Typography>
@@ -643,6 +729,12 @@ const Rdv = () => {
                     </Box>
                 </React.Fragment>
             )}
+            <Snackbar
+                open={Boolean(snackbar)}
+                autoHideDuration={3000}
+                onClose={() => setSnackbar("")}
+                message={snackbar}
+            />
         </Box>
     );
 };
