@@ -99,7 +99,7 @@ final class MeetingController extends AbstractController
         $client = $this->security->getUser();
 
         if ($client->getId() !== $clientId) {
-            return $this->json(['error' => 'You are not the owner of this vehicle'], Response::HTTP_FORBIDDEN);
+            return $this->json(['error' => 'You are not the owner of this meeting'], Response::HTTP_FORBIDDEN);
         }
 
         $meetings = $this->meetingRepository->findBy(['client' => $client]);
