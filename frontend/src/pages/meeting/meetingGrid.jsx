@@ -144,6 +144,24 @@ const MeetingGrid = () => {
                                             throw new Error('Échec de la mise à jour du statut');
                                         }
 
+                                        let newInvoice = null;
+
+                                        if (newStatusName === "completed") {
+                                            const billResponse = await fetch(`${config.apiBaseUrl}/bill/create`, {
+                                                method: "POST",
+                                                headers: config.headers,
+                                                body: JSON.stringify({
+                                                    "meeting": meetingId
+                                                })
+                                            });
+
+                                            if (!billResponse.ok) {
+                                                throw new Error("Erreur lors de la création de la facture");
+                                            }
+
+                                            newInvoice = await billResponse.json();
+                                        }
+
                                         setSnackbar("Statut de rendez-vous mis à jour.");
 
                                         setMeetingData(prevData =>
@@ -151,16 +169,19 @@ const MeetingGrid = () => {
                                                 i === idx
                                                     ? {
                                                         ...m,
-                                                        meetingState: selectedStatus
+                                                        meetingState: selectedStatus,
+                                                        invoice: newInvoice ? newInvoice : m.invoice
                                                     }
                                                     : m
                                             )
                                         );
+
                                     } catch (error) {
                                         console.error(`Erreur lors de la mise à jour du statut du meeting ${meetingId} :`, error);
                                         alert('Erreur lors de la mise à jour du statut.');
                                     }
                                 };
+
 
 
 
