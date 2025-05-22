@@ -46,6 +46,8 @@ const CarForm = () => {
             if (data.length > 0) setActiveCar(data[0]);
         } catch (error) {
             console.error(error);
+            setVehicles([]);
+            setActiveCar(null);
         } finally {
             setLoading(false);
         }
@@ -151,7 +153,7 @@ const CarForm = () => {
             </div>
 
             <div className="w-full mt-6">
-                {!carInfosLoaded ? (
+                {(!carInfosLoaded && activeCar) ? (
                     <div className="flex justify-center items-center h-32">
                         <Loader/>
                     </div>
@@ -174,7 +176,7 @@ const CarForm = () => {
 };
 
 const VehicleList = ({vehicles, onCarClick, onCarDelete, onAddCarClick, onEditCarClick}) => (
-    <ul className={`list bg-base-100 rounded-box shadow-md ${vehicles.length > 0 ? "w-full block" : "hidden"}`}>
+    <ul className={`list bg-base-100 rounded-box shadow-md w-full`}>
         {vehicles.map((car, index) => (
             <li key={index} onClick={() => onCarClick(car)}
                 className="list-row flex justify-between items-center hover:bg-base-200 hover:cursor-pointer active:bg-base-200">
@@ -205,6 +207,7 @@ const VehicleList = ({vehicles, onCarClick, onCarDelete, onAddCarClick, onEditCa
 
 const CarDetails = ({activeCar, drivers, meetings, onDriverSave, onEdit}) => (
     <div className="my-10">
+        {activeCar && (
         <div className="tabs tabs-lift">
             <input type="radio" name="my_tabs_3" className="tab" aria-label="Mes conducteurs"/>
             <div className="tab-content bg-base-100 border-base-300 p-6">
@@ -222,6 +225,7 @@ const CarDetails = ({activeCar, drivers, meetings, onDriverSave, onEdit}) => (
                 <MeetingTable meetings={meetings}/>
             </div>
         </div>
+        )}
     </div>
 );
 

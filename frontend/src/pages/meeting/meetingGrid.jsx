@@ -11,7 +11,7 @@ const meetingGrid = () => {
         const fetchMeetingData = async () => {
             try {
                 const clientId = JSON.parse(localStorage.getItem('client')).id;
-                const response = await fetch(`${config.apiBaseUrl}/meeting/${clientId}`);
+                const response = await fetch(`${config.apiBaseUrl}/meeting/client/${clientId}`);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }

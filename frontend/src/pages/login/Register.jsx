@@ -17,7 +17,7 @@ const Register = () => {
         zipcode: "",
         city: "",
         gender: "",
-        societyName: null,
+        societyName: "",
         birth: ""
     });
 
@@ -188,12 +188,13 @@ const Register = () => {
                     <>
                         <input
                             type="text"
-                            name="firstname"
+                            name="phone"
                             placeholder="Téléphone"
                             value={formData.phone}
                             onChange={handleChange}
                             className="input input-bordered w-full mb-4"
                         />
+                        {errors.phone && <p className="text-red-500 text-sm mb-4">{errors.phone}</p>}
                         <input
                             type="text"
                             name="zipcode"

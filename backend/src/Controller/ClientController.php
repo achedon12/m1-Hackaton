@@ -135,7 +135,7 @@ final class ClientController extends AbstractController
         $client->setVerifiedAccount(false);
         $client->setVerificationToken(bin2hex(random_bytes(32)));
 
-        if (isset($data['birth'])) {
+        if (isset($data['birth']) && $data['birth']) {
             try {
                 $newDate = \DateTime::createFromFormat('Y-m-d', $data['birth']);
                 $client->setBirth($newDate);
