@@ -2,12 +2,48 @@ import {useRef, useState} from "react";
 import {Trash} from "lucide-react";
 import config from "../../../providers/apiConfig.js";
 import UserEdit from "./UserEdit.jsx";
-import {useNavigate} from "react-router-dom";
+
+const Fieldset = ({legend, children}) => (
+    <fieldset className="fieldset bg-white border-base-300 rounded-box w-full border p-4">
+        <legend className="fieldset-legend">{legend}</legend>
+        {children}
+    </fieldset>
+);
+
+const Field = ({text, isEditing, field, onChange, onSave, onCancel, onEdit}) => (
+    <div>
+        <label className="label w-1/3">{text}</label>
+        <div className="flex items-center">
+            {isEditing ? (
+                <>
+                    <input
+                        type="text"
+                        className="input flex-1"
+                        value={field}
+                        onChange={onChange}
+                    />
+                    <button className="btn btn-primary ml-2" onClick={onSave}>
+                        Enregistrer
+                    </button>
+                    <button className="btn btn-secondary ml-2" onClick={onCancel}>
+                        Annuler
+                    </button>
+                </>
+            ) : (
+                <>
+                    <input type="text" className="input flex-1" value={field} disabled/>
+                    <button className="btn btn-secondary ml-2" onClick={onEdit}>
+                        Modifier
+                    </button>
+                </>
+            )}
+        </div>
+    </div>
+);
 
 const UserForm = () => {
     const client = JSON.parse(localStorage.getItem("client"));
-    const navigate = useNavigate();
-    const [isEditingEmail, setIsEditingEmail] = useState(false);
+    const [isEditing, setIsEditing] = useState([]);
     const [formData, setFormData] = useState({
         email: client.email,
         firstname: client.firstname,
@@ -33,8 +69,7 @@ const UserForm = () => {
                 const data = await response.json();
                 localStorage.setItem("client", JSON.stringify(data.client));
                 alert("Utilisateur mis à jour avec succès !");
-                setIsEditingEmail(false);
-                navigate("/");
+                setIsEditing([]);
             } else {
                 const error = await response.json();
                 alert(`Erreur : ${error.error}`);
@@ -64,58 +99,29 @@ const UserForm = () => {
             console.error("Erreur lors de la suppression du compte :", error);
             alert("Une erreur est survenue.");
         }
-    }
+    };
 
     return (
         <div className={"flex flex-col items-center justify-center w-full p-6 bg-base-200"}>
-            <fieldset className="fieldset bg-white border-base-300 rounded-box w-full border p-4">
-                <legend className="fieldset-legend">Identifiants</legend>
+            <Fieldset legend="Identifiants">
+                <Field
+                    text="Mon adresse email"
+                    isEditing={isEditing.email}
+                    field={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onSave={() => handleUpdate({email: formData.email})}
+                    onCancel={() => {
+                        setFormData({...formData, email: client.email});
+                        setIsEditing({...isEditing, email: false});
+                    }}
+                    onEdit={() => setIsEditing({...isEditing, email: true})}
+                />
 
-                <label className="label w-1/3">Mon adresse mail</label>
-                <div className="flex items-center">
-                    {isEditingEmail ? (
-                        <>
-                            <input
-                                type="email"
-                                className="input flex-1"
-                                value={formData.email}
-                                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                            />
-                            <button className="btn btn-primary ml-2" onClick={handleUpdate.bind(null, {email: formData.email})}>
-                                Enregistrer
-                            </button>
-                            <button
-                                className="btn btn-secondary ml-2"
-                                onClick={() => {
-                                    setFormData({...formData, email: client.email});
-                                    setIsEditingEmail(false);
-                                }}
-                            >
-                                Annuler
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <input type="email" className="input flex-1" value={client.email} disabled/>
-                            <button
-                                className="btn btn-secondary ml-2"
-                                onClick={() => setIsEditingEmail(true)}
-                            >
-                                Modifier
-                            </button>
-                        </>
-                    )}
-                </div>
-            </fieldset>
+            </Fieldset>
 
-            <fieldset className="fieldset bg-white border-base-300 rounded-box w-full border p-4">
-                <legend className="fieldset-legend">Informations de facturation</legend>
-                <p>
-                    {client.lastname} {client.firstname}
-                </p>
-                <p>
-                    {client.zipcode}, {client.city}
-                </p>
+            <Fieldset legend="Informations de facturation">
+                <p>{client.lastname} {client.firstname}</p>
+                <p>{client.zipcode}, {client.city}</p>
                 <p>{client.phone}</p>
                 <button
                     className="btn btn-secondary mt-4"
@@ -123,18 +129,17 @@ const UserForm = () => {
                 >
                     Modifier
                 </button>
-            </fieldset>
+            </Fieldset>
 
-            <fieldset className="fieldset bg-white border-base-300 rounded-box w-full border p-4">
-                <legend className="fieldset-legend">Supprimer mon compte</legend>
+            <Fieldset legend="Supprimer mon compte">
                 <p>Voulez-vous définitivement supprimer votre compte ?</p>
                 <div className="flex items-center justify-center">
-                    <button className="btn btn-error mt-4">
+                    <button className="btn btn-error mt-4" onClick={handleDelete}>
                         <Trash className="mr-2"/>
                         <p>Supprimer mon compte</p>
                     </button>
                 </div>
-            </fieldset>
+            </Fieldset>
 
             <UserEdit
                 ref={editModalRef}
