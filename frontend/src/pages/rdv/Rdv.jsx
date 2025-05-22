@@ -72,7 +72,11 @@ const Rdv = () => {
 
     const [meetingStates, setMeetingStates] = React.useState([]);
 
+    const hasFetchedData = React.useRef(false);
+
     React.useEffect(() => {
+
+        if (!location || hasFetchedData.current) return;
 
         const fetchMeetingStates = async () => {
             try {
@@ -165,12 +169,18 @@ const Rdv = () => {
             }
         }
 
-        fetchVehicles();
-        fetchGarages();
-        fetchCategories();
-        fetchMeetingStates();
+        const fetchData = async () => {
+            await Promise.all([
+                fetchVehicles(),
+                fetchGarages(),
+                fetchCategories(),
+                fetchMeetingStates(),
+            ]);
+        };
 
-    }, []);
+        fetchData();
+
+    }, [location]);
 
 
 
