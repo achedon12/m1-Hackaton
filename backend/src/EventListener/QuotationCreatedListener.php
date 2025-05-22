@@ -54,6 +54,7 @@ readonly class QuotationCreatedListener
             'company' => $company,
             'quotation' => $quotation,
             'request_date' => $quotation->getRequestDate()->format('d/m/Y'),
+            'tva_rate' => $quotation->getTva(),
             'operations' => $operations
         ]);
 

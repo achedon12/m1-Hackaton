@@ -55,6 +55,8 @@ readonly class BillCreatedListener
             'billID' => $bill->getId(),
             'bill' => $bill->getMeeting()->getQuotation(),
             'request_date' => $bill->getMeeting()->getQuotation()->getRequestDate()->format('d/m/Y'),
+            'due_date' => $bill->getDueDate()->format('d/m/Y'),
+            'tva_rate' => $bill->getMeeting()->getQuotation()->getTva(),
             'end_date' => date('Y-m-d'),
             'operations' => $operations
         ]);

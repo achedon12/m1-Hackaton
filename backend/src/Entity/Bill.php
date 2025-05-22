@@ -28,6 +28,10 @@ class Bill
     #[Groups(['meeting:read'])]
     private Meeting $meeting;
 
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Groups(['bill:read'])]
+    private ?\DateTime $dueDate = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -53,6 +57,18 @@ class Bill
     public function setMeeting(Meeting $meeting): static
     {
         $this->meeting = $meeting;
+
+        return $this;
+    }
+
+    public function getDueDate(): ?\DateTime
+    {
+        return $this->dueDate;
+    }
+
+    public function setDueDate(\DateTime $dueDate): static
+    {
+        $this->dueDate = $dueDate;
 
         return $this;
     }

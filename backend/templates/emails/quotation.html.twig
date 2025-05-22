@@ -1,23 +1,47 @@
-
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Devis n°{{ quotation.id }}</title>
+    <title>Devis {{ quotation.hash }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             font-size: 14px;
             margin: 40px;
+            color: #000;
         }
 
-        h1 {
-            text-align: center;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: #d63c5e;
+        }
+
+        .logo .orange {
+            color: orange;
+        }
+
+        .devis-num {
+            color: #d63c5e;
+            font-weight: bold;
         }
 
         .company, .client {
             margin-bottom: 20px;
+        }
+
+        .client strong {
+            display: block;
+            margin-bottom: 5px;
         }
 
         table {
@@ -28,12 +52,12 @@
 
         th, td {
             border: 1px solid #ccc;
-            padding: 8px;
+            padding: 10px;
             text-align: left;
         }
 
         th {
-            background-color: #f5f5f5;
+            background-color: #f2f2f2;
         }
 
         .totals {
@@ -44,12 +68,22 @@
 
         .totals td {
             border: none;
-            padding: 5px;
+            padding: 5px 10px;
+        }
+
+        .footer {
+            clear: both;
+            margin-top: 80px;
+            font-size: 12px;
+            color: #888;
         }
     </style>
 </head>
 <body>
-<h1>Devis n°{{ quotation.id }}</h1>
+<div class="header">
+    <div class="logo">RD-<span class="orange">Vroum</span></div>
+    <div class="devis-num">Devis {{ quotation.hash }}</div>
+</div>
 
 <div class="company">
     <strong>{{ company.name }}</strong><br>
@@ -59,7 +93,7 @@
 </div>
 
 <div class="client">
-    <strong>Facturé à :</strong><br>
+    <strong>Facturé à :</strong>
     {{ client.firstname }} {{ client.lastname }}<br>
     {{ client.address }}<br>
     {{ client.zipcode }} {{ client.city }}<br>
@@ -75,46 +109,51 @@
     Kilométrage {{ quotation.vehicle.kms }} Kms<br>
 </div>
 
-<p><strong>Date :</strong> {{ request_date }}</p>
-<p><strong>Numéro de devis :</strong> {{ quotation.id }}</p>
+<p><strong>Date de devis :</strong> {{ request_date }}</p>
 
 <table>
     <thead>
     <tr>
-        <th>Description</th>
-        <th>Durée estimée</th>
-        <th>Intervenants</th>
-        <th>Prix</th>
+        <th>Libellé</th>
+        <th>Prix HT</th>
+        <th>TVA</th>
+        <th>Prix TTC</th>
     </tr>
     </thead>
     <tbody>
     {% set price = 0 %}
     {% for operation in operations %}
-        {% set operation = operation.operation %}
+        {% set op = operation.operation %}
+        {% set tva = op.price * tva_rate %}
+        {% set total_ttc = op.price + tva %}
         <tr>
-            <td>{{ operation.libelle }}</td>
-            <td>{{ operation.estimatedDuration|date('H:i') }}</td>
-            <td>{{ operation.workerNeeded }}</td>
-            <td>{{ operation.price|number_format(2, ',', ' ') }} €</td>
-            {% set price = price + operation.price %}
+            <td>{{ op.libelle }}</td>
+            <td>{{ op.price|number_format(2, ',', ' ') }} €</td>
+            <td>{{ (tva_rate * 100)|number_format(1, ',', ' ') }}%</td>
+            <td>{{ total_ttc|number_format(2, ',', ' ') }} €</td>
         </tr>
+        {% set price = price + op.price %}
     {% endfor %}
     </tbody>
 </table>
 
 <table class="totals">
     <tr>
-        <td>Sous-total HT :</td>
+        <td>Total HT :</td>
         <td>{{ price|number_format(2, ',', ' ') }} €</td>
     </tr>
     <tr>
-        <td>TVA ({{ quotation.tva * 100 }} %) :</td>
-        <td>{{ (price * quotation.tva)|number_format(2, ',', ' ') }} €</td>
+        <td>TVA ({{ tva_rate * 100 }} %) :</td>
+        <td>{{ (price * tva_rate)|number_format(2, ',', ' ') }} €</td>
     </tr>
     <tr>
         <td><strong>Total TTC :</strong></td>
-        <td><strong>{{ (price + price * quotation.tva)|number_format(2, ',', ' ') }} €</strong></td>
+        <td><strong>{{ (price + price * tva_rate)|number_format(2, ',', ' ') }} €</strong></td>
     </tr>
 </table>
+
+<div class="footer">
+    Merci pour votre confiance – {{ company.name }}
+</div>
 </body>
 </html>
