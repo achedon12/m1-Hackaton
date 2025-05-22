@@ -66,6 +66,7 @@ const Rdv = () => {
     const [quotationId, setQuotationId] = React.useState(null);
 
     const [snackbar, setSnackbar] = useState("");
+    const [noVehicles, setNoVehicles] = React.useState(false);
 
 
     React.useEffect(() => {
@@ -73,10 +74,16 @@ const Rdv = () => {
         //  Fetching vehicle(s) based on clientId
         const fetchVehicles = async () => {
             try {
-                const response = await fetch(`${config.apiBaseUrl}/vehicle/client/${client.id}`,
-                    {
-                        headers: config.headers,
-                    });
+                const response = await fetch(`${config.apiBaseUrl}/vehicle/client/${client.id}`, {
+                    headers: config.headers,
+                });
+
+                // No vehicles
+                if (response.status === 404) {
+                    setNoVehicles(true);
+                    setClientVehicles([])
+                    return;
+                }
 
                 if (!response.ok) {
                     throw new Error(`Erreur ${response.status}`);
@@ -84,6 +91,7 @@ const Rdv = () => {
 
                 const data = await response.json();
                 setClientVehicles(data);
+                setNoVehicles(false);
 
             } catch (error) {
                 setVehicleLoadError(error);
