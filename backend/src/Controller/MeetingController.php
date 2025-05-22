@@ -41,10 +41,6 @@ final class MeetingController extends AbstractController
             return $this->json(['error' => 'Vehicle is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!isset($data['garage'])) {
-            return $this->json(['error' => 'Garage is required'], Response::HTTP_BAD_REQUEST);
-        }
-
         if (!isset($data['date'])) {
             return $this->json(['error' => 'Date is required'], Response::HTTP_BAD_REQUEST);
         }
@@ -64,11 +60,6 @@ final class MeetingController extends AbstractController
             return $this->json(['error' => 'You are not the owner of this vehicle'], Response::HTTP_FORBIDDEN);
         }
 
-        $garage = $this->garageRepository->find($data['garage']);
-        if (!$garage) {
-            return $this->json(['error' => 'Garage not found'], Response::HTTP_BAD_REQUEST);
-        }
-
         $quotation = $this->quotationRepository->find($data['quotation']);
         if (!$quotation) {
             return $this->json(['error' => 'Quotation not found'], Response::HTTP_BAD_REQUEST);
@@ -77,7 +68,7 @@ final class MeetingController extends AbstractController
 
         $meeting = new Meeting();
         $meeting->setVehicle($vehicle);
-        $meeting->setGarage($garage);
+        $meeting->setGarage($quotation->getGarage());
         $meeting->setQuotation($quotation);
         $meeting->setMeetingDate($quotation->getRequestDate());
         $meeting->setClient($quotation->getClient());
@@ -99,7 +90,7 @@ final class MeetingController extends AbstractController
         }
         $this->entityManager->flush();
 
-        return $this->json($meeting, Response::HTTP_CREATED, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read']]);
+        return $this->json($meeting, Response::HTTP_CREATED, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
     }
 
     #[Route('/client/{clientId}', name: 'get', methods: ['GET'])]
@@ -113,7 +104,7 @@ final class MeetingController extends AbstractController
 
         $meetings = $this->meetingRepository->findBy(['client' => $client]);
 
-        return $this->json($meetings, Response::HTTP_OK);
+        return $this->json($meetings, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
     }
 
     #[Route('/{id}', name: 'get', methods: ['GET'])]
@@ -125,7 +116,7 @@ final class MeetingController extends AbstractController
             return $this->json(['error' => 'Meeting not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json($meeting, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read']]);
+        return $this->json($meeting, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
     }
 
 }

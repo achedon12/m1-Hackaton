@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Quotation;
 use App\Entity\QuotationOperation;
 use App\Event\QuotationCreatedEvent;
+use App\Repository\GarageRepository;
 use App\Repository\OperationRepository;
 use App\Repository\QuotationRepository;
 use App\Repository\QuotationStateRepository;
@@ -29,7 +30,8 @@ final class QuotationController extends AbstractController
                                 private readonly EventDispatcherInterface $eventDispatcher,
                                 private readonly QuotationRepository      $quotationRepository,
                                 private readonly SerializerInterface      $serializer,
-                                private readonly VehicleRepository        $vehicleRepository)
+                                private readonly VehicleRepository        $vehicleRepository,
+                                private readonly GarageRepository         $garageRepository)
     {
     }
 
@@ -38,7 +40,7 @@ final class QuotationController extends AbstractController
     {
         $quotations = $this->entityManager->getRepository(Quotation::class)->findAll();
 
-        return $this->json($quotations, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read', 'client:read']]);
+        return $this->json($quotations, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read', 'client:read', 'vehicle:read', 'garage:read', 'category:read']]);
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
@@ -54,6 +56,10 @@ final class QuotationController extends AbstractController
             return $this->json(['error' => 'Vehicle is required'], Response::HTTP_BAD_REQUEST);
         }
 
+        if (!isset($data['garage'])) {
+            return $this->json(['error' => 'Garage is required'], Response::HTTP_BAD_REQUEST);
+        }
+
         $client = $this->security->getUser();
 
         $vehicle = $this->vehicleRepository->find($data['vehicle']);
@@ -63,6 +69,11 @@ final class QuotationController extends AbstractController
 
         if ($vehicle->getClient()->getId() !== $client->getId()) {
             return $this->json(['error' => 'Vehicle does not belong to the client'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $garage = $this->garageRepository->find($data['garage']);
+        if (!$garage) {
+            return $this->json(['error' => 'Garage not found'], Response::HTTP_BAD_REQUEST);
         }
 
         $price = 0;
@@ -75,6 +86,7 @@ final class QuotationController extends AbstractController
         $quotation->setRequestDate(new \DateTime($data['date']));
         $quotation->setCreationDate(new \DateTimeImmutable());
         $quotation->setVehicle($vehicle);
+        $quotation->setGarage($garage);
 
         $this->entityManager->persist($quotation);
 
@@ -100,7 +112,7 @@ final class QuotationController extends AbstractController
         $event = new QuotationCreatedEvent($quotation);
         $this->eventDispatcher->dispatch($event, QuotationCreatedEvent::NAME);
 
-        return $this->json($quotation, Response::HTTP_CREATED, [], ['groups' => ['quotation:read', 'operation:read', 'quotationState:read', 'client:read', 'vehicle:read']]);
+        return $this->json($quotation, Response::HTTP_CREATED, [], ['groups' => ['quotation:read', 'operation:read', 'quotationState:read', 'client:read', 'vehicle:read', 'garage:read', 'category:read']]);
     }
 
     #[Route('/update/{quotationId}', name: 'update', methods: ['PUT'])]
@@ -126,7 +138,7 @@ final class QuotationController extends AbstractController
         $quotation->setUpdateDate(new \DateTimeImmutable());
         $this->entityManager->flush();
 
-        return $this->json($quotation, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read']]);
+        return $this->json($quotation, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read', 'quotationState:read', 'vehicle:read', 'garage:read', 'category:read']]);
     }
 
     #[Route('/client', name: 'getClientsQuotations', methods: ['GET'])]
@@ -144,7 +156,7 @@ final class QuotationController extends AbstractController
             return $this->json(['error' => 'No quotations found for this client'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json($quotations, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read', 'vehicle:read']]);
+        return $this->json($quotations, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read', 'vehicle:read', 'garage:read', 'category:read']]);
     }
 
     #[Route('/{id}', name: 'get', methods: ['GET'])]
@@ -156,6 +168,6 @@ final class QuotationController extends AbstractController
             return $this->json(['error' => 'Quotation not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json($quotation, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read', 'client:read', 'vehicle:read']]);
+        return $this->json($quotation, Response::HTTP_OK, [], ['groups' => ['quotation:read', 'operation:read', 'client:read', 'vehicle:read', 'garage:read', 'category:read']]);
     }
 }
