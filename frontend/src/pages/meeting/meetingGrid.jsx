@@ -100,7 +100,7 @@ const MeetingGrid = () => {
         <Box className="w-full">
             <PageHeader
                 title={"Mes rendez-vous"}
-                description={"Consultez l'historique de vos opérations"}
+                description={"Consultez l'historique de vos rendez-vous"}
                 backgroundImage={"/garage1.jpg"}
             />
             {loading ? (
