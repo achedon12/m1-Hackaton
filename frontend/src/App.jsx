@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Layout, Login, Profile, Register, Rdv, Home } from "./pages";
+import {Layout, Login, Profile, Register, Rdv, Home, Meeting, Operations, Garages} from "./pages";
 import { AuthProvider } from "./providers/AuthProvider.jsx";
 import { ProtectedRoute } from "./components/index.js";
 
@@ -12,6 +12,9 @@ const App = () => (
 
                 <Route path="/" element={<Layout />}>
                     <Route index element={<Home />} />
+                    <Route path={"operations"} element={<Operations />} />
+                    <Route path={"garages"} element={<Garages />} />
+
                     <Route path="profile" element={
                         <ProtectedRoute>
                             <Profile />
@@ -20,6 +23,12 @@ const App = () => (
                     <Route path="rdv" element={
                         <ProtectedRoute>
                             <Rdv />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="meeting" element={
+                        <ProtectedRoute>
+                            <Meeting />
                         </ProtectedRoute>
                     } />
                 </Route>

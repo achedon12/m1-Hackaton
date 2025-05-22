@@ -1,10 +1,8 @@
-
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Devis n°{{ quotation.id }}</title>
+    <title>Facture n°{{ billID }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -49,7 +47,7 @@
     </style>
 </head>
 <body>
-<h1>Devis n°{{ quotation.id }}</h1>
+<h1>Facture n°{{ billID }}</h1>
 
 <div class="company">
     <strong>{{ company.name }}</strong><br>
@@ -68,15 +66,15 @@
 
 <div class="vehicle">
     <strong>Véhicule :</strong><br>
-    Marque : {{ quotation.vehicle.brand.name }} <br>
-    Modèle : {{ quotation.vehicle.model.name }} <br>
-    Plaque : {{ quotation.vehicle.registrationNumber }} <br>
-    Numéro de série : {{ quotation.vehicle.vin }} <br>
-    Kilométrage {{ quotation.vehicle.kms }} Kms<br>
+    Marque : {{ bill.vehicle.brand.name }} <br>
+    Modèle : {{ bill.vehicle.model.name }} <br>
+    Plaque : {{ bill.vehicle.registrationNumber }} <br>
+    Numéro de série : {{ bill.vehicle.vin }} <br>
+    Kilométrage : {{ bill.vehicle.kms }} Kms<br>
 </div>
 
 <p><strong>Date :</strong> {{ request_date }}</p>
-<p><strong>Numéro de devis :</strong> {{ quotation.id }}</p>
+<p><strong>Numéro de facture :</strong> {{ billID }}</p>
 
 <table>
     <thead>
@@ -90,13 +88,13 @@
     <tbody>
     {% set price = 0 %}
     {% for operation in operations %}
-        {% set operation = operation.operation %}
+        {% set op = operation.operation %}
         <tr>
-            <td>{{ operation.libelle }}</td>
-            <td>{{ operation.estimatedDuration|date('H:i') }}</td>
-            <td>{{ operation.workerNeeded }}</td>
-            <td>{{ operation.price|number_format(2, ',', ' ') }} €</td>
-            {% set price = price + operation.price %}
+            <td>{{ op.libelle }}</td>
+            <td>{{ op.estimatedDuration|date('H:i') }}</td>
+            <td>{{ op.workerNeeded }}</td>
+            <td>{{ op.price|number_format(2, ',', ' ') }} €</td>
+            {% set price = price + op.price %}
         </tr>
     {% endfor %}
     </tbody>
@@ -108,12 +106,12 @@
         <td>{{ price|number_format(2, ',', ' ') }} €</td>
     </tr>
     <tr>
-        <td>TVA ({{ quotation.tva * 100 }} %) :</td>
-        <td>{{ (price * quotation.tva)|number_format(2, ',', ' ') }} €</td>
+        <td>TVA ({{ bill.tva * 100 }} %) :</td>
+        <td>{{ (price * bill.tva)|number_format(2, ',', ' ') }} €</td>
     </tr>
     <tr>
         <td><strong>Total TTC :</strong></td>
-        <td><strong>{{ (price + price * quotation.tva)|number_format(2, ',', ' ') }} €</strong></td>
+        <td><strong>{{ (price + price * bill.tva)|number_format(2, ',', ' ') }} €</strong></td>
     </tr>
 </table>
 </body>

@@ -61,6 +61,11 @@ const Home = () => {
                         )}
                     </div>
                 </div>
+                <NavLink to={"/garages"}>
+                    <button className="btn btn-secondary mt-2 px-20 py-6 text-xl">
+                        Découvrir nos garages
+                    </button>
+                </NavLink>
             </div>
 
             <BotpressChat />

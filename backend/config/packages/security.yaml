@@ -32,6 +32,7 @@ security:
         - { path: ^/api/brand, roles: PUBLIC_ACCESS }
         - { path: ^/api/model, roles: PUBLIC_ACCESS }
         - { path: ^/api/garage/nearby, roles: PUBLIC_ACCESS }
+        - { path: ^/api/garage/list, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:

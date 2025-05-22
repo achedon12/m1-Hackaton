@@ -2,12 +2,19 @@ import {User, Car} from "lucide-react";
 import {useState} from "react";
 import UserForm from "./userForm/UserForm.jsx";
 import CarForm from "./carForm/CarForm.jsx";
+import {PageHeader} from "../../components";
 
 const Profile = () => {
     const [activeTab, setActiveTab] = useState("person");
 
     return (
         <>
+            <PageHeader
+                title={"Profil"}
+                description={"Gérez vos informations personnelles et vos véhicules"}
+                backgroundImage={"/garage1.jpg"}
+            />
+
             <div className="flex justify-center p-2 mt-4">
                 <button
                     className={`btn btn-ghost ${activeTab === "person" ? "bg-secondary" : "text-secondary"}`}
