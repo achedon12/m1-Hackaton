@@ -67,8 +67,18 @@ const Layout = () => {
                         {location && (
                             <div className="flex items-center text-white">
                                 <MapPin className="w-6 h-6 mr-1"/>
-                                <span className="text-sm font-bold">
-                                {nearestGarage ? nearestGarage.city : "Localisation en cours..."}
+                                <span>
+                                {nearestGarage ?
+                                    <>
+                                        <p className="text-sm font-bold uppercase">
+                                            {nearestGarage.zipcode} {nearestGarage.city}
+                                        </p>
+                                        <p className={"text-xs"}>
+                                            {nearestGarage.name}
+                                        </p>
+                                    </>
+                                    : "Localisation en cours..."
+                                }
                             </span>
                             </div>
                         )}
