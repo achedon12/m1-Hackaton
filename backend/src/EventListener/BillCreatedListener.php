@@ -39,12 +39,13 @@ readonly class BillCreatedListener
     {
         $bill = $event->getBill();
 
+        $garage = $bill->getMeeting()->getGarage();
         $company = [
-            'name' => 'RD-Vroum',
-            'address' => '123 Main St, Paris, France',
-            'zipcode' => '12345',
-            'city' => 'Paris',
-            'country' => 'FR',
+            'name' => $garage->getName(),
+            'address' => $garage->getAddress(),
+            'zipcode' => $garage->getZipcode(),
+            'city' => $garage->getCity(),
+            'country' => 'France',
         ];
 
         $operations = $this->quotationOperationRepository->findBy(['quotation' => $bill->getMeeting()->getQuotation()]);
