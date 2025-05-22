@@ -1,9 +1,9 @@
-import {useEffect, useState} from "react";
+import {useState, useEffect} from "react";
 import Loader from "../../components/Loader.jsx";
 import config from "../../providers/apiConfig.js";
 import {PageHeader} from "../../components";
 
-const meetingGrid = () => {
+const MeetingGrid = () => {
     const [meetingData, setMeetingData] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -11,12 +11,41 @@ const meetingGrid = () => {
         const fetchMeetingData = async () => {
             try {
                 const clientId = JSON.parse(localStorage.getItem('client')).id;
-                const response = await fetch(`${config.apiBaseUrl}/meeting/client/${clientId}`);
+                const response = await fetch(
+                    `${config.apiBaseUrl}/meeting/client/${clientId}`,
+                    { headers: config.headers }
+                );
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                const data = await response.json();
-                setMeetingData(data);
+
+                const meetings = await response.json();
+
+                // Fetch quotations pour chaque meeting
+                const enrichedMeetings = await Promise.all(
+                    meetings.map(async (meeting) => {
+                        try {
+                            const quotationRes = await fetch(
+                                `${config.apiBaseUrl}/quotation/${meeting.quotationId}`,
+                                { headers: config.headers }
+                            );
+                            if (!quotationRes.ok) {
+                                throw new Error('Erreur lors de la récupération du devis');
+                            }
+                            const quotation = await quotationRes.json();
+
+                            return {
+                                ...meeting,
+                                operations: quotation.operations || [], // fusion des opérations depuis le devis
+                            };
+                        } catch (quotationError) {
+                            console.error(`Erreur pour le devis du meeting ${meeting.id}:`, quotationError);
+                            return { ...meeting, operations: [] }; // fallback
+                        }
+                    })
+                );
+
+                setMeetingData(enrichedMeetings);
             } catch (error) {
                 console.error('Error fetching meeting data:', error);
             } finally {
@@ -26,6 +55,7 @@ const meetingGrid = () => {
 
         fetchMeetingData();
     }, []);
+
 
     return (
         <div className="w-full">
@@ -61,13 +91,13 @@ const meetingGrid = () => {
                                     <td>{new Date(meeting.meetingDate).toLocaleDateString()}</td>
                                     <td>
                                         <p className={"font-bold"}>
-                                            {meeting.vehicule.brand.name}
+                                            {meeting.vehicle.brand.name}
                                         </p>
                                         <p className={"text-sm"}>
-                                            {meeting.vehicule.model.name}
+                                            {meeting.vehicle.model.name}
                                         </p>
                                         <p className={"text-sm"}>
-                                            ({meeting.vehicule.registrationNumber})
+                                            ({meeting.vehicle.registrationNumber})
                                         </p>
                                     </td>
                                     <td>{meeting.meetingState.name}</td>
@@ -87,4 +117,4 @@ const meetingGrid = () => {
     );
 }
 
-export default meetingGrid;
+export default MeetingGrid;
