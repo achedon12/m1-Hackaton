@@ -611,7 +611,6 @@ const Rdv = () => {
                     vehicle: selectedVehicle.id,
                     garage: formData.place
                 };
-                console.log(body);
                 const response = await fetch(`${config.apiBaseUrl}/quotation/create`, {
                     method: 'POST',
                     headers: config.getHeaders(),
@@ -686,8 +685,7 @@ const Rdv = () => {
             }
 
             const data = await response.json();
-
-            console.log("Rendez-vous créé :", data);
+            
             navigate("../meeting");
         } catch (error) {
             console.error("Erreur création rendez-vous :", error);
