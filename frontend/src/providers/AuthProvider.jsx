@@ -15,7 +15,6 @@ export const AuthProvider = ({children}) => {
                 const decodedToken = jwtDecode(token);
                 const currentTime = Date.now() / 1000;
 
-                console.log("Token décodé :", decodedToken, currentTime, decodedToken.exp, decodedToken.exp < currentTime);
                 if (decodedToken.exp < currentTime) {
                     logout(); // Token expiré
                 } else {

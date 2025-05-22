@@ -10,6 +10,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: QuotationRepository::class)]
 class Quotation
@@ -19,7 +20,7 @@ class Quotation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['quotation:read'])]
+    #[Groups(['quotation:read', 'meeting:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
@@ -48,10 +49,15 @@ class Quotation
     #[Groups(['quotation:read'])]
     private ?string $hash = null;
 
-
     #[ORM\OneToMany(targetEntity: QuotationOperation::class, mappedBy: 'quotation')]
     #[Groups(['quotation:read'])]
     private Collection $quotationOperations;
+
+    #[ORM\ManyToOne(targetEntity: Vehicle::class, inversedBy: 'quotations')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[MaxDepth(1)]
+    #[Groups(['vehicle:read'])]
+    private Vehicle $vehicle;
 
     public function __construct()
     {
@@ -161,6 +167,23 @@ class Quotation
         }
 
         return $this;
+    }
+
+    public function getVehicle(): ?Vehicle
+    {
+        return $this->vehicle;
+    }
+
+    public function setVehicle(Vehicle $vehicle): static
+    {
+        $this->vehicle = $vehicle;
+
+        return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getId() . ' - ' . $this->getRequestDate()->format('d/m/Y') . ' - ' . $this->getPrice() . '€';
     }
 
 }

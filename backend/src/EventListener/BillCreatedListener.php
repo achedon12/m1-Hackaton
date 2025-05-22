@@ -2,7 +2,7 @@
 
 namespace App\EventListener;
 
-use App\Event\QuotationCreatedEvent;
+use App\Event\BillCreatedEvent;
 use App\Repository\OperationRepository;
 use App\Repository\QuotationOperationRepository;
 use Dompdf\Dompdf;
@@ -17,8 +17,8 @@ use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
-#[AsEventListener(event: QuotationCreatedEvent::NAME, method: 'onQuotationCreated')]
-readonly class QuotationCreatedListener
+#[AsEventListener(event: BillCreatedEvent::NAME, method: 'onBillCreated')]
+readonly class BillCreatedListener
 {
     public function __construct(
         private MailerInterface                       $mailer,
@@ -35,9 +35,9 @@ readonly class QuotationCreatedListener
      * @throws SyntaxError
      * @throws LoaderError
      */
-    public function onQuotationCreated(QuotationCreatedEvent $event): void
+    public function onBillCreated(BillCreatedEvent $event): void
     {
-        $quotation = $event->getQuotation();
+        $bill = $event->getBill();
 
         $company = [
             'name' => 'RD-Vroum',
@@ -47,13 +47,15 @@ readonly class QuotationCreatedListener
             'country' => 'FR',
         ];
 
-        $operations = $this->quotationOperationRepository->findBy(['quotation' => $quotation]);
+        $operations = $this->quotationOperationRepository->findBy(['quotation' => $bill->getMeeting()->getQuotation()]);
 
-        $html = $this->twig->render('emails/quotation.html.twig', [
-            'client' => $quotation->getClient(),
+        $html = $this->twig->render('emails/bill.html.twig', [
+            'client' => $bill->getMeeting()->getClient(),
             'company' => $company,
-            'quotation' => $quotation,
-            'request_date' => $quotation->getRequestDate()->format('d/m/Y'),
+            'billID' => $bill->getId(),
+            'bill' => $bill->getMeeting()->getQuotation(),
+            'request_date' => $bill->getMeeting()->getQuotation()->getRequestDate()->format('d/m/Y'),
+            'end_date' => date('Y-m-d'),
             'operations' => $operations
         ]);
 
@@ -65,8 +67,8 @@ readonly class QuotationCreatedListener
         $dompdf->render();
         $pdfOutput = $dompdf->output();
 
-        $filename = $quotation->getHash() . '.pdf';
-        $quotationsDirectory = __DIR__ . '/../../public/uploads/quotations';
+        $filename = $bill->getHash() . '.pdf';
+        $quotationsDirectory = __DIR__ . '/../../public/uploads/bills';
         $filePath = $quotationsDirectory . '/' . $filename;
         if (!is_dir($quotationsDirectory)) {
             mkdir($quotationsDirectory, 0777, true);
@@ -77,14 +79,28 @@ readonly class QuotationCreatedListener
         try {
             $email = (new Email())
                 ->from('no-reply@rd-vroum.com')
-                ->to($quotation->getClient()->getEmail())
-                ->subject('RD-Vroum - Quotation')
+                ->to($bill->getMeeting()->getClient()->getEmail())
+                ->subject('RD-Vroum - Bill')
                 ->html('
-                    <p>Dear ' . $quotation->getClient()->getFirstName() . ',</p>
-                    <p>Your quotation has been created successfully. Please find the attached PDF.</p>
+                    <p>Dear ' . $bill->getMeeting()->getClient()->getFirstName() . ',</p>
+                    <p>Your bill has been created successfully. Please find the attached PDF.</p>
                     <p>Best regards,</p>
                     <p>RD-Vroum Team</p>')
-                ->attach($pdfOutput, 'devis_' . $quotation->getId() . '.pdf', 'application/pdf');
+                ->attach($pdfOutput, 'facture_' . $bill->getId() . '.pdf', 'application/pdf');
+
+            $this->mailer->send($email);
+
+            $email = (new Email())
+                ->from('no-reply@rd-vroum.com')
+                ->to($bill->getMeeting()->getGarage()->getEmail())
+                ->subject('RD-Vroum - Bill')
+                ->html('
+                    <p>Dear ' . $bill->getMeeting()->getGarage()->getName() . ',</p>
+                    <p>A new bill has been created for your client ' . $bill->getMeeting()->getClient()->getFirstName() . ' ' . $bill->getMeeting()->getClient()->getLastName() . '.</p>
+                    <p>Please find the attached PDF.</p>
+                    <p>Best regards,</p>
+                    <p>RD-Vroum Team</p>')
+                ->attach($pdfOutput, 'facture_' . $bill->getId() . '.pdf', 'application/pdf');
 
             $this->mailer->send($email);
         } catch (TransportExceptionInterface) {

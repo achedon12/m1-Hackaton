@@ -13,7 +13,7 @@ use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
-#[AsEventListener(event: ClientCreatedEvent::NAME, method: 'onUserCreated')]
+#[AsEventListener(event: ClientCreatedEvent::NAME, method: 'onClientCreated')]
 readonly class ClientCreatedListener
 {
     public function __construct(private MailerInterface $mailer,
@@ -27,7 +27,7 @@ readonly class ClientCreatedListener
      * @throws SyntaxError
      * @throws LoaderError
      */
-    public function onUserCreated(ClientCreatedEvent $event): void
+    public function onClientCreated(ClientCreatedEvent $event): void
     {
         $client = $event->getClient();
 

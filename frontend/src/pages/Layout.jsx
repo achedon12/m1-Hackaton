@@ -11,8 +11,9 @@ const Layout = () => {
     const client = JSON.parse(localStorage.getItem("client"));
 
     const navItems = [
-        {name: "Prestations", path: "/catalog"},
         {name: "Prendre rendez-vous", path: "/rdv"},
+        {name: "Nos services", path: "/operations"},
+        {name: "Nos garages", path: "/garages"},
     ];
 
     useEffect(() => {
@@ -29,8 +30,8 @@ const Layout = () => {
                                 "Content-Type": "application/json",
                             },
                             body: JSON.stringify({
-                                longitude: latitude,
-                                latitude: longitude
+                                longitude: longitude,
+                                latitude: latitude
                             }),
                         });
                         const nearestGarage = await response.json();
@@ -71,13 +72,6 @@ const Layout = () => {
                             </span>
                             </div>
                         )}
-                        <div className="dropdown dropdown-end">
-                            <div tabIndex="0" role="button" className="btn btn-ghost btn-circle">
-                                <div className="indicator">
-                                    <ShoppingCart className={`text-white`}/>
-                                </div>
-                            </div>
-                        </div>
                         <NavLink to="/login" className={`text-white ${isAuthenticated ? 'hidden' : ''}`}>
                             Se connecter
                         </NavLink>
@@ -94,12 +88,10 @@ const Layout = () => {
                             <ul tabIndex="0"
                                 className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
                                 <li>
-                                    <p className={"text-sm font-bold"}>
-                                        {client?.firstname} {client?.lastname}
-                                    </p>
+                                    <NavLink to="/profile">Modifier son profil</NavLink>
                                 </li>
                                 <li>
-                                    <NavLink to="/profile">Modifier son profil</NavLink>
+                                    <NavLink to="/meeting">Mes opérations</NavLink>
                                 </li>
                                 <li>
                                     <button onClick={logout}>Se déconnecter</button>

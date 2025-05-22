@@ -11,6 +11,7 @@ use App\Repository\QuotationRepository;
 use App\Repository\VehicleRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -25,7 +26,8 @@ final class MeetingController extends AbstractController
                                 private readonly MeetingRepository      $meetingRepository,
                                 private readonly MeetingStateRepository $meetingStateRepository,
                                 private readonly QuotationRepository    $quotationRepository,
-                                private readonly EntityManagerInterface $entityManager)
+                                private readonly EntityManagerInterface $entityManager,
+                                private readonly Security               $security)
     {
     }
 
@@ -33,8 +35,6 @@ final class MeetingController extends AbstractController
     public function create(Request $request): Response
     {
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
-
-        // vehicle, garage, operations, rdv_date
 
         if (!isset($data['vehicle'])) {
             return $this->json(['error' => 'Vehicle is required'], Response::HTTP_BAD_REQUEST);
@@ -52,9 +52,15 @@ final class MeetingController extends AbstractController
             return $this->json(['error' => 'Quotation is required'], Response::HTTP_BAD_REQUEST);
         }
 
+        $client = $this->security->getUser();
+
         $vehicle = $this->vehicleRepository->find($data['vehicle']);
         if (!$vehicle) {
             return $this->json(['error' => 'Vehicle not found'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($vehicle->getClient()->getId() !== $client->getId()) {
+            return $this->json(['error' => 'You are not the owner of this vehicle'], Response::HTTP_FORBIDDEN);
         }
 
         $garage = $this->garageRepository->find($data['garage']);
@@ -78,24 +84,24 @@ final class MeetingController extends AbstractController
         $meeting->setMeetingState($this->meetingStateRepository->findOneBy(['name' => 'created']));
         $meeting->setCreationDate(new \DateTimeImmutable());
 
-        // save meeting operations
-
         $this->entityManager->persist($meeting);
         $this->entityManager->flush();
 
-        return $this->json($meeting, Response::HTTP_CREATED, ['groups' => ['meeting']]);
+        return $this->json($meeting, Response::HTTP_CREATED, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read']]);
     }
 
-    #[Route('/vehicle/{id}', name: 'vehicle', methods: ['GET'])]
-    public function getVehicleMeetings(int $id): Response
+    #[Route('/{clientId}', name: 'get', methods: ['GET'])]
+    public function get(int $clientId): Response
     {
-        $vehicle = $this->vehicleRepository->find($id);
-        if (!$vehicle) {
-            return $this->json(['error' => 'Vehicle not found'], Response::HTTP_BAD_REQUEST);
+        $client = $this->security->getUser();
+
+        if ($client->getId() !== $clientId) {
+            return $this->json(['error' => 'You are not the owner of this vehicle'], Response::HTTP_FORBIDDEN);
         }
 
-        $meetings = $this->meetingRepository->findBy(['vehicle' => $vehicle]);
+        $meetings = $this->meetingRepository->findBy(['client' => $client]);
 
-        return $this->json($meetings, Response::HTTP_OK, ['groups' => ['meeting']]);
+        return $this->json($meetings, Response::HTTP_OK);
     }
+
 }

@@ -17,7 +17,7 @@ const Rdv = () => {
 
     // Form datas
     const [formData, setFormData] = React.useState({
-        vehiclePlate: '',
+        vehiclePlate: [],
         place:'',
         category: [],
         cart:[],
@@ -43,6 +43,8 @@ const Rdv = () => {
     const [categoriesError, setCategoriesError] = React.useState(null);
 
     const [operations, setOperations] = React.useState([]);
+
+    const [quotationHash, setQuotationHash] = React.useState(null);
 
     React.useEffect(() => {
 
@@ -523,18 +525,15 @@ const Rdv = () => {
             try {
                 const tvaRate = 0.2;
 
-                // Récupérer les libellés sélectionnés dans le cart
+                // Fetch libs in cart
                 const selectedLibelles = formData.cart.map(item => item.libelle);
 
-                // Filtrer les opérations selon les libellés sélectionnés
                 const selectedOperations = operations.filter(op =>
                     selectedLibelles.includes(op.libelle)
                 );
 
-                // Calculer le total des prix
                 const totalPrice = selectedOperations.reduce((total, op) => total + op.price, 0);
 
-                // Construire la chaîne d'ids des opérations (ex: "1;2;3")
                 const operationsString = selectedOperations.map(op => op.id).join(';');
 
                 const body = {
@@ -544,6 +543,7 @@ const Rdv = () => {
                     date: formData.meetingTime
                         ? `${formData.meetingTime.getFullYear()}-${String(formData.meetingTime.getMonth() + 1).padStart(2, '0')}-${String(formData.meetingTime.getDate()).padStart(2, '0')} ${String(formData.meetingTime.getHours()).padStart(2, '0')}:${String(formData.meetingTime.getMinutes()).padStart(2, '0')}:00`
                         : null,
+                    vehicle: formData.vehiclePlate,
                 };
 
                 const response = await fetch(`${config.apiBaseUrl}/quotation/create`, {
@@ -555,6 +555,9 @@ const Rdv = () => {
                 if (!response.ok) {
                     throw new Error(`Erreur ${response.status}`);
                 }
+
+                const quotationData = await response.json();
+                setQuotationHash(quotationData.hash);
 
                 setActiveStep((prevActiveStep) => prevActiveStep + 1);
 
@@ -596,11 +599,34 @@ const Rdv = () => {
                     <Typography className="text-green-800 pt-10">
                         Votre demande a bien été prise en compte.
                     </Typography>
-                    <Box>
-                        <Box/>
-                    </Box>
+
+                    {quotationHash ? (
+                        <Box className="mt-6 space-y-4">
+                            <iframe
+                                src={`${config.baseUrl}/uploads/quotations/${quotationHash}.pdf`}
+                                width="100%"
+                                height="600px"
+                                title="Aperçu du devis"
+                            />
+                            <Box display="flex" justifyContent="center">
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    component="a"
+                                    href={`${config.baseUrl}/uploads/quotations/${quotationHash}.pdf`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Télécharger le devis
+                                </Button>
+                            </Box>
+                        </Box>
+                    ) : (
+                        <Typography color="error">Une erreur est survenue lors du chargement du devis PDF.</Typography>
+                    )}
                 </React.Fragment>
             ) : (
+
                 <React.Fragment>
                     <Box className="my-10">{getStepContent(activeStep)}</Box>
                     <Box className="flex justify-center">

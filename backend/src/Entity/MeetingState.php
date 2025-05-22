@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\MeetingStateRepository;
 use App\Trait\TimeStampTrait;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: MeetingStateRepository::class)]
 class MeetingState
@@ -14,9 +15,11 @@ class MeetingState
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['meeting:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['meeting:read'])]
     private ?string $name = null;
 
     public function getId(): ?int

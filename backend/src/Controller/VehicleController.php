@@ -181,6 +181,7 @@ final class VehicleController extends AbstractController
 
         foreach ($vehicles as $vehicle) {
             $brandNameLowercase = strtolower($vehicle->getBrand()->getName());
+            $brandNameLowercase = str_replace(' ', '', $brandNameLowercase);
             $logoPath = 'uploads/brands/' . $brandNameLowercase . '.png';
 
             $vehicle->getBrand()->setLogoUrl($logoPath);

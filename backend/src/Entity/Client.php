@@ -72,7 +72,6 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
     private ?bool $verifiedAccount = null;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
-    #[Groups(['client:read'])]
     private ?string $verificationToken = null;
 
     #[ORM\Column(type: Types::FLOAT, nullable: true)]

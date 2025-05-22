@@ -2,8 +2,10 @@
 
 namespace App\Controller;
 
+use App\Entity\Garage;
 use App\Repository\GarageRepository;
 use App\Repository\MeetingRepository;
+use App\Repository\OperationRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,16 +19,17 @@ use Twig\Environment;
 #[Route('/api/garage', name: 'api_garage_')]
 final class GarageController extends AbstractController
 {
-    public function __construct(private readonly GarageRepository  $garageRepository,
-                                private readonly Security          $security,
-                                private MailerInterface            $mailer,
-                                private Environment                $twig,
-                                private readonly MeetingRepository $meetingRepository,
-    )
+    public function __construct(private readonly GarageRepository    $garageRepository,
+                                private readonly Security            $security,
+                                private MailerInterface              $mailer,
+                                private Environment                  $twig,
+                                private readonly MeetingRepository   $meetingRepository,
+                                private readonly OperationRepository $operationRepository)
     {
     }
 
-    #[Route('/list', name: 'list', methods: ['GET'])]
+    #[
+        Route('/list', name: 'list', methods: ['GET'])]
     public function getGarages(): Response
     {
         $garages = $this->garageRepository->findAll();
@@ -34,12 +37,33 @@ final class GarageController extends AbstractController
         return $this->json($garages, Response::HTTP_OK);
     }
 
-    #[Route('/availabilities', name: 'availabilities', methods: ['GET'])]
-    public function availabilities(): Response
+    #[Route('/availabilities', name: 'availabilities', methods: ['POST'])]
+    public function availabilities(Request $request): Response
     {
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
         $client = $this->security->getUser();
 
-        $garages = $this->garageRepository->findNearby($client->getLatitude() ?? 0, $client->getLongitude() ?? 0, -1);
+        $zipcode = $data['zipcode'] ?? $client->getZipcode();
+        $city = $data['city'] ?? $client->getCity();
+        $operations = $data['operations'];
+
+        $neededTime = 0;
+        foreach (explode(";", $data['operations'] ?? []) as $id) {
+            $operation = $this->operationRepository->find($id);
+            if ($operation) {
+                $time = $operation->getEstimatedDuration()->format("H:i:s");
+                $time = explode(":", $time);
+                $neededTime += ((int)$time[0] * 3600) + ((int)$time[1] * 60) + (int)$time[2];
+            }
+        }
+        $neededTimeFormated = gmdate("H:i:s", $neededTime);
+
+        $coordinates = ClientController::getCoordinatesFromZipcode($zipcode, $city);
+        $longitude = $coordinates['longitude'];
+        $latitude = $coordinates['latitude'];
+
+
+        $garages = $this->garageRepository->findNearby($latitude, $longitude, -1);
 
         $garages = array_map(function ($garage) {
             $garage[0]->distance = round($garage['distance'], 2);
@@ -48,6 +72,19 @@ final class GarageController extends AbstractController
             $garage[0]->workingTime = $garagesMeeting;
             return $garage[0];
         }, $garages);
+
+        $garages = array_slice($garages, 0, 7);
+
+        /** @var Garage $garage */
+        foreach ($garages as $garage) {
+            if ($garage->getWorkingTime()) {
+                $workingTime = explode(":", $garage->getWorkingTime());
+                $workingTime = ((int)$workingTime[0] * 3600) + ((int)$workingTime[1] * 60) + (int)$workingTime[2];
+                $garage->available = $workingTime <= 3 * 8 * 3600;
+                $workingTime = $workingTime / 8 / 3600;
+                $garage->setWorkingTime($workingTime);
+            }
+        }
 
         return $this->json($garages, Response::HTTP_OK);
     }
@@ -105,16 +142,28 @@ final class GarageController extends AbstractController
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
 
         $zipcode = $data['zipcode'] ?? null;
+        $city = $data['city'] ?? null;
+
+        $radius = isset($data['radius']) ? (float)$data['radius'] : 50.0;
 
         if (!$zipcode) {
             return $this->json(['error' => 'Zipcode is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        $garages = $this->garageRepository->findNearbyByZipcode($zipcode);
+        if (!$city) {
+            return $this->json(['error' => 'City is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $garages = $this->garageRepository->findNearbyByZipcode($zipcode, $city, $radius);
 
         if (empty($garages)) {
             return $this->json(['error' => 'No garages found nearby'], Response::HTTP_NOT_FOUND);
         }
+
+        $garages = array_map(function ($garage) {
+            $garage[0]->distance = round($garage['distance'], 2);
+            return $garage[0];
+        }, $garages);
 
         return $this->json($garages, Response::HTTP_OK);
     }
