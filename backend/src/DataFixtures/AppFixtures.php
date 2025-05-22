@@ -109,6 +109,14 @@ class AppFixtures extends Fixture
     {
         $data = json_decode(file_get_contents(__DIR__ . '/car-list.json'), true);
 
+        usort($data, function ($a, $b) {
+            $brandComparison = strcmp($a['brand'], $b['brand']);
+            if ($brandComparison === 0) {
+                return strcmp($a['models'][0] ?? '', $b['models'][0] ?? '');
+            }
+            return $brandComparison;
+        });
+
         foreach ($data as $element) {
             $brand = new Brand();
             $brand->setName($element['brand']);
