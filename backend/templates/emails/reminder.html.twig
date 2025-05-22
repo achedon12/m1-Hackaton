@@ -44,6 +44,15 @@
         <li><strong>Téléphone :</strong> {{ client.phone }}</li>
         <li><strong>Email :</strong> {{ client.email }}</li>
     </ul>
+    {% if vehicle %}
+        <p>Véhicule concerné :</p>
+        <ul>
+            <li><strong>Marque :</strong> {{ vehicle.brand.name }}</li>
+            <li><strong>Modèle :</strong> {{ vehicle.model.name }}</li>
+            <li><strong>Immatriculation :</strong> {{ vehicle.registrationNumber }}</li>
+            <li><strong>Kilométrage :</strong> {{ vehicle.kms }} km</li>
+        </ul>
+    {% endif %}
     <p>Message du client :</p>
     <blockquote>{{ message }}</blockquote>
     <p>Merci de le contacter dans les plus brefs délais.</p>

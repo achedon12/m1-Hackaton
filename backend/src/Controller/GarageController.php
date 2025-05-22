@@ -2,10 +2,10 @@
 
 namespace App\Controller;
 
-use App\Entity\Garage;
 use App\Repository\GarageRepository;
 use App\Repository\MeetingRepository;
 use App\Repository\OperationRepository;
+use App\Repository\VehicleRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,7 +24,8 @@ final class GarageController extends AbstractController
                                 private MailerInterface              $mailer,
                                 private Environment                  $twig,
                                 private readonly MeetingRepository   $meetingRepository,
-                                private readonly OperationRepository $operationRepository)
+                                private readonly OperationRepository $operationRepository,
+                                private readonly VehicleRepository   $vehicleRepository)
     {
     }
 
@@ -134,7 +135,7 @@ final class GarageController extends AbstractController
             $canSchedule = true;
 
             for ($j = 0; $j < $daysToCheck - $i; $j++) {
-                $dateToCheck = (clone $startDate)->modify("+".($i + $j)." days")->format('Y-m-d');
+                $dateToCheck = (clone $startDate)->modify("+" . ($i + $j) . " days")->format('Y-m-d');
                 $used = $dailyWorkload[$dateToCheck] ?? 0;
                 $available = $workingSecondsPerDay - $used;
 
@@ -266,6 +267,15 @@ final class GarageController extends AbstractController
         }
 
         $client = $this->security->getUser();
+
+        $vehicle = $data['vehicle'] ?? null;
+        if ($vehicle) {
+            $vehicle = $this->vehicleRepository->find($vehicle);
+            if (!$vehicle) {
+                return $this->json(['error' => 'Vehicle not found'], Response::HTTP_NOT_FOUND);
+            }
+        }
+
         $message = $data['message'] ?? 'Je souhaite être rappelé par le garage';
 
         try {
@@ -273,7 +283,7 @@ final class GarageController extends AbstractController
                 ->from('no-reply@rd-vroum.com')
                 ->to($garage->getEmail())
                 ->subject('New reminder request')
-                ->html($this->twig->render('emails/reminder.html.twig', ['client' => $client, 'message' => $message]));
+                ->html($this->twig->render('emails/reminder.html.twig', ['client' => $client, 'message' => $message, 'vehicle' => $vehicle,]));
 
             $this->mailer->send($reminderEmail);
 
@@ -281,7 +291,7 @@ final class GarageController extends AbstractController
                 ->from('no-reply@rd-vroum.com')
                 ->to($client->getEmail())
                 ->subject('Reminder request confirmation')
-                ->html($this->twig->render('emails/reminderConfirm.html.twig', ['garage' => $garage]));
+                ->html($this->twig->render('emails/reminderConfirm.html.twig', ['garage' => $garage, 'vehicle' => $vehicle, 'message' => $message]));
 
             $this->mailer->send($reminderConfirmEmail);
         } catch (TransportExceptionInterface) {
