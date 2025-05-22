@@ -67,7 +67,6 @@ const TakeMeeting = () => {
 
     }, []);
 
-    // TODO : FIX LOAD MEETINGS
     const handleCreateMeeting = async () => {
         try {
             if (!selectedQuotation) {
@@ -86,7 +85,7 @@ const TakeMeeting = () => {
             const existingMeetings = await existingMeetingsResponse.json();
 
             const meetingExists = existingMeetings.some(
-                (meeting) => meeting.quotation === selectedQuotation.id
+                (meeting) => meeting.quotation.id === selectedQuotation.id
             );
 
             if (meetingExists) {
