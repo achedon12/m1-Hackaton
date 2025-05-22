@@ -107,6 +107,32 @@ final class MeetingController extends AbstractController
         return $this->json($meetings, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
     }
 
+    #[Route('/update/{id}', name: 'update', methods: ['PUT'])]
+    public function update(Request $request, int $id): Response
+    {
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
+
+        $meeting = $this->meetingRepository->find($id);
+
+        if (!$meeting) {
+            return $this->json(['error' => 'Meeting not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if (!isset($data['state'])) {
+            return $this->json(['error' => 'Meeting State is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $meetingState = $this->meetingStateRepository->findOneBy(['name' => $data['state']]);
+        if (!$meetingState) {
+            return $this->json(['error' => 'Meeting State not found'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $meeting->setMeetingState($meetingState);
+        $this->entityManager->flush();
+
+        return $this->json($meeting, Response::HTTP_OK, [], ['groups' => ['meeting:read', 'vehicle:read', 'garage:read', 'operation:read', 'category:read']]);
+    }
+
     #[Route('/{id}', name: 'get', methods: ['GET'])]
     public function get(int $id): Response
     {
