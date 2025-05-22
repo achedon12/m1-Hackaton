@@ -1,11 +1,14 @@
-import {useState, useEffect} from "react";
+import React, {useState, useEffect} from "react";
 import Loader from "../../components/Loader.jsx";
 import config from "../../providers/apiConfig.js";
 import {PageHeader} from "../../components";
+import {Snackbar, Box} from "@mui/material";
 
 const MeetingGrid = () => {
     const [meetingData, setMeetingData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [meetingStates, setMeetingStates] = useState([]);
+    const [snackbar, setSnackbar] = useState("");
 
     const MeetingStatusConfig = {
         created: { label: "Créé", bgColor: "bg-blue-500" },
@@ -15,6 +18,23 @@ const MeetingGrid = () => {
     };
 
     useEffect(() => {
+
+        const fetchMeetingStates = async () => {
+            try {
+                const response = await fetch(`${config.apiBaseUrl}/meetingstate/list`, {
+                    headers: config.headers
+                });
+                if (!response.ok) throw new Error('Erreur lors du chargement des statuts');
+                const data = await response.json();
+                setMeetingStates(data);
+            } catch (error) {
+                console.error("Erreur récupération des statuts :", error);
+            }
+        };
+
+        fetchMeetingStates();
+
+
         const fetchMeetingData = async () => {
             try {
                 const clientId = JSON.parse(localStorage.getItem('client')).id;
@@ -69,7 +89,7 @@ const MeetingGrid = () => {
 
 
     return (
-        <div className="w-full">
+        <Box className="w-full">
             <PageHeader
                 title={"Mes rendez-vous"}
                 description={"Consultez l'historique de vos opérations"}
@@ -91,7 +111,8 @@ const MeetingGrid = () => {
                             <th>Garage</th>
                             <th>Opérations</th>
                             <th>Devis</th>
-                            <th>Modifier le statut</th> 
+                            <th>Modifier le statut</th>
+                            <th>Facture</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -103,22 +124,46 @@ const MeetingGrid = () => {
                             meetingData.map((meeting, idx) => {
                                 const status = MeetingStatusConfig[meeting.meetingState.name];
 
-                                const handleStatusChange = (e) => {
-                                    const newStatus = e.target.value;
-                                    setMeetingData(prevData =>
-                                        prevData.map((m, i) =>
-                                            i === idx
-                                                ? {
-                                                    ...m,
-                                                    meetingState: {
-                                                        ...m.meetingState,
-                                                        name: newStatus
+                                const handleStatusChange = async (e, meetingId, idx) => {
+                                    const newStatusName = e.target.value;
+                                    const selectedStatus = meetingStates.find(state => state.name === newStatusName);
+
+                                    try {
+                                        const response = await fetch(`${config.apiBaseUrl}/meeting/update/${meetingId}`, {
+                                            method: 'PUT',
+                                            headers: {
+                                                ...config.headers,
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify({
+                                                state: newStatusName
+                                            })
+                                        });
+
+                                        if (!response.ok) {
+                                            throw new Error('Échec de la mise à jour du statut');
+                                        }
+
+                                        setSnackbar("Statut de rendez-vous mis à jour.");
+
+                                        setMeetingData(prevData =>
+                                            prevData.map((m, i) =>
+                                                i === idx
+                                                    ? {
+                                                        ...m,
+                                                        meetingState: selectedStatus
                                                     }
-                                                }
-                                                : m
-                                        )
-                                    );
+                                                    : m
+                                            )
+                                        );
+                                    } catch (error) {
+                                        console.error(`Erreur lors de la mise à jour du statut du meeting ${meetingId} :`, error);
+                                        alert('Erreur lors de la mise à jour du statut.');
+                                    }
                                 };
+
+
+
 
                                 return (
                                     <tr key={meeting.id}>
@@ -171,16 +216,33 @@ const MeetingGrid = () => {
                                         <td>
                                             <select
                                                 value={meeting.meetingState.name}
-                                                onChange={handleStatusChange}
+                                                onChange={(e) => handleStatusChange(e, meeting.id, idx)}
                                                 className="border border-gray-300 rounded px-2 py-1 text-sm"
                                             >
-                                                {Object.keys(MeetingStatusConfig).map((key) => (
-                                                    <option key={key} value={key}>
-                                                        {MeetingStatusConfig[key].label}
+                                                {meetingStates.map((state) => (
+                                                    <option key={state.id} value={state.name}>
+                                                        {MeetingStatusConfig[state.name]?.label || state.name}
                                                     </option>
                                                 ))}
                                             </select>
                                         </td>
+                                        <td>
+                                            {meeting.meetingState.name === "completed" && meeting.invoice && meeting.invoice.hash ? (
+                                                <a
+                                                    href={`${config.baseUrl}/uploads/invoices/${meeting.invoice.hash}.pdf`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 hover:underline"
+                                                >
+                                                    Télécharger
+                                                </a>
+                                            ) : meeting.meetingState.name === "completed" ? (
+                                                <span className="text-sm text-gray-400 italic">Facture non disponible</span>
+                                            ) : (
+                                                <span className="text-sm text-gray-400 italic">Non disponible</span>
+                                            )}
+                                        </td>
+
                                     </tr>
                                 );
                             })
@@ -189,7 +251,13 @@ const MeetingGrid = () => {
                     </table>
                 </div>
             )}
-        </div>
+            <Snackbar
+                open={Boolean(snackbar)}
+                autoHideDuration={3000}
+                onClose={() => setSnackbar("")}
+                message={snackbar}
+            />
+        </Box>
     );
 
 }
