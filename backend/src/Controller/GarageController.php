@@ -44,13 +44,13 @@ final class GarageController extends AbstractController
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
         $client = $this->security->getUser();
 
-        $zipcode = $data['zipcode'] ?? $client?->getZipcode();
-        $city = $data['city'] ?? $client?->getCity();
+        $zipcode = $data['zipcode'] ?? null;
+        $city = $data['city'] ?? null;
         $operationIds = array_filter(explode(';', $data['operations'] ?? ''));
 
-        if (!$zipcode || !$city || empty($operationIds)) {
-            return $this->json(['error' => 'Données manquantes.'], Response::HTTP_BAD_REQUEST);
-        }
+//        if (!$zipcode || !$city || empty($operationIds)) {
+//            return $this->json(['error' => 'Données manquantes.'], Response::HTTP_BAD_REQUEST);
+//        }
 
         // Calcul du temps nécessaire total en secondes
         $neededTime = 0;

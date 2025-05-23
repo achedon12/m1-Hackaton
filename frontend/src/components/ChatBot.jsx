@@ -1,6 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 import config from "../providers/apiConfig.js";
 import {Bot, User, FileText} from "lucide-react";
+import {MapContainer, Marker, Popup, TileLayer} from "react-leaflet";
 
 const ChatBot = () => {
     const client = JSON.parse(localStorage.getItem("client"));
@@ -17,6 +18,7 @@ const ChatBot = () => {
     const [formData, setFormData] = useState({client_id: clientId});
     const [vehicles, setVehicles] = useState([]);
     const [vehicleId, setVehicleId] = useState(null);
+    const [vehicleKms, setVehicleKms] = useState(null);
     const [brands, setBrands] = useState([]);
     const [models, setModels] = useState([]);
     const [selectedBrand, setSelectedBrand] = useState("");
@@ -35,6 +37,8 @@ const ChatBot = () => {
     const [pendingGarage, setPendingGarage] = React.useState(null);
 
     const [meetingWithOperations, setMeetingWithOperations] = useState(false);
+
+    const [viewMode, setViewMode] = useState("map");
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({behavior: "smooth"});
@@ -102,6 +106,7 @@ const ChatBot = () => {
                     if (res.ok) {
                         const data = await res.json();
                         setVehicleId(data['vehicule'].id);
+                        setVehicleKms(data['vehicule'].kms);
 
                         appendMessage("bot", "Véhicule créé avec succès !");
                         appendMessage("bot", "Veuillez renseigner le problème de votre véhicule :");
@@ -121,6 +126,7 @@ const ChatBot = () => {
             error: "Kilométrage invalide. Entrez un nombre.",
             onValid: async (val) => {
                 setVehicleId(formData.vehicle_id);
+                setVehicleKms(val)
 
                 try {
                     const res = await fetch(`${config.apiBaseUrl}/vehicle/update/${vehicleId}`, {
@@ -270,6 +276,7 @@ const ChatBot = () => {
     const handleVehicleSelect = (vehicle_id) => {
         const selected = vehicles.find(v => v.id === vehicle_id);
         setVehicleId(vehicle_id)
+        setVehicleKms(selected.kms);
         appendMessage("user", `${selected.brand.name} ${selected.model.name} (${selected.registrationNumber})`);
         appendMessage("bot", "Véhicule sélectionné.");
 
@@ -281,7 +288,7 @@ const ChatBot = () => {
 
         appendMessage(
             "bot",
-            `📄 Informations du véhicule :
+            `Informations du véhicule :
 - Marque : ${selected.brand.name}
 - Modèle : ${selected.model.name}
 - Immatriculation : ${selected.registrationNumber}
@@ -301,7 +308,7 @@ const ChatBot = () => {
 
             const operationsIds = selectedOperations.join(";");
             // const operationsIds = selectedOperations.map(op => op.id).join(";");
-            const params = meetingWithOperations ? {zipcode: zip, city: city, operations: operationsIds} : {zipcode: zip, city: city};
+            const params = meetingWithOperations ? {zipcode: zip, operations: operationsIds} : {zipcode: zip, city: city};
 
             const response = await fetch(url_garages, {
                 method: "POST",
@@ -425,7 +432,7 @@ const ChatBot = () => {
                 const res = await fetch(`${config.apiBaseUrl}/operations/analyze`, {
                     method: "POST",
                     headers: config.getHeaders(),
-                    body: JSON.stringify({message: message})
+                    body: JSON.stringify({message: message, kms: vehicleKms})
                 });
 
                 const data = await res.json();
@@ -474,7 +481,12 @@ const ChatBot = () => {
     }, [step]);
 
     return (
-        <div className="w-full min-w-[600px] max-w-[800px] h-[72vh] min-h-[400px] max-h-screen p-4 bg-white shadow rounded-lg flex flex-col">
+        <div className="w-full min-w-[600px] max-w-[1200px] h-[72vh] min-h-[400px] max-h-screen p-4 bg-white shadow rounded-lg flex flex-col">
+            <div className="flex items-center mb-3">
+                <img src={"logo.svg"} alt={"logo"} className="h-8 w-auto mr-3" />
+                <h1 className="text-xl font-semibold tracking-wide">RD-Vroum</h1>
+            </div>
+
             <div className="flex-1 overflow-y-auto border p-4 mb-2 space-y-3 bg-gray-50 rounded">
                 {messages.map((msg, index) => (
                     <div
@@ -505,356 +517,628 @@ const ChatBot = () => {
                     </div>
                 ))}
 
-                {step === "start" && (
-                    <div className="flex gap-4 mt-2">
-                        <button
-                            onClick={() => handleStart("oui")}
-                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-300"
-                        >
-                            Oui
-                        </button>
-                        <button
-                            onClick={() => handleStart("non")}
-                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition focus:outline-none focus:ring-2 focus:ring-gray-300"
-                        >
-                            Non
-                        </button>
-                    </div>
-                )}
-
-                {step === "choose_vehicle" && (
-                    <div className="space-y-2">
-                        {vehicles.map((vehicle) => (
-                            <div
-                                key={vehicle.id}
-                                className="p-2 bg-white border rounded cursor-pointer hover:bg-gray-100 transition"
-                                onClick={() => handleVehicleSelect(vehicle.id)}
-                            >
-                                {vehicle.brand.name} {vehicle.model.name} ({vehicle.registrationNumber})
-                            </div>
-                        ))}
-                        <div
-                            className="text-blue-600 cursor-pointer underline hover:text-blue-800 transition"
-                            onClick={() => {
-                                setStep("ask_registration");
-                            }}
-                        >
-                            Ou créer un nouveau véhicule
-                        </div>
-                    </div>
-                )}
-
-                {step === "confirm_kms" && (
-                    <div className="mt-4">
-                        <p>Le kilométrage affiché est-il correct ?</p>
+                <div className="ml-7">
+                    {step === "start" && (
                         <div className="flex gap-4 mt-2">
                             <button
+                                onClick={() => handleStart("oui")}
+                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-300"
+                            >
+                                Oui
+                            </button>
+                            <button
+                                onClick={() => handleStart("non")}
+                                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition focus:outline-none focus:ring-2 focus:ring-gray-300"
+                            >
+                                Non
+                            </button>
+                        </div>
+                    )}
+
+                    {step === "choose_vehicle" && (
+                        <div className="grid gap-4 w-3/4">
+                            {vehicles.map((vehicle) => (
+                                <div
+                                    key={vehicle.id}
+                                    onClick={() => handleVehicleSelect(vehicle.id)}
+                                    className="flex items-center justify-between p-4 border rounded-xl shadow-sm bg-white hover:bg-gray-50 transition cursor-pointer"
+                                >
+                                    <div className={"flex"}>
+                                        <div className="w-12 h-12 flex justify-center items-center mr-4">
+                                            <img src={config.baseUrl + "/uploads/brands/" + vehicle.brand.name.toLowerCase().replace(/\s+/g, '') + ".png"}
+                                                 alt="brand logo"/>
+                                        </div>
+
+                                        <div className={"flex flex-col border-l-2"}>
+                                            <div className={"ml-3"}>
+                                                <p className="text-lg font-semibold text-gray-800">
+                                                    {vehicle.brand.name} {vehicle.model.name}
+                                                </p>
+                                                <p className="text-sm text-gray-500">Immatriculation : {vehicle.registrationNumber}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-blue-600 text-sm font-medium hover:underline">Choisir</div>
+                                </div>
+                            ))}
+
+                            <div
+                                className="mt-2 text-center text-blue-600 font-medium cursor-pointer hover:underline hover:text-blue-800 transition"
                                 onClick={() => {
-                                    setConfirmKms(true);
-                                    appendMessage("user", "Oui");
-                                    appendMessage("bot", "Très bien, on continue.");
-                                    appendMessage("bot", "Veuillez renseigner le problème de votre véhicule :");
-                                    setStep("step2");
+                                    setStep("ask_registration");
                                 }}
-                                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition focus:outline-none focus:ring-2 focus:ring-green-300"
+                            >
+                                Créer un nouveau véhicule
+                            </div>
+                        </div>
+                    )}
+
+
+                    {step === "confirm_kms" && (
+                        <div className="mt-4">
+                            <p>Le kilométrage affiché est-il correct ?</p>
+                            <div className="flex gap-4 mt-2">
+                                <button
+                                    onClick={() => {
+                                        setConfirmKms(true);
+                                        appendMessage("user", "Oui");
+                                        appendMessage("bot", "Très bien, on continue.");
+                                        appendMessage("bot", "Veuillez renseigner le problème de votre véhicule :");
+                                        setStep("step2");
+                                    }}
+                                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition focus:outline-none focus:ring-2 focus:ring-green-300"
+                                >
+                                    Oui
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setConfirmKms(false);
+                                        appendMessage("user", "Non");
+                                        appendMessage("bot", "Merci de renseigner le kilométrage actuel.");
+                                        setStep("update_kms");
+                                    }}
+                                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition focus:outline-none focus:ring-2 focus:ring-red-300"
+                                >
+                                    Non
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === "ask_brand" && (
+                        <select
+                            className="w-full p-2 border rounded mt-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                            value={selectedBrand || ""}
+                            onChange={(e) => {
+                                const selectedId = parseInt(e.target.value);
+                                const brand = brands.find(b => b.id === selectedId);
+                                if (brand) {
+                                    setSelectedBrand(brand.id);
+                                    setUserInput(brand.name);
+                                }
+                            }}
+                        >
+                            <option value="">Sélectionnez une marque</option>
+                            {brands.map((brand) => (
+                                <option key={brand.id} value={brand.id}>
+                                    {brand.name}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+
+                    {step === "ask_model" && (
+                        <select
+                            className="w-full p-2 border rounded mt-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                            value={selectedModel || ""}
+                            onChange={(e) => {
+                                const selectedId = parseInt(e.target.value);
+                                const model = models.find(m => m.id === selectedId);
+                                if (model) {
+                                    setSelectedModel(model.id);
+                                    setUserInput(model.name);
+                                }
+                            }}
+                        >
+                            <option value="">Sélectionnez un modèle</option>
+                            {models.map((model) => (
+                                <option key={model.id} value={model.id}>
+                                    {model.name}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+
+                    {step === "choose_operations" && (
+                        <div className="mt-2 space-y-4">
+                            {Object.entries(operations).map(([category, ops]) => (
+                                <div key={category}>
+                                    <h4 className="font-semibold text-blue-700 mb-1">{category}</h4>
+                                    <div className="space-y-1 pl-2">
+                                        {ops.map(op => (
+                                            <div key={op.id} className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`op-${op.id}`}
+                                                    checked={selectedOperations.includes(op.id)}
+                                                    onChange={() => {
+                                                        setSelectedOperations(prev =>
+                                                            prev.includes(op.id)
+                                                                ? prev.filter(id => id !== op.id)
+                                                                : [...prev, op.id]
+                                                        );
+                                                    }}
+                                                />
+                                                <label htmlFor={`op-${op.id}`}>{op.libelle}</label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+
+                            <button
+                                onClick={() => {
+                                    appendMessage("user", "Je veux être rappelé");
+                                    appendMessage("bot", "D'accord, nous allons vous recontacter pour définir les réparations.");
+                                    setMeetingWithOperations(false);
+                                    setStep("rappel_request");
+                                }}
+                                className="mt-4 text-blue-600 underline hover:text-blue-800"
+                            >
+                                Je ne sais pas quoi choisir, veuillez me rappeler
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    appendMessage("user", "Voici mes choix");
+                                    const selected = Object.values(operations).flat().filter(op => selectedOperations.includes(op.id));
+                                    const summary = selected.map(op => `- ${op.libelle}`).join("\n");
+                                    setMeetingWithOperations(true);
+                                    appendMessage("bot", `✅ Vous avez sélectionné :\n${summary}`);
+                                    setStep("rappel_request");
+                                }}
+                                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                            >
+                                Confirmer les opérations sélectionnées
+                            </button>
+                        </div>
+                    )}
+
+                    {step === "rappel_request" && (
+                        <div className="flex space-x-2 mt-4">
+                            <button
+                                className="px-4 py-2 bg-green-600 text-white rounded"
+                                onClick={async () => {
+                                    appendMessage("user", "oui");
+                                    await stepsConfig.rappel_request.onValid("oui");
+                                }}
+                            >
+                                Oui
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-red-600 text-white rounded"
+                                onClick={async () => {
+                                    appendMessage("user", "non");
+                                    await stepsConfig.rappel_request.onValid("non");
+                                }}
+                            >
+                                Non
+                            </button>
+                        </div>
+                    )}
+
+
+                    {step === "garage_list" && garages.length > 0 && (
+                        <>
+                            {/* Boutons pour switcher la vue */}
+                            <div className="flex justify-center gap-4 my-4">
+                                <button
+                                    onClick={() => setViewMode("map")}
+                                    className={`px-4 py-2 rounded ${
+                                        viewMode === "map" ? "bg-blue-600 text-white" : "bg-gray-200"
+                                    }`}
+                                >
+                                    🗺️ Carte
+                                </button>
+                                <button
+                                    onClick={() => setViewMode("list")}
+                                    className={`px-4 py-2 rounded ${
+                                        viewMode === "list" ? "bg-blue-600 text-white" : "bg-gray-200"
+                                    }`}
+                                >
+                                    📋 Liste
+                                </button>
+                            </div>
+
+                            {/* Vue Carte */}
+                            {viewMode === "map" && (
+                                <div className="flex flex-col items-center justify-center overflow-auto my-6 w-[800px]">
+                                    <MapContainer
+                                        center={[46.603354, 1.888334]}
+                                        zoom={6}
+                                        style={{
+                                            height: "400px",
+                                            width: "100%",
+                                            borderRadius: "12px",
+                                            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                                        }}
+                                    >
+                                        <TileLayer
+                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                        />
+                                        {garages.map(
+                                            (garage) =>
+                                                garage.latitude &&
+                                                garage.longitude && (
+                                                    <Marker
+                                                        key={garage.id}
+                                                        position={[garage.latitude, garage.longitude]}
+                                                    >
+                                                        <Popup>
+                                                            <div className="space-y-1 text-sm">
+                                                                <p className="font-semibold">{garage.name}</p>
+                                                                <p>
+                                                                    {garage.address}, {garage.zipcode} {garage.city}
+                                                                </p>
+                                                                <p>
+                                                                    <strong>📞</strong> {garage.phone}
+                                                                </p>
+                                                                <p>
+                                                                    <strong>📧</strong> {garage.email}
+                                                                </p>
+                                                                {garage.nextAvailableDate && (
+                                                                    <p>
+                                                                        📅{" "}
+                                                                        <em>
+                                                                            Dispo :{" "}
+                                                                            {new Date(
+                                                                                garage.nextAvailableDate
+                                                                            ).toLocaleDateString("fr-FR", {
+                                                                                weekday: "long",
+                                                                                year: "numeric",
+                                                                                month: "long",
+                                                                                day: "numeric",
+                                                                            })}
+                                                                        </em>
+                                                                    </p>
+                                                                )}
+                                                                <button
+                                                                    className={`mt-2 px-3 py-1 rounded text-white w-full transition ${
+                                                                        garage.available !== false
+                                                                            ? "bg-blue-600 hover:bg-blue-700"
+                                                                            : "bg-orange-500 hover:bg-orange-600"
+                                                                    }`}
+                                                                    onClick={() => {
+                                                                        setPendingGarage(garage);
+                                                                        setStep(
+                                                                            garage.available !== false
+                                                                                ? "confirm_create_quotation"
+                                                                                : "garage_unavailable"
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    {garage.available !== false
+                                                                        ? "Sélectionner"
+                                                                        : "Être recontacté"}
+                                                                </button>
+                                                            </div>
+                                                        </Popup>
+                                                    </Marker>
+                                                )
+                                        )}
+                                    </MapContainer>
+                                </div>
+                            )}
+
+                            {/* Vue Liste */}
+                            {viewMode === "list" && (
+                                <div className="mt-4 space-y-2">
+                                    {garages.map((garage) => {
+                                        const isAvailable = garage.available !== false;
+
+                                        return (
+                                            <div
+                                                key={garage.id}
+                                                className={`border p-3 rounded shadow transition ${
+                                                    isAvailable
+                                                        ? "border-green-500"
+                                                        : "border-gray-400 bg-gray-100"
+                                                }`}
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <p className="font-semibold">{garage.name}</p>
+                                                    <span
+                                                        className={`text-sm font-medium px-2 py-1 rounded ${
+                                                            isAvailable
+                                                                ? "bg-green-200 text-green-800"
+                                                                : "bg-gray-300 text-gray-700"
+                                                        }`}
+                                                    >
+                                                    {isAvailable ? "Disponible" : "Indisponible"}
+                                                  </span>
+                                                </div>
+                                                <p>
+                                                    {garage.address}, {garage.zipcode} {garage.city}
+                                                </p>
+                                                <p>Téléphone : {garage.phone}</p>
+                                                <p>Email : {garage.email}</p>
+                                                {garage.nextAvailableDate && (
+                                                    <p className="text-sm text-gray-600">
+                                                        📅 Prochaine disponibilité estimée :{" "}
+                                                        <span className="font-medium">
+                                                          {new Date(
+                                                              garage.nextAvailableDate
+                                                          ).toLocaleDateString("fr-FR", {
+                                                              weekday: "long",
+                                                              year: "numeric",
+                                                              month: "long",
+                                                              day: "numeric",
+                                                          })}
+                                                        </span>
+                                                    </p>
+                                                )}
+
+                                                <button
+                                                    className={`mt-2 px-3 py-1 rounded text-white transition ${
+                                                        isAvailable
+                                                            ? "bg-blue-600 hover:bg-blue-700"
+                                                            : "bg-orange-500 hover:bg-orange-600"
+                                                    }`}
+                                                    onClick={() => {
+                                                        setPendingGarage(garage);
+                                                        setStep(
+                                                            isAvailable
+                                                                ? "confirm_create_quotation"
+                                                                : "garage_unavailable"
+                                                        );
+                                                    }}
+                                                >
+                                                    {isAvailable
+                                                        ? "Sélectionner ce garage"
+                                                        : "Demander à être recontacté"}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </>
+                    )}
+
+
+                    {/*{step === "garage_list" && garages.length > 0 && (*/}
+                    {/*    <div className="flex flex-col items-center justify-center overflow-auto my-6">*/}
+                    {/*        <MapContainer*/}
+                    {/*            center={[46.603354, 1.888334]} // Centré sur la France*/}
+                    {/*            zoom={6}*/}
+                    {/*            style={{ height: "100px", width: "100px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}*/}
+                    {/*        >*/}
+                    {/*            <TileLayer*/}
+                    {/*                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"*/}
+                    {/*                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'*/}
+                    {/*            />*/}
+
+                    {/*            {garages.map((garage) => (*/}
+                    {/*                (garage.latitude && garage.longitude) && (*/}
+                    {/*                    <Marker key={garage.id} position={[garage.latitude, garage.longitude]}>*/}
+                    {/*                        <Popup>*/}
+                    {/*                            <div className="space-y-1 text-sm">*/}
+                    {/*                                <p className="font-semibold">{garage.name}</p>*/}
+                    {/*                                <p>{garage.address}, {garage.zipcode} {garage.city}</p>*/}
+                    {/*                                <p><strong>📞</strong> {garage.phone}</p>*/}
+                    {/*                                <p><strong>📧</strong> {garage.email}</p>*/}
+                    {/*                                {garage.nextAvailableDate && (*/}
+                    {/*                                    <p>*/}
+                    {/*                                        📅 <em>Dispo : {new Date(garage.nextAvailableDate).toLocaleDateString("fr-FR", {*/}
+                    {/*                                        weekday: "long",*/}
+                    {/*                                        year: "numeric",*/}
+                    {/*                                        month: "long",*/}
+                    {/*                                        day: "numeric",*/}
+                    {/*                                    })}</em>*/}
+                    {/*                                    </p>*/}
+                    {/*                                )}*/}
+                    {/*                                <button*/}
+                    {/*                                    className={`mt-2 px-3 py-1 rounded text-white w-full transition ${*/}
+                    {/*                                        garage.available !== false*/}
+                    {/*                                            ? "bg-blue-600 hover:bg-blue-700"*/}
+                    {/*                                            : "bg-orange-500 hover:bg-orange-600"*/}
+                    {/*                                    }`}*/}
+                    {/*                                    onClick={() => {*/}
+                    {/*                                        setPendingGarage(garage);*/}
+                    {/*                                        if (garage.available !== false) {*/}
+                    {/*                                            setStep("confirm_create_quotation");*/}
+                    {/*                                        } else {*/}
+                    {/*                                            setStep("garage_unavailable");*/}
+                    {/*                                        }*/}
+                    {/*                                    }}*/}
+                    {/*                                >*/}
+                    {/*                                    {garage.available !== false ? "Sélectionner" : "Être recontacté"}*/}
+                    {/*                                </button>*/}
+                    {/*                            </div>*/}
+                    {/*                        </Popup>*/}
+                    {/*                    </Marker>*/}
+                    {/*                )*/}
+                    {/*            ))}*/}
+                    {/*        </MapContainer>*/}
+                    {/*    </div>*/}
+                    {/*)}*/}
+
+
+                    {/*{step === "garage_list" && garages.length > 0 && (*/}
+                    {/*    <div className="mt-4 space-y-2">*/}
+                    {/*        {garages.map((garage) => {*/}
+                    {/*            const isAvailable = garage.available !== false;*/}
+
+                    {/*            return (*/}
+                    {/*                <div*/}
+                    {/*                    key={garage.id}*/}
+                    {/*                    className={`border p-3 rounded shadow transition ${*/}
+                    {/*                        isAvailable ? "border-green-500" : "border-gray-400 bg-gray-100"*/}
+                    {/*                    }`}*/}
+                    {/*                >*/}
+                    {/*                    <div className="flex justify-between items-center">*/}
+                    {/*                        <p className="font-semibold">{garage.name}</p>*/}
+                    {/*                        <span*/}
+                    {/*                            className={`text-sm font-medium px-2 py-1 rounded ${*/}
+                    {/*                                isAvailable ? "bg-green-200 text-green-800" : "bg-gray-300 text-gray-700"*/}
+                    {/*                            }`}*/}
+                    {/*                        >*/}
+                    {/*        {isAvailable ? "Disponible" : "Indisponible"}*/}
+                    {/*    </span>*/}
+                    {/*                    </div>*/}
+                    {/*                    <p>{garage.address}, {garage.zipcode} {garage.city}</p>*/}
+                    {/*                    <p>Téléphone : {garage.phone}</p>*/}
+                    {/*                    <p>Email : {garage.email}</p>*/}
+                    {/*                    {garage.nextAvailableDate && (*/}
+                    {/*                        <p className="text-sm text-gray-600">*/}
+                    {/*                            📅 Prochaine disponibilité estimée :{" "}*/}
+                    {/*                            <span className="font-medium">*/}
+                    {/*                            {new Date(garage.nextAvailableDate).toLocaleDateString("fr-FR", {*/}
+                    {/*                                weekday: "long",*/}
+                    {/*                                year: "numeric",*/}
+                    {/*                                month: "long",*/}
+                    {/*                                day: "numeric",*/}
+                    {/*                            })}*/}
+                    {/*                        </span>*/}
+                    {/*                        </p>*/}
+                    {/*                    )}*/}
+
+                    {/*                    <button*/}
+                    {/*                        className={`mt-2 px-3 py-1 rounded text-white transition ${*/}
+                    {/*                            isAvailable*/}
+                    {/*                                ? "bg-blue-600 hover:bg-blue-700"*/}
+                    {/*                                : "bg-orange-500 hover:bg-orange-600"*/}
+                    {/*                        }`}*/}
+                    {/*                        onClick={() => {*/}
+                    {/*                            setPendingGarage(garage);*/}
+                    {/*                            if (isAvailable) {*/}
+                    {/*                                setStep("confirm_create_quotation");*/}
+                    {/*                            } else {*/}
+                    {/*                                setStep("garage_unavailable");*/}
+                    {/*                                // handleSelectGarage(garage.id, garage.name);*/}
+                    {/*                            }*/}
+                    {/*                        }}*/}
+                    {/*                    >*/}
+                    {/*                        {isAvailable ? "Sélectionner ce garage" : "Demander à être recontacté"}*/}
+                    {/*                    </button>*/}
+                    {/*                </div>*/}
+                    {/*            );*/}
+                    {/*        })}*/}
+                    {/*    </div>*/}
+                    {/*)}*/}
+
+                    {step === "garage_unavailable" && (
+                        <div className="flex gap-4 mt-2">
+                            <button
+                                onClick={async () => {
+                                    appendMessage("user", "Oui");
+                                    await stepsConfig.garage_unavailable.onValid("oui");
+                                }}
+                                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+                            >
+                                Oui
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    appendMessage("user", "Non");
+                                    await stepsConfig.garage_unavailable.onValid("non");
+                                }}
+                                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+                            >
+                                Non
+                            </button>
+                        </div>
+                    )}
+
+                    {step === "confirm_create_quotation" && (
+                        <div className="flex gap-4 mt-2">
+                            <button
+                                onClick={async () => {
+                                    if (!pendingGarage) return;
+
+                                    appendMessage("user", "Oui");
+                                    // Appelle la création de devis
+                                    await handleCreateQuotation(pendingGarage, selectedOperations);
+                                }}
+                                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
                             >
                                 Oui
                             </button>
                             <button
                                 onClick={() => {
-                                    setConfirmKms(false);
                                     appendMessage("user", "Non");
-                                    appendMessage("bot", "Merci de renseigner le kilométrage actuel.");
-                                    setStep("update_kms");
+                                    appendMessage("bot", "D'accord, pas de devis créé.");
+                                    setPendingGarage(null);
+                                    setStep("garage_list");
                                 }}
-                                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition focus:outline-none focus:ring-2 focus:ring-red-300"
+                                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
                             >
                                 Non
                             </button>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {step === "ask_brand" && (
-                    <select
-                        className="w-full p-2 border rounded mt-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                        value={selectedBrand || ""}
-                        onChange={(e) => {
-                            const selectedId = parseInt(e.target.value);
-                            const brand = brands.find(b => b.id === selectedId);
-                            if (brand) {
-                                setSelectedBrand(brand.id);
-                                setUserInput(brand.name);
-                            }
-                        }}
-                    >
-                        <option value="">Sélectionnez une marque</option>
-                        {brands.map((brand) => (
-                            <option key={brand.id} value={brand.id}>
-                                {brand.name}
-                            </option>
-                        ))}
-                    </select>
-                )}
-
-                {step === "ask_model" && (
-                    <select
-                        className="w-full p-2 border rounded mt-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                        value={selectedModel || ""}
-                        onChange={(e) => {
-                            const selectedId = parseInt(e.target.value);
-                            const model = models.find(m => m.id === selectedId);
-                            if (model) {
-                                setSelectedModel(model.id);
-                                setUserInput(model.name);
-                            }
-                        }}
-                    >
-                        <option value="">Sélectionnez un modèle</option>
-                        {models.map((model) => (
-                            <option key={model.id} value={model.id}>
-                                {model.name}
-                            </option>
-                        ))}
-                    </select>
-                )}
-
-                {step === "choose_operations" && (
-                    <div className="mt-2 space-y-4">
-                        {Object.entries(operations).map(([category, ops]) => (
-                            <div key={category}>
-                                <h4 className="font-semibold text-blue-700 mb-1">{category}</h4>
-                                <div className="space-y-1 pl-2">
-                                    {ops.map(op => (
-                                        <div key={op.id} className="flex items-center gap-2">
-                                            <input
-                                                type="checkbox"
-                                                id={`op-${op.id}`}
-                                                checked={selectedOperations.includes(op.id)}
-                                                onChange={() => {
-                                                    setSelectedOperations(prev =>
-                                                        prev.includes(op.id)
-                                                            ? prev.filter(id => id !== op.id)
-                                                            : [...prev, op.id]
-                                                    );
-                                                }}
-                                            />
-                                            <label htmlFor={`op-${op.id}`}>{op.libelle}</label>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-
-                        <button
-                            onClick={() => {
-                                appendMessage("user", "Je veux être rappelé");
-                                appendMessage("bot", "D'accord, nous allons vous recontacter pour définir les réparations.");
-                                setMeetingWithOperations(false);
-                                setStep("rappel_request");
-                            }}
-                            className="mt-4 text-blue-600 underline hover:text-blue-800"
-                        >
-                            Je ne sais pas quoi choisir, veuillez me rappeler
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                appendMessage("user", "Voici mes choix");
-                                const selected = Object.values(operations).flat().filter(op => selectedOperations.includes(op.id));
-                                const summary = selected.map(op => `- ${op.libelle}`).join("\n");
-                                setMeetingWithOperations(true);
-                                appendMessage("bot", `✅ Vous avez sélectionné :\n${summary}`);
-                                setStep("rappel_request");
-                            }}
-                            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-                        >
-                            Confirmer les opérations sélectionnées
-                        </button>
-                    </div>
-                )}
-
-                {step === "rappel_request" && (
-                    <div className="flex space-x-2 mt-4">
-                        <button
-                            className="px-4 py-2 bg-green-600 text-white rounded"
-                            onClick={async () => {
-                                appendMessage("user", "oui");
-                                await stepsConfig.rappel_request.onValid("oui");
-                            }}
-                        >
-                            Oui
-                        </button>
-                        <button
-                            className="px-4 py-2 bg-red-600 text-white rounded"
-                            onClick={async () => {
-                                appendMessage("user", "non");
-                                await stepsConfig.rappel_request.onValid("non");
-                            }}
-                        >
-                            Non
-                        </button>
-                    </div>
-                )}
-
-                {step === "garage_list" && garages.length > 0 && (
-                    <div className="mt-4 space-y-2">
-                        {garages.map((garage) => {
-                            const isAvailable = garage.available !== false;
-
-                            return (
-                                <div
-                                    key={garage.id}
-                                    className={`border p-3 rounded shadow transition ${
-                                        isAvailable ? "border-green-500" : "border-gray-400 bg-gray-100"
-                                    }`}
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <p className="font-semibold">{garage.name}</p>
-                                        <span
-                                            className={`text-sm font-medium px-2 py-1 rounded ${
-                                                isAvailable ? "bg-green-200 text-green-800" : "bg-gray-300 text-gray-700"
-                                            }`}
-                                        >
-                            {isAvailable ? "Disponible" : "Indisponible"}
-                        </span>
-                                    </div>
-                                    <p>{garage.address}, {garage.zipcode} {garage.city}</p>
-                                    <p>Téléphone : {garage.phone}</p>
-                                    <p>Email : {garage.email}</p>
-                                    <button
-                                        className={`mt-2 px-3 py-1 rounded text-white transition ${
-                                            isAvailable
-                                                ? "bg-blue-600 hover:bg-blue-700"
-                                                : "bg-orange-500 hover:bg-orange-600"
-                                        }`}
-                                        onClick={() => {
-                                            setPendingGarage(garage);
-                                            if (isAvailable) {
-                                                setStep("confirm_create_quotation");
-                                            } else {
-                                                setStep("garage_unavailable");
-                                                // handleSelectGarage(garage.id, garage.name);
-                                            }
-                                        }}
-                                    >
-                                        {isAvailable ? "Sélectionner ce garage" : "Demander à être recontacté"}
-                                    </button>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-
-                {step === "garage_unavailable" && (
-                    <div className="flex gap-4 mt-2">
-                        <button
-                            onClick={async () => {
-                                appendMessage("user", "Oui");
-                                await stepsConfig.garage_unavailable.onValid("oui");
-                            }}
-                            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-                        >
-                            Oui
-                        </button>
-                        <button
-                            onClick={async () => {
-                                appendMessage("user", "Non");
-                                await stepsConfig.garage_unavailable.onValid("non");
-                            }}
-                            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
-                        >
-                            Non
-                        </button>
-                    </div>
-                )}
-
-                {step === "confirm_create_quotation" && (
-                    <div className="flex gap-4 mt-2">
-                        <button
-                            onClick={async () => {
-                                if (!pendingGarage) return;
-
-                                appendMessage("user", "Oui");
-                                // Appelle la création de devis
-                                await handleCreateQuotation(pendingGarage, selectedOperations);
-                            }}
-                            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-                        >
-                            Oui
-                        </button>
-                        <button
-                            onClick={() => {
-                                appendMessage("user", "Non");
-                                appendMessage("bot", "D'accord, pas de devis créé.");
-                                setPendingGarage(null);
-                                setStep("garage_list");
-                            }}
-                            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
-                        >
-                            Non
-                        </button>
-                    </div>
-                )}
-
-                {step === "quotation_ready" && quotation?.hash && (
-                    <div className="mt-4 space-y-4">
-                        <button
-                            onClick={() => {
-                                const url = `${config.baseUrl}/uploads/quotations/${quotation.hash}.pdf`;
-                                window.open(url, "_blank");
-                            }}
-                            className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-xl shadow hover:bg-green-700 transition"
-                        >
-                            <FileText className="w-5 h-5" />
-                            <span>Ouvrir le devis PDF</span>
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                appendMessage("user", "OK");
-                                setStep("ask_meeting");
-                            }}
-                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-                        >
-                            Continuer
-                        </button>
-                    </div>
-                )}
-
-                {step === "ask_meeting" && showPdfButton && quotation.hash && (
-                    <div className="mt-6">
-                        <div className="flex gap-4">
+                    {step === "quotation_ready" && quotation?.hash && (
+                        <div className="mt-4 space-y-4">
                             <button
                                 onClick={() => {
-                                    appendMessage("user", "Oui");
-                                    appendMessage("bot", "Très bien, nous allons planifier un rendez-vous.");
-                                    setStep("create_meeting");
-                                    handleMeeting();
+                                    const url = `${config.baseUrl}/uploads/quotations/${quotation.hash}.pdf`;
+                                    window.open(url, "_blank");
+                                }}
+                                className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-xl shadow hover:bg-green-700 transition"
+                            >
+                                <FileText className="w-5 h-5" />
+                                <span>Ouvrir le devis PDF</span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    appendMessage("user", "OK");
+                                    setStep("ask_meeting");
                                 }}
                                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                             >
-                                Oui
-                            </button>
-                            <button
-                                onClick={() => {
-                                    appendMessage("user", "Non");
-                                    appendMessage("bot", "D'accord, n'hésitez pas à revenir si vous changez d'avis.");
-                                    setStep("end");
-                                }}
-                                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
-                            >
-                                Non
+                                Continuer
                             </button>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {step === "end" && (
-                    <div className="mt-4 text-green-700 font-semibold">
-                        Merci pour votre demande. À bientôt !
-                    </div>
-                )}
+                    {step === "ask_meeting" && showPdfButton && quotation.hash && (
+                        <div className="mt-6">
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => {
+                                        appendMessage("user", "Oui");
+                                        appendMessage("bot", "Très bien, nous allons planifier un rendez-vous.");
+                                        setStep("create_meeting");
+                                        handleMeeting();
+                                    }}
+                                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                                >
+                                    Oui
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        appendMessage("user", "Non");
+                                        appendMessage("bot", "D'accord, n'hésitez pas à revenir si vous changez d'avis.");
+                                        setStep("end");
+                                    }}
+                                    className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
+                                >
+                                    Non
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === "end" && (
+                        <div className="mt-4 text-green-700 font-semibold">
+                            Merci pour votre demande. À bientôt !
+                        </div>
+                    )}
+                </div>
+
 
                 <div ref={bottomRef}/>
             </div>

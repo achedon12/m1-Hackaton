@@ -12,7 +12,7 @@ class MistralAgent
         private OperationRepository $operationRepository,
     ) {}
 
-    public function analyzeMessage(string $clientMessage): array
+    public function analyzeMessage(string $clientMessage, $kms): array
     {
         $mistralApiKey = $_ENV['MISTRAL_API_KEY'];
         $operations = $this->operationRepository->findAll();
@@ -37,12 +37,14 @@ class MistralAgent
             $operationsDescription .= "\n";
         }
 
+        $kmsInfo = $kms !== null ? "\nLe véhicule a actuellement {$kms} km au compteur." : "";
+
         $systemMessage = "Tu es un assistant expert en mécanique automobile.";
         $userMessage = <<<EOT
 Voici la liste des opérations disponibles : 
 $operationsDescription
 
-Le client dit : "$clientMessage"
+Le client dit : "$clientMessage" $kmsInfo
 
 Retourne uniquement les IDs des opérations pertinentes sous forme de tableau JSON.
 EOT;

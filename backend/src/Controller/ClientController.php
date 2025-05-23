@@ -155,7 +155,7 @@ final class ClientController extends AbstractController
         return $this->json(['client' => $client, 'token' => $token], Response::HTTP_OK, [], ['groups' => ['client:read']]);
     }
 
-    public static function getCoordinatesFromZipcode(string $zipcode, string $city): ?array
+    public static function getCoordinatesFromZipcode(string $zipcode, ?string $city): ?array
     {
         $httpClient = HttpClient::create();
         $psr17Factory = new Psr17Factory();
@@ -163,7 +163,11 @@ final class ClientController extends AbstractController
 
         $provider = Nominatim::withOpenStreetMapServer($httpClient, 'mon-app/1.0');
         $geocoder = new StatefulGeocoder($provider, 'fr');
-        $results = $geocoder->geocodeQuery(GeocodeQuery::create($zipcode . ' ' . $city . ' France'));
+        if (!empty($city)){
+            $results = $geocoder->geocodeQuery(GeocodeQuery::create($zipcode . ' ' . $city . ' France'));
+        }else{
+            $results = $geocoder->geocodeQuery(GeocodeQuery::create($zipcode . ' France'));
+        }
 
         return $results->isEmpty() ? null : [
             'latitude' => $results->first()->getCoordinates()->getLatitude(),

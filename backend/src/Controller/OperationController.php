@@ -38,6 +38,8 @@ class OperationController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $clientMessage = $data['message'] ?? '';
 
+        $kms = $data['kms'] ?? null;
+
         if (empty($clientMessage)) {
             return $this->json(['error' => 'Message client manquant'], Response::HTTP_BAD_REQUEST);
         }
@@ -47,7 +49,7 @@ class OperationController extends AbstractController
         }
 
         try {
-            $filteredOps = $mistralAgent->analyzeMessage($clientMessage);
+            $filteredOps = $mistralAgent->analyzeMessage($clientMessage, $kms);
 
             return $this->json([
                 'operations' => array_values($filteredOps)
