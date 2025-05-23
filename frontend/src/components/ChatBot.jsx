@@ -106,8 +106,8 @@ const ChatBot = () => {
 
                     if (res.ok) {
                         const data = await res.json();
-                        setVehicleId(data['vehicule'].id);
-                        setVehicleKms(data['vehicule'].kms);
+                        setVehicleId(data['vehicle'].id);
+                        setVehicleKms(data['vehicle'].kms);
 
                         appendMessage("bot", "Véhicule créé avec succès !");
                         appendMessage("bot", "Veuillez renseigner le problème de votre véhicule :");
