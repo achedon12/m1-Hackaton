@@ -135,7 +135,11 @@ const CarForm = () => {
             const response = await fetch(url, {method, headers: config.getHeaders(), body});
             if (!response.ok) throw new Error('Erreur lors de la sauvegarde du conducteur');
             const data = await response.json();
-            setActiveCarDrivers([...activeCarDrivers, data.driver]);
+            if (driver.id) {
+                setActiveCarDrivers(activeCarDrivers.map(d => (d.id === driver.id ? data.driver : d)));
+            } else {
+                setActiveCarDrivers([...activeCarDrivers, data.driver]);
+            }
         } catch (error) {
             console.error(error);
         }
