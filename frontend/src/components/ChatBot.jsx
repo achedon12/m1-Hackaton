@@ -27,6 +27,7 @@ const ChatBot = () => {
     const [zipcode, setZipcode] = useState(client.zipcode);
     const [city, setCity] = useState(client.city);
     const [confirmedZipcode, setConfirmedZipcode] = useState(null);
+    const [selectedLocation, setSelectedLocation] = useState({"latitude": 46.603354, "longitude": 1.888334});
     const [garages, setGarages] = useState([]);
     const [inputZip, setInputZip] = useState("");
     const [operations, setOperations] = useState([]);
@@ -160,6 +161,8 @@ const ChatBot = () => {
         },
         rappel_request: {
             question: () => `Votre code postal est "${zipcode ?? ''}". Souhaitez-vous l'utiliser ?`,
+            validate: val => /^\d{5}$/.test(val),
+            error: "Code postal invalide. Entrez 5 chiffres.",
             onValid: async (val) => {
                 if (val.toLowerCase() === "oui") {
                     await handleConfirmZip(zipcode);
@@ -303,6 +306,17 @@ const ChatBot = () => {
 
     const handleConfirmZip = async (zip) => {
         setConfirmedZipcode(zip);
+
+        const resGetLocation = await fetch(`${config.apiBaseUrl}/location/coordinates/${zip}`, {
+            method: "GET",
+            headers: config.getHeaders()
+        });
+
+        if (resGetLocation.ok) {
+            const locationData = await resGetLocation.json();
+            setSelectedLocation(locationData);
+        }
+
         try {
             const url_garages = meetingWithOperations ? `${config.apiBaseUrl}/garage/availabilities` : `${config.apiBaseUrl}/garage/nearbyByZipcode`;
 
@@ -754,8 +768,8 @@ const ChatBot = () => {
                             {viewMode === "map" && (
                                 <div className="flex flex-col items-center justify-center overflow-auto my-6 w-[800px]">
                                     <MapContainer
-                                        center={[46.603354, 1.888334]}
-                                        zoom={6}
+                                        center={[selectedLocation.latitude, selectedLocation.longitude]}
+                                        zoom={10}
                                         style={{
                                             height: "400px",
                                             width: "100%",
