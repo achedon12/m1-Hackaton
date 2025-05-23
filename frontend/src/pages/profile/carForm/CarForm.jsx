@@ -143,6 +143,7 @@ const CarForm = () => {
                     <Loader/>
                 ) : (
                     <VehicleList
+                        activeCar={activeCar}
                         vehicles={vehicles}
                         onCarClick={setActiveCar}
                         onCarDelete={handleCarDelete}
@@ -190,11 +191,11 @@ const CarForm = () => {
     );
 };
 
-const VehicleList = ({vehicles, onCarClick, onCarDelete, onAddCarClick, onEditCarClick}) => (
+const VehicleList = ({activeCar, vehicles, onCarClick, onCarDelete, onAddCarClick, onEditCarClick}) => (
     <ul className={`list bg-base-100 rounded-box shadow-md w-full`}>
         {vehicles.map((car, index) => (
             <li key={index} onClick={() => onCarClick(car)}
-                className="list-row flex justify-between items-center hover:bg-base-200 hover:cursor-pointer active:bg-base-200">
+                className={`list-row flex justify-between items-center hover:bg-base-200 hover:cursor-pointer active:bg-base-200 ${activeCar?.id === car.id ? "bg-blue-100" : ""}`}>
                 <div className="flex items-center">
                     <div className="w-12 h-12 flex justify-center items-center">
                         <img
