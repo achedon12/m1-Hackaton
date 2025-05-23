@@ -1,8 +1,14 @@
-import {forwardRef, useState} from "react";
+import { forwardRef, useState } from "react";
 import config from "../../../providers/apiConfig.js";
+import {FormField} from "../../../components";
+
+const validateField = (name, value) => {
+    if (!value) return "Ce champ est requis.";
+    return "";
+};
 
 const UserEdit = forwardRef((props, ref) => {
-    const {user, setUser} = props;
+    const { user, setUser } = props;
     const [errors, setErrors] = useState({});
     const [isFormValid, setIsFormValid] = useState(false);
     const [formData, setFormData] = useState({
@@ -13,35 +19,11 @@ const UserEdit = forwardRef((props, ref) => {
         city: user.city,
     });
 
-    const validateField = (name, value) => {
-        let error = "";
-        switch (name) {
-            case "lastname":
-                if (!value) error = "Ce champ est requis.";
-                break;
-            case "firstname":
-                if (!value) error = "Ce champ est requis.";
-                break;
-            case "phone":
-                if (!value) error = "Ce champ est requis.";
-                break;
-            case "zipcode":
-                if (!value) error = "Ce champ est requis.";
-                break;
-            case "city":
-                if (!value) error = "Ce champ est requis.";
-                break;
-            default:
-                break;
-        }
-        return error;
-    }
-
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-
         const error = validateField(name, value);
+
+        setFormData({ ...formData, [name]: value });
         setErrors({ ...errors, [name]: error });
 
         const hasErrors = Object.values({ ...errors, [name]: error }).some((err) => err);
@@ -52,9 +34,9 @@ const UserEdit = forwardRef((props, ref) => {
         e.preventDefault();
         try {
             const response = await fetch(`${config.apiBaseUrl}/client/update`, {
-                method: 'PUT',
+                method: "PUT",
                 headers: config.getHeaders(),
-                body: JSON.stringify(formData)
+                body: JSON.stringify(formData),
             });
             if (!response.ok) {
                 const error = await response.json();
@@ -63,12 +45,12 @@ const UserEdit = forwardRef((props, ref) => {
             }
             const data = await response.json();
             setUser(data);
-            localStorage.setItem('client', JSON.stringify(data.client));
+            localStorage.setItem("client", JSON.stringify(data.client));
             ref.current.close();
         } catch (error) {
-            console.error('Error updating user:', error);
+            console.error("Error updating user:", error);
         }
-    }
+    };
 
     return (
         <dialog ref={ref} id="edit_user_modal" className="modal">
@@ -76,54 +58,55 @@ const UserEdit = forwardRef((props, ref) => {
                 <h3 className="text-lg font-bold">Modifier mes informations</h3>
 
                 <fieldset className="fieldset bg-slate-100 border-base-300 rounded-box w-full border p-4 mt-4">
-                    <label className="label w-1/3">Nom</label>
-                    <input
-                        type="text"
+                    <FormField
+                        label="Nom"
                         name="lastname"
                         value={formData.lastname}
                         onChange={handleChange}
-                        className="input input-bordered w-full"
+                        error={errors.lastname}
+                        placeholder="Nom"
                     />
-
-                    <label className="label w-1/3">Prénom</label>
-                    <input
-                        type="text"
+                    <FormField
+                        label="Prénom"
                         name="firstname"
                         value={formData.firstname}
                         onChange={handleChange}
-                        className="input input-bordered w-full"
+                        error={errors.firstname}
+                        placeholder="Prénom"
                     />
-
-                    <label className="label w-1/3">Code Postal</label>
-                    <input
-                        type="text"
+                    <FormField
+                        label="Code Postal"
                         name="zipcode"
                         value={formData.zipcode}
                         onChange={handleChange}
-                        className="input input-bordered w-full"
+                        error={errors.zipcode}
+                        placeholder="Code Postal"
                     />
-
-                    <label className="label w-1/3">Ville</label>
-                    <input
-                        type="text"
+                    <FormField
+                        label="Ville"
                         name="city"
                         value={formData.city}
                         onChange={handleChange}
-                        className="input input-bordered w-full"
+                        error={errors.city}
+                        placeholder="Ville"
                     />
-
-                    <label className="label w-1/3">Téléphone</label>
-                    <input
-                        type="text"
+                    <FormField
+                        label="Téléphone"
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        className="input input-bordered w-full"
+                        error={errors.phone}
+                        placeholder="Téléphone"
                     />
                 </fieldset>
 
                 <div className="modal-action">
-                    <button type="button" className="btn btn-primary" onClick={(e) => handleSubmit(e)} disabled={!isFormValid}>
+                    <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={handleSubmit}
+                        disabled={!isFormValid}
+                    >
                         Enregistrer
                     </button>
                     <button type="button" className="btn" onClick={() => ref.current.close()}>

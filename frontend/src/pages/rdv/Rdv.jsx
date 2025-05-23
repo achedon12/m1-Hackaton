@@ -21,22 +21,13 @@ import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import frLocale from "date-fns/locale/fr"; // French displaying
 import config from "../../providers/apiConfig.js";
-
-
 const steps = ['Identifiez votre véhicule', 'Choix de l\'atelier', 'Votre panier', 'Votre rendez-vous', 'Récapitulatif']
-
 const client = JSON.parse(localStorage.getItem("client"));
 
 const Rdv = () => {
-
     const navigate = useNavigate();
-
     const { location, nearestGarage } = React.useContext(LocationContext);
-
-    // Value to acknowledge which step is the current one
     const [activeStep, setActiveStep] = React.useState(0);
-
-    // Form datas
     const [formData, setFormData] = React.useState({
         vehiclePlate: [],
         place:'',
@@ -45,7 +36,6 @@ const Rdv = () => {
         meetingTime: null,
     });
 
-    // Errors
     const [errors, setErrors] = React.useState({
         vehiclePlate: '',
         place:'',
@@ -91,14 +81,12 @@ const Rdv = () => {
             }
         };
 
-        //  Fetching vehicle(s) based on clientId
         const fetchVehicles = async () => {
             try {
                 const response = await fetch(`${config.apiBaseUrl}/vehicle/client/${client.id}`, {
                     headers: config.getHeaders(),
                 });
 
-                // No vehicles
                 if (response.status === 404) {
                     setNoVehicles(true);
                     setClientVehicles([])
@@ -184,12 +172,10 @@ const Rdv = () => {
 
 
 
-    // Update form value based on field
     const handleChange = (field) => (event) => {
         setFormData({ ...formData, [field]: event.target.value });
     };
 
-    // Fetch content based on which step is active
     const getStepContent = (step) => {
         switch (step){
             case 0:
@@ -493,7 +479,6 @@ const Rdv = () => {
 
     }
 
-    // Check on submit if step is complete, if not, error is written
     const checkStepComplete = (step) => {
         let valid = true;
 
@@ -575,15 +560,11 @@ const Rdv = () => {
     }
 
 
-    // Go to next step
     const handleNext = async () => {
         if (activeStep === steps.length - 1) {
             try {
                 const tvaRate = 0.2;
-
-                // Fetch libs in cart
                 const selectedLibelles = formData.cart.map(item => item.libelle);
-
                 const selectedOperations = operations.filter(op =>
                     selectedLibelles.includes(op.libelle)
                 );
@@ -592,7 +573,6 @@ const Rdv = () => {
 
                 const operationsString = selectedOperations.map(op => op.id).join(';');
 
-                // Fetch vehicle id
                 const selectedVehicle = clientVehicles.find(
                     v => v.registrationNumber === formData.vehiclePlate
                 );
@@ -692,7 +672,6 @@ const Rdv = () => {
         }
     };
 
-    // Go back to previous step
     const handleBack = () => {
         setActiveStep((prevActiveStep) => prevActiveStep - 1);
     };

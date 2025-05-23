@@ -328,7 +328,7 @@ const ChatBot = () => {
             const res = await fetch(`${config.apiBaseUrl}/garage/reminder`, {
                 method: "POST",
                 headers: config.getHeaders(),
-                body: JSON.stringify({ garage: garageId, vehicle: vehicleId, message: requestClient }),
+                body: JSON.stringify({garage: garageId, vehicle: vehicleId, message: requestClient}),
             });
 
             if (res.ok) {

@@ -197,10 +197,13 @@ const VehicleList = ({vehicles, onCarClick, onCarDelete, onAddCarClick, onEditCa
             <li key={index} onClick={() => onCarClick(car)}
                 className="list-row flex justify-between items-center hover:bg-base-200 hover:cursor-pointer active:bg-base-200">
                 <div className="flex items-center">
-                    <div className="w-12 h-12 flex justify-center items-center mr-4">
+                    <div className="w-12 h-12 flex justify-center items-center">
                         <img
                             src={config.baseUrl + "/uploads/brands/" + car.brand.name.toLowerCase().replace(/\s+/g, '') + ".png"}
-                            alt="brand logo"/></div>
+                            alt="brand logo"
+                        />
+                    </div>
+                    <hr className="w-[1.5px] h-8 bg-secondary mx-4 rounded-2xl"/>
                     <div>
                         <p className="font-bold">{car.brand.name} {car.model.name}</p>
                         <p className="text-sm text-gray-500">{car.registrationNumber} - {car.kms} km</p>
