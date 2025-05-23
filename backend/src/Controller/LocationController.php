@@ -27,6 +27,6 @@ final class LocationController extends AbstractController
         if ($coordinates === null) {
             return $this->json(['error' => 'Coordinates not found.'], Response::HTTP_NOT_FOUND);
         }
-        return $this->json($coordinates);
+        return $this->json($coordinates, Response::HTTP_OK);
     }
 }
