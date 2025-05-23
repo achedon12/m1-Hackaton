@@ -108,7 +108,11 @@ const CarForm = () => {
             const response = await fetch(url, {method, headers: config.getHeaders(), body});
             if (!response.ok) throw new Error('Erreur lors de la sauvegarde du véhicule');
             const data = await response.json();
-            setVehicles([...vehicles, data.vehicle]);
+            if (carForm.id) {
+                setVehicles(vehicles.map(car => (car.id === carForm.id ? data.vehicle : car)));
+            } else {
+                setVehicles([...vehicles, data.vehicle]);
+            }
             setActiveCar(data.vehicle);
         } catch (error) {
             console.error(error);
