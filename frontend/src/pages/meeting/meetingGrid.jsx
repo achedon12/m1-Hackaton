@@ -21,7 +21,7 @@ const MeetingGrid = () => {
         const fetchMeetingStates = async () => {
             try {
                 const response = await fetch(`${config.apiBaseUrl}/meetingstate/list`, {
-                    headers: config.headers
+                    headers: config.getHeaders()
                 });
                 if (!response.ok) throw new Error('Erreur lors du chargement des statuts');
                 const data = await response.json();
@@ -38,7 +38,7 @@ const MeetingGrid = () => {
                 const clientId = JSON.parse(localStorage.getItem('client')).id;
                 const response = await fetch(
                     `${config.apiBaseUrl}/meeting/client/${clientId}`,
-                    { headers: config.headers }
+                    { headers: config.getHeaders() }
                 );
                 if (!response.ok) throw new Error('Network response was not ok');
 
@@ -49,7 +49,7 @@ const MeetingGrid = () => {
                         try {
                             const quotationRes = await fetch(
                                 `${config.apiBaseUrl}/quotation/${meeting.quotation.id}`,
-                                { headers: config.headers }
+                                { headers: config.getHeaders() }
                             );
                             if (!quotationRes.ok) throw new Error('Erreur lors de la récupération du devis');
                             const quotation = await quotationRes.json();
@@ -59,7 +59,7 @@ const MeetingGrid = () => {
                             if (meeting.meetingState.name === "completed") {
                                 // Récupération de la facture associée
                                 const billRes = await fetch(`${config.apiBaseUrl}/bill/meeting/${meeting.id}`, {
-                                    headers: config.headers,
+                                    headers: config.getHeaders(),
                                 });
                                 if (billRes.ok) {
                                     const billJson = await billRes.json();
@@ -100,7 +100,7 @@ const MeetingGrid = () => {
         <Box className="w-full">
             <PageHeader
                 title={"Mes rendez-vous"}
-                description={"Consultez l'historique de vos opérations"}
+                description={"Consultez l'historique de vos rendez-vous"}
                 backgroundImage={"/garage1.jpg"}
             />
             {loading ? (
@@ -140,7 +140,7 @@ const MeetingGrid = () => {
                                         const response = await fetch(`${config.apiBaseUrl}/meeting/update/${meetingId}`, {
                                             method: 'PUT',
                                             headers: {
-                                                ...config.headers,
+                                                ...config.getHeaders(),
                                                 'Content-Type': 'application/json'
                                             },
                                             body: JSON.stringify({
@@ -161,7 +161,7 @@ const MeetingGrid = () => {
                                                 const billResponse = await fetch(`${config.apiBaseUrl}/bill/create`, {
                                                     method: "POST",
                                                     headers: {
-                                                        ...config.headers,
+                                                        ...config.getHeaders(),
                                                         'Content-Type': 'application/json'
                                                     },
                                                     body: JSON.stringify({ meeting: meetingId })

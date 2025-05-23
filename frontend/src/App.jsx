@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import {Layout, Login, Profile, Register, Rdv, Home, Meeting, Operations, TakeMeeting, Garages} from "./pages";
 import { AuthProvider } from "./providers/AuthProvider.jsx";
 import { ProtectedRoute } from "./components/index.js";
+import {LocationProvider} from "./components/LocationContext.jsx";
 
 const App = () => (
     <BrowserRouter>
@@ -21,9 +22,11 @@ const App = () => (
                         </ProtectedRoute>
                     } />
                     <Route path="rdv" element={
-                        <ProtectedRoute>
-                            <Rdv />
-                        </ProtectedRoute>
+                        <LocationProvider>
+                            <ProtectedRoute>
+                                <Rdv />
+                            </ProtectedRoute>
+                        </LocationProvider>
                     } />
                     <Route path="takeMeeting" element={
                         <ProtectedRoute>

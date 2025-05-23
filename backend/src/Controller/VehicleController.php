@@ -35,7 +35,7 @@ final class VehicleController extends AbstractController
             return $this->json(['error' => 'Vehicle not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if (!$vehicle->getClient()->getId() !== $this->security->getUser()->getId()) {
+        if ($vehicle->getClient()->getId() !== $this->security->getUser()->getId()) {
             return $this->json(['error' => 'You are not authorized to update this vehicle'], Response::HTTP_FORBIDDEN);
         }
 
@@ -105,7 +105,7 @@ final class VehicleController extends AbstractController
         $vehicle->setUpdateDate(new \DateTimeImmutable());
         $this->entityManager->flush();
 
-        return $this->json(['message' => 'Vehicle updated successfully'], Response::HTTP_OK);
+        return $this->json(['message' => 'Vehicle updated successfully', 'vehicle' => $vehicle], Response::HTTP_OK);
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
@@ -113,23 +113,31 @@ final class VehicleController extends AbstractController
     {
         $data = json_decode($request->getContent(), true) ?? $request->request->all();
 
-        if (!isset($data['model'])) {
+        $model = $data['model'] ?? null;
+        $brand = $data['brand'] ?? null;
+        $circulationDate = $data['circulationDate'] ?? null;
+        $kms = $data['kms'] ?? null;
+        $registrationNumber = $data['registrationNumber'] ?? null;
+        $vin = $data['vin'] ?? null;
+        $client = $this->security->getUser();
+
+        if (!$model) {
             return $this->json(['error' => 'Model is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!isset($data['brand'])) {
+        if (!$brand) {
             return $this->json(['error' => 'Brand is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!isset($data['circulationDate'])) {
+        if (!$circulationDate) {
             return $this->json(['error' => 'Circulation date is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!isset($data['kms'])) {
+        if (!$kms) {
             return $this->json(['error' => 'Kms is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!isset($data['registrationNumber'])) {
+        if (!$registrationNumber) {
             return $this->json(['error' => 'Registration number is required'], Response::HTTP_BAD_REQUEST);
         }
 
@@ -146,13 +154,23 @@ final class VehicleController extends AbstractController
             return $this->json(['error' => 'This model does not belong to the specified brand'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (isset($data['vin'])) {
+        if ($vin) {
             $vehicle = $this->entityManager->getRepository(Vehicle::class)->findOneBy(['vin' => $data['vin']]);
 
             if ($vehicle) {
                 return $this->json(['error' => 'Vehicle with this VIN already exists'], Response::HTTP_BAD_REQUEST);
             }
         }
+
+        $vehicle = $this->entityManager->getRepository(Vehicle::class)->findOneBy(['registrationNumber' => $data['registrationNumber']]);
+        if ($vehicle) {
+            return $this->json(['error' => 'Vehicle with this registration number already exists'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (preg_match('/^[A-Z]{2}-[0-9]{3}-[A-Z]{2}$/', $data['registrationNumber']) === 0) {
+            return $this->json(['error' => 'Invalid registration number format'], Response::HTTP_BAD_REQUEST);
+        }
+
 
         $vehicle = new Vehicle();
         $vehicle->setModel($model);
@@ -167,7 +185,7 @@ final class VehicleController extends AbstractController
         $this->entityManager->persist($vehicle);
         $this->entityManager->flush();
 
-        return $this->json(['message' => 'Vehicle created successfully'], Response::HTTP_CREATED);
+        return $this->json(['message' => 'Vehicle created successfully', 'vehicle' => $vehicle], Response::HTTP_CREATED);
     }
 
     #[Route('/client/{id}', name: 'get_by_client', methods: ['GET'])]
@@ -177,14 +195,6 @@ final class VehicleController extends AbstractController
 
         if (!$vehicles) {
             return $this->json(['error' => 'No vehicles found for this client'], Response::HTTP_NOT_FOUND);
-        }
-
-        foreach ($vehicles as $vehicle) {
-            $brandNameLowercase = strtolower($vehicle->getBrand()->getName());
-            $brandNameLowercase = str_replace(' ', '', $brandNameLowercase);
-            $logoPath = 'uploads/brands/' . $brandNameLowercase . '.png';
-
-            $vehicle->getBrand()->setLogoUrl($logoPath);
         }
 
         return $this->json($vehicles, Response::HTTP_OK);

@@ -63,7 +63,7 @@ final class DriverController extends AbstractController
         $driver->setCreationDate(new \DateTimeImmutable());
         $this->entityManager->persist($driver);
         $this->entityManager->flush();
-        return $this->json(['message' => 'Driver created successfully'], Response::HTTP_CREATED);
+        return $this->json(['message' => 'Driver created successfully', 'driver' => $driver], Response::HTTP_CREATED);
     }
 
     #[Route('/{id}', name: 'edit', methods: ['PUT'])]
@@ -89,7 +89,7 @@ final class DriverController extends AbstractController
         $driver->setDriver($data['driver'] ?? true);
         $driver->setVehicle($vehicle);
         $this->entityManager->flush();
-        return $this->json(['message' => 'Driver updated successfully'], Response::HTTP_OK);
+        return $this->json(['message' => 'Driver updated successfully', 'driver' => $driver], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]

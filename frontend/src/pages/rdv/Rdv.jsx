@@ -1,5 +1,6 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {useNavigate} from "react-router-dom";
+import { LocationContext } from "../../components/LocationContext.jsx";
 import {
     Checkbox,
     FormControlLabel,
@@ -29,6 +30,8 @@ const client = JSON.parse(localStorage.getItem("client"));
 const Rdv = () => {
 
     const navigate = useNavigate();
+
+    const { location, nearestGarage } = React.useContext(LocationContext);
 
     // Value to acknowledge which step is the current one
     const [activeStep, setActiveStep] = React.useState(0);
@@ -65,17 +68,34 @@ const Rdv = () => {
     const [quotationHash, setQuotationHash] = React.useState(null);
     const [quotationId, setQuotationId] = React.useState(null);
 
-    const [snackbar, setSnackbar] = useState("");
     const [noVehicles, setNoVehicles] = React.useState(false);
 
+    const [meetingStates, setMeetingStates] = React.useState([]);
+
+    const hasFetchedData = React.useRef(false);
 
     React.useEffect(() => {
+
+        if (!location || hasFetchedData.current) return;
+
+        const fetchMeetingStates = async () => {
+            try {
+                const res = await fetch(`${config.apiBaseUrl}/meetingstate/list`, {
+                    headers: config.getHeaders(),
+                });
+                if (!res.ok) throw new Error("Erreur chargement des statuts");
+                const data = await res.json();
+                setMeetingStates(data);
+            } catch (error) {
+                console.error("Erreur récupération des statuts :", error);
+            }
+        };
 
         //  Fetching vehicle(s) based on clientId
         const fetchVehicles = async () => {
             try {
                 const response = await fetch(`${config.apiBaseUrl}/vehicle/client/${client.id}`, {
-                    headers: config.headers,
+                    headers: config.getHeaders(),
                 });
 
                 // No vehicles
@@ -99,17 +119,16 @@ const Rdv = () => {
             }
         };
 
-        // TODO : Update position based on true position
         const fetchGarages = async () => {
             try {
                 const response = await fetch(`${config.apiBaseUrl}/garage/nearby`,
                     {
                         method: 'POST',
-                        headers: config.headers,
+                        headers: config.getHeaders(),
                         body: JSON.stringify(
                             {
-                                "longitude": 45.74,
-                                "latitude": 4.87,
+                                "longitude": location.longitude,
+                                "latitude": location.latitude,
                                 "radius": -1
                             }
                         )
@@ -134,7 +153,7 @@ const Rdv = () => {
                 const response = await fetch(`${config.apiBaseUrl}/operations/category/list`,
                     {
                         method: 'GET',
-                        headers: config.headers,
+                        headers: config.getHeaders(),
                     });
 
                 if (!response.ok) {
@@ -150,11 +169,18 @@ const Rdv = () => {
             }
         }
 
-        fetchVehicles();
-        fetchGarages();
-        fetchCategories();
+        const fetchData = async () => {
+            await Promise.all([
+                fetchVehicles(),
+                fetchGarages(),
+                fetchCategories(),
+                fetchMeetingStates(),
+            ]);
+        };
 
-    }, []);
+        fetchData();
+
+    }, [location]);
 
 
 
@@ -245,7 +271,7 @@ const Rdv = () => {
 
                                 try {
                                     const response = await fetch(`${config.apiBaseUrl}/operations/category/${selectedCategoryId}`, {
-                                        headers: config.headers,
+                                        headers: config.getHeaders(),
                                     });
 
                                     if (!response.ok) {
@@ -585,10 +611,9 @@ const Rdv = () => {
                     vehicle: selectedVehicle.id,
                     garage: formData.place
                 };
-
                 const response = await fetch(`${config.apiBaseUrl}/quotation/create`, {
                     method: 'POST',
-                    headers: config.headers,
+                    headers: config.getHeaders(),
                     body: JSON.stringify(body)
                 });
 
@@ -597,7 +622,7 @@ const Rdv = () => {
                 }
 
                 const quotationData = await response.json();
-                console.log(quotationData)
+
                 setQuotationHash(quotationData.hash);
                 setQuotationId(quotationData.id);
 
@@ -617,9 +642,8 @@ const Rdv = () => {
 
     const handleCreateMeeting = async () => {
         try {
-            // Tu dois retrouver les bonnes valeurs ici
             const selectedVehicle = clientVehicles.find(
-                v => v.registrationNumber === formData.vehiclePlate
+                (v) => v.registrationNumber === formData.vehiclePlate
             );
 
             if (!selectedVehicle) {
@@ -627,20 +651,32 @@ const Rdv = () => {
             }
 
             const meetingDate = formData.meetingTime
-                ? `${formData.meetingTime.getFullYear()}-${String(formData.meetingTime.getMonth() + 1).padStart(2, '0')}-${String(formData.meetingTime.getDate()).padStart(2, '0')} ${String(formData.meetingTime.getHours()).padStart(2, '0')}:${String(formData.meetingTime.getMinutes()).padStart(2, '0')}:00`
+                ? `${formData.meetingTime.getFullYear()}-${String(
+                    formData.meetingTime.getMonth() + 1
+                ).padStart(2, "0")}-${String(formData.meetingTime.getDate()).padStart(
+                    2,
+                    "0"
+                )} ${String(formData.meetingTime.getHours()).padStart(2, "0")}:${String(
+                    formData.meetingTime.getMinutes()
+                ).padStart(2, "0")}:00`
                 : null;
+
+            const createdState = meetingStates.find((state) => state.name === "created");
+            if (!createdState) {
+                throw new Error("Statut 'created' non trouvé");
+            }
 
             const body = {
                 vehicle: selectedVehicle.id,
                 quotation: quotationId,
                 garage: formData.place,
-                meeting_state_id: 5, // TODO : Get id from "Created" status
+                meeting_state_id: createdState.id,
                 date: meetingDate,
             };
 
             const response = await fetch(`${config.apiBaseUrl}/meeting/create`, {
                 method: 'POST',
-                headers: config.headers,
+                headers: config.getHeaders(),
                 body: JSON.stringify(body),
             });
 
@@ -649,24 +685,18 @@ const Rdv = () => {
             }
 
             const data = await response.json();
-
-            console.log("Rendez-vous créé :", data);
-            navigate("../meeting")
-
+            
+            navigate("../meeting");
         } catch (error) {
             console.error("Erreur création rendez-vous :", error);
         }
     };
-
-
-
 
     // Go back to previous step
     const handleBack = () => {
         setActiveStep((prevActiveStep) => prevActiveStep - 1);
     };
 
-    
     return (
         <Box className="m-20 bg-white p-10">
 
@@ -743,12 +773,6 @@ const Rdv = () => {
                             </Box>
                         </React.Fragment>
                     )}
-                    <Snackbar
-                        open={Boolean(snackbar)}
-                        autoHideDuration={3000}
-                        onClose={() => setSnackbar("")}
-                        message={snackbar}
-                    />
                 </>
             )}
         </Box>

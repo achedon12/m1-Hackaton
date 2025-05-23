@@ -38,7 +38,7 @@ const TakeMeeting = () => {
         const fetchQuotations = async () => {
             try {
                 const response = await fetch(`${config.apiBaseUrl}/quotation/client`, {
-                    headers: config.headers,
+                    headers: config.getHeaders(),
                 });
                 const data = await response.json();
 
@@ -75,7 +75,7 @@ const TakeMeeting = () => {
 
             const existingMeetingsResponse = await fetch(
                 `${config.apiBaseUrl}/meeting/client/${client.id}`,
-                { headers: config.headers }
+                { headers: config.getHeaders() }
             );
 
             if (!existingMeetingsResponse.ok) {
@@ -104,7 +104,7 @@ const TakeMeeting = () => {
 
             const response = await fetch(`${config.apiBaseUrl}/meeting/create`, {
                 method: "POST",
-                headers: config.headers,
+                headers: config.getHeaders(),
                 body: JSON.stringify(payload),
             });
 

@@ -1,7 +1,6 @@
 import {useEffect, useState, useRef} from "react";
 import {Trash} from "lucide-react";
-import AddCar from "./carActions/AddCar.jsx";
-import EditCar from "./carActions/EditCar.jsx";
+import AddOrEditCar from "./carActions/AddOrEditCar.jsx";
 import AddOrEditDriver from "./driverActions/AddOrEditDriver.jsx";
 import config from "../../../providers/apiConfig.js";
 import {Loader} from "../../../components/index.js";
@@ -16,8 +15,7 @@ const CarForm = () => {
     const [loading, setLoading] = useState(true);
     const [carInfosLoaded, setCarInfosLoaded] = useState(false);
 
-    const addCarModalRef = useRef(null);
-    const editCarModalRef = useRef(null);
+    const addOrEditCarModalRef = useRef(null);
     const addOrEditDriverModalRef = useRef(null);
 
     useEffect(() => {
@@ -72,7 +70,7 @@ const CarForm = () => {
     const fetchData = async (url) => {
         const response = await fetch(url, {
             method: "GET",
-            headers: config.headers
+            headers: config.getHeaders()
         });
         if (!response.ok) throw new Error('Erreur lors de la récupération des données');
         return response.json();
@@ -94,22 +92,24 @@ const CarForm = () => {
         }
     };
 
-    const handleCarSave = async (car) => {
+    const handleCarSave = async (carForm) => {
         try {
-            const url = car.id
-                ? `${config.apiBaseUrl}/vehicle/update/${car.id}`
+            const url = carForm.id
+                ? `${config.apiBaseUrl}/vehicle/update/${carForm.id}`
                 : `${config.apiBaseUrl}/vehicle/create`;
-            const method = car.id ? 'PUT' : 'POST';
+            const method = carForm.id ? 'PUT' : 'POST';
             const body = JSON.stringify({
-                brand: car.brand.id,
-                model: car.model.id,
-                circulationDate: car.circulationDate,
-                kms: car.kms,
-                registrationNumber: car.registrationNumber,
+                brand: carForm.brand,
+                model: carForm.model,
+                circulationDate: carForm.circulationDate,
+                kms: carForm.kms,
+                registrationNumber: carForm.registrationNumber,
             });
-            const response = await fetch(url, {method, headers: config.headers, body});
+            const response = await fetch(url, {method, headers: config.getHeaders(), body});
             if (!response.ok) throw new Error('Erreur lors de la sauvegarde du véhicule');
-            if (!car.id) setVehicles([...vehicles, car]);
+            const data = await response.json();
+            setVehicles([...vehicles, data.vehicle]);
+            setActiveCar(data.vehicle);
         } catch (error) {
             console.error(error);
         }
@@ -128,9 +128,10 @@ const CarForm = () => {
                 vehicleId: activeCar.id,
                 clientId: client.id
             });
-            const response = await fetch(url, {method, headers: config.headers, body});
+            const response = await fetch(url, {method, headers: config.getHeaders(), body});
             if (!response.ok) throw new Error('Erreur lors de la sauvegarde du conducteur');
-            if (!driver.id) setActiveCarDrivers([...activeCarDrivers, driver]);
+            const data = await response.json();
+            setActiveCarDrivers([...activeCarDrivers, data.driver]);
         } catch (error) {
             console.error(error);
         }
@@ -146,8 +147,16 @@ const CarForm = () => {
                         vehicles={vehicles}
                         onCarClick={setActiveCar}
                         onCarDelete={handleCarDelete}
-                        onAddCarClick={() => addCarModalRef.current?.showModal()}
-                        onEditCarClick={(car) => editCarModalRef.current?.showModal(car)}
+                        onAddCarClick={() => {
+                            setActiveCar(null)
+                            setActiveCarDrivers([]);
+                            setActiveCarMeeting([]);
+                            addOrEditCarModalRef.current?.showModal()
+                        }}
+                        onEditCarClick={(car) => {
+                            setActiveCar(car)
+                            addOrEditCarModalRef.current?.showModal()
+                        }}
                     />
                 )}
             </div>
@@ -163,14 +172,21 @@ const CarForm = () => {
                         drivers={activeCarDrivers}
                         meetings={activeCarMeeting}
                         onDriverSave={handleDriverSave}
-                        onEdit={(car) => addOrEditDriverModalRef.current?.showModal(car)}
+                        onAddDriverClick={() => {
+                            setActiveDriver(null)
+                            addOrEditDriverModalRef.current?.showModal()
+                        }}
+                        onEditDriverClick={(driver) => {
+                            setActiveDriver(driver)
+                            addOrEditDriverModalRef.current?.showModal()
+                        }}
                     />
                 )}
             </div>
 
-            <AddCar ref={addCarModalRef} onSave={handleCarSave}/>
-            <EditCar ref={editCarModalRef} car={activeCar} onSave={handleCarSave}/>
-            <AddOrEditDriver ref={addOrEditDriverModalRef} car={activeCar} driver={activeDriver} onSave={handleDriverSave}/>
+            <AddOrEditCar ref={addOrEditCarModalRef} onSave={handleCarSave} car={activeCar}/>
+            <AddOrEditDriver ref={addOrEditDriverModalRef} car={activeCar} driver={activeDriver}
+                             onSave={handleDriverSave}/>
         </>
     );
 };
@@ -182,8 +198,9 @@ const VehicleList = ({vehicles, onCarClick, onCarDelete, onAddCarClick, onEditCa
                 className="list-row flex justify-between items-center hover:bg-base-200 hover:cursor-pointer active:bg-base-200">
                 <div className="flex items-center">
                     <div className="w-12 h-12 flex justify-center items-center mr-4">
-                        <img src={config.baseUrl + "/" + car.brand.logoUrl} alt="brand logo"/>
-                    </div>
+                        <img
+                            src={config.baseUrl + "/uploads/brands/" + car.brand.name.toLowerCase().replace(/\s+/g, '') + ".png"}
+                            alt="brand logo"/></div>
                     <div>
                         <p className="font-bold">{car.brand.name} {car.model.name}</p>
                         <p className="text-sm text-gray-500">{car.registrationNumber} - {car.kms} km</p>
@@ -205,31 +222,33 @@ const VehicleList = ({vehicles, onCarClick, onCarDelete, onAddCarClick, onEditCa
     </ul>
 );
 
-const CarDetails = ({activeCar, drivers, meetings, onDriverSave, onEdit}) => (
+const CarDetails = ({activeCar, drivers, meetings, onDriverSave, onAddDriverClick, onEditDriverClick}) => (
     <div className="my-10">
         {activeCar && (
-        <div className="tabs tabs-lift">
-            <input type="radio" name="my_tabs_3" className="tab" aria-label="Mes conducteurs"/>
-            <div className="tab-content bg-base-100 border-base-300 p-6">
-                <div className={"flex justify-between items-center mb-4"}>
-                    <h3 className="text-lg font-bold mb-4">Mes conducteurs pour {activeCar.brand.name} {activeCar.model.name}</h3>
-                    <button className="btn btn-primary" onClick={() => onEdit(activeCar)}>
-                        Ajouter un conducteur
-                    </button>
+            <div className="tabs tabs-lift">
+                <input type="radio" name="my_tabs_3" className="tab" aria-label="Mes conducteurs"/>
+                <div className="tab-content bg-base-100 border-base-300 p-6">
+                    <div className={"flex justify-between items-center mb-4"}>
+                        <h3 className="text-lg font-bold mb-4">Mes conducteurs
+                            pour {activeCar.brand.name} {activeCar.model.name}</h3>
+                        <button className="btn btn-primary" onClick={onAddDriverClick}>
+                            Ajouter un conducteur
+                        </button>
+                    </div>
+                    <DriverTable drivers={drivers} onDriverSave={onDriverSave} onEditDriverClick={onEditDriverClick}/>
                 </div>
-                <DriverTable drivers={drivers} onDriverSave={onDriverSave} onEdit={onEdit}/>
+                <input type="radio" name="my_tabs_3" className="tab" aria-label="Mes prestations" defaultChecked/>
+                <div className="tab-content bg-base-100 border-base-300 p-6">
+                    <h3 className="text-lg font-bold mb-4">Mes prestations
+                        pour {activeCar.brand.name} {activeCar.model.name}</h3>
+                    <MeetingTable meetings={meetings}/>
+                </div>
             </div>
-            <input type="radio" name="my_tabs_3" className="tab" aria-label="Mes prestations" defaultChecked/>
-            <div className="tab-content bg-base-100 border-base-300 p-6">
-                <h3 className="text-lg font-bold mb-4">Mes prestations pour {activeCar.brand.name} {activeCar.model.name}</h3>
-                <MeetingTable meetings={meetings}/>
-            </div>
-        </div>
         )}
     </div>
 );
 
-const DriverTable = ({drivers, onDriverSave, onEdit}) => (
+const DriverTable = ({drivers, onDriverSave, onEditDriverClick}) => (
     <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
         <table className="table w-full">
             <thead className="bg-base-200">
@@ -247,7 +266,7 @@ const DriverTable = ({drivers, onDriverSave, onEdit}) => (
                         <button className="btn btn-error" onClick={() => onDriverSave(driver)}>
                             <Trash className="w-4 h-4"/>
                         </button>
-                        <button className="btn btn-secondary ml-2" onClick={() => onEdit(driver)}>
+                        <button className="btn btn-secondary ml-2" onClick={() => onEditDriverClick(driver)}>
                             Modifier
                         </button>
                     </td>

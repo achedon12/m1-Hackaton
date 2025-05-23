@@ -69,7 +69,7 @@ const AddOrEditDriver = forwardRef(({car, driver, onSave}, ref) => {
     return (
         <dialog ref={ref} id="add_or_edit_driver_modal" className="modal">
             <div className="modal-box">
-                <h3 className="text-lg font-bold">Ajouter ou Modifier un Conducteur</h3>
+                <h3 className="text-lg font-bold">{driver ? "Modifier le conducteur" : "Ajouter un conducteur"}</h3>
 
                 <fieldset className="fieldset bg-slate-100 border-base-300 rounded-box w-full border p-4 mt-4">
                     <label className="label w-1/3">Nom</label>
