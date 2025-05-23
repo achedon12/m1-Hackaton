@@ -113,7 +113,6 @@ const TakeMeeting = () => {
             }
 
             const data = await response.json();
-            console.log(data);
             setSnackbar("Rendez-vous créé avec succès !");
         } catch (error) {
             console.error("Erreur lors de la création du rendez-vous :", error);

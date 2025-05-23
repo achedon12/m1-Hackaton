@@ -301,7 +301,11 @@ const ChatBot = () => {
 
             const operationsIds = selectedOperations.join(";");
             // const operationsIds = selectedOperations.map(op => op.id).join(";");
-            const params = meetingWithOperations ? {zipcode: zip, city: city, operations: operationsIds} : {zipcode: zip, city: city};
+            const params = meetingWithOperations ? {
+                zipcode: zip,
+                city: city,
+                operations: operationsIds
+            } : {zipcode: zip, city: city};
 
             const response = await fetch(url_garages, {
                 method: "POST",
@@ -321,7 +325,7 @@ const ChatBot = () => {
             const res = await fetch(`${config.apiBaseUrl}/garage/reminder`, {
                 method: "POST",
                 headers: config.getHeaders(),
-                body: JSON.stringify({ garage: garageId, vehicle: vehicleId, message: requestClient }),
+                body: JSON.stringify({garage: garageId, vehicle: vehicleId, message: requestClient}),
             });
 
             if (res.ok) {
@@ -474,7 +478,8 @@ const ChatBot = () => {
     }, [step]);
 
     return (
-        <div className="w-full min-w-[600px] max-w-[800px] h-[72vh] min-h-[400px] max-h-screen p-4 bg-white shadow rounded-lg flex flex-col">
+        <div
+            className="w-full min-w-[600px] max-w-[800px] h-[72vh] min-h-[400px] max-h-screen p-4 bg-white shadow rounded-lg flex flex-col">
             <div className="flex-1 overflow-y-auto border p-4 mb-2 space-y-3 bg-gray-50 rounded">
                 {messages.map((msg, index) => (
                     <div
@@ -806,7 +811,7 @@ const ChatBot = () => {
                             }}
                             className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-xl shadow hover:bg-green-700 transition"
                         >
-                            <FileText className="w-5 h-5" />
+                            <FileText className="w-5 h-5"/>
                             <span>Ouvrir le devis PDF</span>
                         </button>
 
