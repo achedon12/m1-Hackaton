@@ -136,7 +136,6 @@ const CarForm = () => {
             console.error(error);
         }
     };
-
     return (
         <>
             <div className="flex flex-col lg:flex-row justify-between items-center w-full">
@@ -291,14 +290,16 @@ const MeetingTable = ({meetings}) => (
                 <th>Date</th>
                 <th>Libellé</th>
                 <th>Coût (€)</th>
+                <th>Garage</th>
             </tr>
             </thead>
             <tbody>
             {meetings.map((meeting, index) => (
                 <tr key={index}>
                     <td>{new Date(meeting.meetingDate).toLocaleDateString()}</td>
-                    <td>{meeting.libelle}</td>
-                    <td>{meeting.price}</td>
+                    <td>{meeting.meetingOperations.map(op => op.operation.libelle).join(', ')}</td>
+                    <td>{meeting.meetingOperations.reduce((acc, op) => acc + op.operation.price, 0)} €</td>
+                    <td>{meeting.garage.name} - {meeting.garage.city}</td>
                 </tr>
             ))}
             </tbody>
