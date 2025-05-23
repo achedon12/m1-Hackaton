@@ -1,5 +1,5 @@
 import React from 'react';
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 import { LocationContext } from "../../components/LocationContext.jsx";
 import {
     Checkbox,
@@ -19,12 +19,15 @@ import {
 } from "@mui/material";
 import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import frLocale from "date-fns/locale/fr"; // French displaying
+import frLocale from "date-fns/locale/fr";
 import config from "../../providers/apiConfig.js";
 const steps = ['Identifiez votre véhicule', 'Choix de l\'atelier', 'Votre panier', 'Votre rendez-vous', 'Récapitulatif']
 const client = JSON.parse(localStorage.getItem("client"));
 
 const Rdv = () => {
+    const [searchParams] = useSearchParams();
+    const operationId = searchParams.get("operationId");
+    const categoryId = searchParams.get("categoryId");
     const navigate = useNavigate();
     const { location, nearestGarage } = React.useContext(LocationContext);
     const [activeStep, setActiveStep] = React.useState(0);
@@ -150,7 +153,15 @@ const Rdv = () => {
 
                 const data = await response.json();
                 setCategories(data);
-
+                if (categoryId) {
+                    const selectedOperation = categories.find(category => category.id === parseInt(categoryId));
+                    if (selectedOperation) {
+                        setFormData((prev) => ({
+                            ...prev,
+                            category: selectedOperation.id
+                        }));
+                    }
+                }
             } catch (error) {
                 setCategoriesError(error);
                 console.error("Erreur lors de la récupération des opérations :", error);
@@ -266,6 +277,15 @@ const Rdv = () => {
 
                                     const data = await response.json();
                                     setOperations(data);
+                                    if (operationId) {
+                                        const selectedOperation = data.find(operation => operation.id === parseInt(operationId));
+                                        if (selectedOperation) {
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                cart: [...prev.cart, { libelle: selectedOperation.libelle, price: selectedOperation.price }]
+                                            }));
+                                        }
+                                    }
                                 } catch (error) {
                                     console.error("Erreur lors du chargement des opérations :", error);
                                     setOperations([]);

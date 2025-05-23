@@ -10,10 +10,10 @@ import {useAuth} from "../../providers/AuthProvider.jsx";
 const PopularOperationCard = ({operation, icon, isAuthenticated}) => (
     isAuthenticated ?
         (<NavLink
-            to={`/rdv`}
-            key={operation.id}
-            className={`cursor-pointer flex flex-col items-center justify-center bg-gray-100 p-4 rounded-lg shadow-md`}
-        >
+                to={`/rdv?operationId=${operation.id}&categoryId=${operation.category.id}`}
+                key={operation.id}
+                className={`cursor-pointer flex flex-col items-center justify-center bg-gray-100 p-4 rounded-lg shadow-md`}
+            >
             <div className="h-10 flex items-center justify-center mb-2">{icon}</div>
             <h2 className="text-base text-center h-12">{operation.libelle}</h2>
         </NavLink>
