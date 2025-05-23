@@ -12,12 +12,8 @@ const BotpressChat = () => {
         const fetchAndInit = async () => {
             try {
                 const response = await fetch(`${config.apiBaseUrl}/vehicle/client/${client.id}`, {
-                    headers: config.headers,
+                    headers: config.getHeaders(),
                 });
-
-                if (!response.ok) {
-                    throw new Error(`Erreur ${response.status}`);
-                }
 
                 const data = await response.json();
                 setClientVehicles(data);
