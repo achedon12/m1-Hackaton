@@ -108,7 +108,11 @@ const CarForm = () => {
             const response = await fetch(url, {method, headers: config.getHeaders(), body});
             if (!response.ok) throw new Error('Erreur lors de la sauvegarde du véhicule');
             const data = await response.json();
-            setVehicles([...vehicles, data.vehicle]);
+            if (carForm.id) {
+                setVehicles(vehicles.map(car => (car.id === carForm.id ? data.vehicle : car)));
+            } else {
+                setVehicles([...vehicles, data.vehicle]);
+            }
             setActiveCar(data.vehicle);
         } catch (error) {
             console.error(error);
@@ -136,7 +140,6 @@ const CarForm = () => {
             console.error(error);
         }
     };
-
     return (
         <>
             <div className="flex flex-col lg:flex-row justify-between items-center w-full">
@@ -144,6 +147,7 @@ const CarForm = () => {
                     <Loader/>
                 ) : (
                     <VehicleList
+                        activeCar={activeCar}
                         vehicles={vehicles}
                         onCarClick={setActiveCar}
                         onCarDelete={handleCarDelete}
@@ -191,11 +195,11 @@ const CarForm = () => {
     );
 };
 
-const VehicleList = ({vehicles, onCarClick, onCarDelete, onAddCarClick, onEditCarClick}) => (
+const VehicleList = ({activeCar, vehicles, onCarClick, onCarDelete, onAddCarClick, onEditCarClick}) => (
     <ul className={`list bg-base-100 rounded-box shadow-md w-full`}>
         {vehicles.map((car, index) => (
             <li key={index} onClick={() => onCarClick(car)}
-                className="list-row flex justify-between items-center hover:bg-base-200 hover:cursor-pointer active:bg-base-200">
+                className={`list-row flex justify-between items-center hover:bg-base-200 hover:cursor-pointer active:bg-base-200 ${activeCar?.id === car.id ? "bg-blue-100" : ""}`}>
                 <div className="flex items-center">
                     <div className="w-12 h-12 flex justify-center items-center">
                         <img
@@ -291,14 +295,16 @@ const MeetingTable = ({meetings}) => (
                 <th>Date</th>
                 <th>Libellé</th>
                 <th>Coût (€)</th>
+                <th>Garage</th>
             </tr>
             </thead>
             <tbody>
             {meetings.map((meeting, index) => (
                 <tr key={index}>
                     <td>{new Date(meeting.meetingDate).toLocaleDateString()}</td>
-                    <td>{meeting.libelle}</td>
-                    <td>{meeting.price}</td>
+                    <td>{meeting.meetingOperations.map(op => op.operation.libelle).join(', ')}</td>
+                    <td>{meeting.meetingOperations.reduce((acc, op) => acc + op.operation.price, 0)} €</td>
+                    <td>{meeting.garage.name} - {meeting.garage.city}</td>
                 </tr>
             ))}
             </tbody>
